@@ -1,0 +1,32 @@
+services:
+  # Web Service (Next.js App)
+  - type: web
+    name: mauritius-game-app
+    env: node
+    plan: standard
+    branch: main
+    buildCommand: npm run build
+    startCommand: npm run start
+    healthCheckPath: /
+    
+    # Environment variables
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          property: url
+    
+    # Connect to PostgreSQL
+    databases:
+      - name: mauritius-game-db
+        dbName: mauritius_game
+        user: game_user
+
+  # PostgreSQL Database
+  - type: pserv
+    name: mauritius-game-db
+    ipAllowList: []
+    plan: standard
+    postgresVersion: 15
