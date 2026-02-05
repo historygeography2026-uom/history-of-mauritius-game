@@ -1,7 +1,7 @@
 import { Pool } from 'pg'
 
 // Create a single pool instance to be reused across the app
-const pool = new Pool({
+export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   // For SSL connections (required by Render in production)
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,

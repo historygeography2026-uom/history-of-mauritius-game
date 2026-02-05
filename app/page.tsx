@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Sparkles, ArrowLeft, Settings, Trophy, LogOut, Map } from "lucide-react"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
+import { useSession, signOut } from "next-auth/react"
 import { ProgressMap } from "@/components/progress-map"
 import { DodoMascot } from "@/components/dodo-mascot"
 
@@ -15,35 +15,31 @@ export const dynamic = 'force-dynamic'
 export default function SubjectSelection() {
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null)
   const [showProgressMap, setShowProgressMap] = useState(false)
-  const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
   const [welcomeMessage, setWelcomeMessage] = useState("Let's learn about Mauritian History & Geography! 🌴")
   const router = useRouter()
+  const { data: session } = useSession()
 
   useEffect(() => {
-    const checkUser = async () => {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      setUser(user)
-
-      if (user) {
-        // Fetch user profile
-        const { data: profileData } = await supabase.from("user_profiles").select("*").eq("id", user.id).single()
-        setProfile(profileData)
+    const loadProfile = async () => {
+      if (session?.user?.id) {
+        try {
+          const response = await fetch(`/api/user/profile/${session.user.id}`)
+          if (response.ok) {
+            const profileData = await response.json()
+            setProfile(profileData)
+          }
+        } catch (error) {
+          console.error("Failed to load profile:", error)
+        }
       }
     }
 
-    checkUser()
-  }, [])
+    loadProfile()
+  }, [session])
 
   const handleLogout = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    setUser(null)
-    setProfile(null)
-    router.refresh()
+    await signOut({ redirectTo: "/" })
   }
 
   const subjects = [
@@ -243,7 +239,7 @@ export default function SubjectSelection() {
 
           <div className="flex gap-2 items-center">
             {/* All users are now authenticated - show user info and logout */}
-            <div className="text-sm text-muted-foreground mr-2">Welcome, {profile?.full_name || user?.email || "Student"}!</div>
+            <div className="text-sm text-muted-foreground mr-2">Welcome, {profile?.full_name || session?.user?.email || "Student"}!</div>
             <Button onClick={handleLogout} variant="outline" className="flex items-center gap-2 bg-transparent">
               <LogOut className="h-4 w-4" />
               Logout

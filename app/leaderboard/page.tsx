@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Trophy, ArrowLeft, Medal, Calendar } from "lucide-react"
-import { createClient } from "@/lib/supabase-client"
+import { useSession } from "next-auth/react"
 
 export const dynamic = 'force-dynamic'
 
@@ -27,21 +27,13 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
 export default function Leaderboard() {
   const [selectedCategory, setSelectedCategory] = useState("all")
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const { data: session } = useSession()
 
   const { data, isLoading, error, mutate } = useSWR<LeaderboardRow[]>(
     `/api/leaderboard?subject=${selectedCategory}&all=true`,
     fetcher,
     { refreshInterval: 15000 },
   )
-
-  // Fetch the current user
-  useEffect(() => {
-    const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setCurrentUserId(user?.id ?? null)
-    })
-  }, [])
 
   useEffect(() => {
     void mutate()
@@ -63,8 +55,8 @@ export default function Leaderboard() {
   let currentUserRow: LeaderboardRow | null = null
   let currentUserRank: number | null = null
   
-  if (currentUserId) {
-    const currentUserIndex = allRows.findIndex(r => r.user_id === currentUserId)
+  if (session?.user?.id) {
+    const currentUserIndex = allRows.findIndex(r => r.user_id === session.user.id)
     if (currentUserIndex >= 10) {
       currentUserRow = allRows[currentUserIndex]
       currentUserRank = currentUserIndex + 1
@@ -162,7 +154,7 @@ export default function Leaderboard() {
 
           {!isLoading && !error &&
             top10Rows.map((r, i) => {
-              const isCurrentUser = currentUserId !== null && r.user_id === currentUserId
+              const isCurrentUser = session?.user?.id !== undefined && r.user_id === session.user.id
               return renderLeaderboardRow(r, i + 1, isCurrentUser)
             })}
           

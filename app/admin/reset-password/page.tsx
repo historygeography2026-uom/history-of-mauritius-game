@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
 
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState("")
@@ -41,16 +40,21 @@ export default function ResetPasswordPage() {
     }
 
     try {
-      const supabase = createClient()
-
-      // Send password reset email
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/update-password`,
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          newPassword,
+        }),
       })
 
-      if (error) throw error
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Password reset failed")
+      }
 
-      setMessage(`Password reset email sent to ${email}`)
+      setMessage(`Password reset successfully for ${email}`)
       setEmail("")
       setNewPassword("")
       setAdminPassword("")

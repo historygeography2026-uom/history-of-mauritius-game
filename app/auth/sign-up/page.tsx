@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -26,7 +26,6 @@ export default function SignUpPage() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
@@ -36,20 +35,41 @@ export default function SignUpPage() {
       return
     }
 
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters")
+      setIsLoading(false)
+      return
+    }
+
     try {
-      const { error } = await supabase.auth.signUp({
+      // Call the registration API
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          password,
+          name: fullName,
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Registration failed")
+      }
+
+      // After successful registration, sign in
+      const result = await signIn("credentials", {
         email,
         password,
-        options: {
-          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/`,
-          data: {
-            full_name: fullName,
-            phone_number: phoneNumber,
-          },
-        },
+        redirect: false,
       })
-      if (error) throw error
-      router.push("/auth/sign-up-success")
+
+      if (result?.ok) {
+        router.push("/auth/sign-up-success")
+      } else {
+        setError("Sign-up successful but login failed. Please log in manually.")
+      }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")
     } finally {
@@ -58,18 +78,13 @@ export default function SignUpPage() {
   }
 
   const handleGoogleSignUp = async () => {
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
+      await signIn("google", {
+        redirectTo: "/auth/sign-up-success",
       })
-      if (error) throw error
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")
       setIsLoading(false)
@@ -77,18 +92,13 @@ export default function SignUpPage() {
   }
 
   const handleFacebookSignUp = async () => {
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "facebook",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
+      await signIn("facebook", {
+        redirectTo: "/auth/sign-up-success",
       })
-      if (error) throw error
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")
       setIsLoading(false)

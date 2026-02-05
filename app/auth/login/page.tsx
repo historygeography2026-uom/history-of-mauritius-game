@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -26,17 +26,24 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const result = await signIn("credentials", {
         email,
         password,
+        redirect: false,
       })
-      if (error) throw error
-      router.push(redirectTo)
+
+      if (result?.error) {
+        setError(result.error || "Login failed")
+        return
+      }
+
+      if (result?.ok) {
+        router.push(redirectTo)
+      }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")
     } finally {
@@ -45,18 +52,13 @@ export default function LoginPage() {
   }
 
   const handleGoogleLogin = async () => {
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback?redirectTo=${redirectTo}`,
-        },
+      await signIn("google", {
+        redirectTo: redirectTo,
       })
-      if (error) throw error
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")
       setIsLoading(false)
@@ -64,18 +66,13 @@ export default function LoginPage() {
   }
 
   const handleFacebookLogin = async () => {
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "facebook",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback?redirectTo=${redirectTo}`,
-        },
+      await signIn("facebook", {
+        redirectTo: redirectTo,
       })
-      if (error) throw error
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")
       setIsLoading(false)
@@ -83,17 +80,23 @@ export default function LoginPage() {
   }
 
   const handleDemoLogin = async () => {
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const result = await signIn("credentials", {
         email: GAME_CONFIG.DEMO_ACCOUNT.EMAIL,
         password: GAME_CONFIG.DEMO_ACCOUNT.PASSWORD,
+        redirect: false,
       })
-      if (error) throw error
-      router.push(redirectTo)
+
+      if (result?.error) {
+        throw new Error(result.error || "Demo account login failed")
+      }
+
+      if (result?.ok) {
+        router.push(redirectTo)
+      }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "Demo account not available. Please sign up.")
       setIsLoading(false)
