@@ -10,6 +10,8 @@ import { useRouter } from "next/navigation"
 import { ProgressMap } from "@/components/progress-map"
 import { DodoMascot } from "@/components/dodo-mascot"
 
+export const dynamic = 'force-dynamic'
+
 export default function SubjectSelection() {
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null)
   const [showProgressMap, setShowProgressMap] = useState(false)
@@ -17,10 +19,10 @@ export default function SubjectSelection() {
   const [profile, setProfile] = useState<any>(null)
   const [welcomeMessage, setWelcomeMessage] = useState("Let's learn about Mauritian History & Geography! 🌴")
   const router = useRouter()
-  const supabase = createClient()
 
   useEffect(() => {
     const checkUser = async () => {
+      const supabase = createClient()
       const {
         data: { user },
       } = await supabase.auth.getUser()
@@ -37,6 +39,7 @@ export default function SubjectSelection() {
   }, [])
 
   const handleLogout = async () => {
+    const supabase = createClient()
     await supabase.auth.signOut()
     setUser(null)
     setProfile(null)

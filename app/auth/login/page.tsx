@@ -13,6 +13,8 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft, User } from "lucide-react"
 import { GAME_CONFIG } from "@/lib/game-config"
 
+export const dynamic = 'force-dynamic'
+
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")

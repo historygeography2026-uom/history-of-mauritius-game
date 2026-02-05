@@ -9,6 +9,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Trophy, ArrowLeft, Medal, Calendar } from "lucide-react"
 import { createClient } from "@/lib/supabase-client"
 
+export const dynamic = 'force-dynamic'
+
 type LeaderboardRow = {
   id: number
   user_id: string | null
