@@ -6,31 +6,48 @@ services:
     plan: standard
     branch: main
     buildCommand: npm run build
-    startCommand: npm run start
+    startCommand: npm start
     healthCheckPath: /
     
     # Environment variables
     envVars:
       - key: NODE_ENV
         value: production
-      - key: NEXT_PUBLIC_API_URL
+      
+      # NextAuth Configuration
+      - key: NEXTAUTH_URL
         fromService:
           type: web
           property: url
-      - key: NEXT_PUBLIC_SUPABASE_URL
-        value: https://zjziegyiscwdpnimjtgm.supabase.co
-      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
-        value: REDACTED_SUPABASE_ANON_KEY
+      - key: NEXTAUTH_SECRET
+        sync: false
+        # ⚠️ REQUIRED: Generate with: openssl rand -base64 32
+        # Set in Render dashboard or before deploying
+      
+      # Database Configuration (PostgreSQL)
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: mauritius-game-db
+          property: connectionString
+      
+      # OAuth Providers (Update with your credentials)
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: FACEBOOK_APP_ID
+        sync: false
+      - key: FACEBOOK_APP_SECRET
+        sync: false
     
     # Connect to PostgreSQL
     databases:
       - name: mauritius-game-db
-        dbName: mauritius_game
-        user: game_user
 
   # PostgreSQL Database
   - type: pserv
     name: mauritius-game-db
     ipAllowList: []
     plan: standard
-    postgresVersion: 15
+    postgresVersion: 18
