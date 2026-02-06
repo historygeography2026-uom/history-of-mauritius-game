@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { Pool } from 'pg';
+import { readFile } from 'fs/promises';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL_EXTERNAL,
@@ -17,9 +18,9 @@ export async function GET(
       return NextResponse.json({ error: 'Image ID required' }, { status: 400 });
     }
 
-    // Retrieve image from PostgreSQL
+    // Get file path from database
     const result = await pool.query(
-      'SELECT image_data, file_type FROM question_images WHERE id = $1',
+      'SELECT file_path, file_type FROM question_images WHERE id = $1',
       [imageId]
     );
 
@@ -27,10 +28,13 @@ export async function GET(
       return NextResponse.json({ error: 'Image not found' }, { status: 404 });
     }
 
-    const { image_data, file_type } = result.rows[0];
+    const { file_path, file_type } = result.rows[0];
+
+    // Read file from Render persistent disk
+    const imageData = await readFile(file_path);
 
     // Return image with appropriate content type
-    return new NextResponse(image_data, {
+    return new NextResponse(imageData, {
       headers: {
         'Content-Type': file_type,
         'Cache-Control': 'public, max-age=31536000', // Cache for 1 year
