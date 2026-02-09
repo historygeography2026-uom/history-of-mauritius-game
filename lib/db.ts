@@ -3,8 +3,8 @@ import { Pool } from 'pg'
 // Create a single pool instance to be reused across the app
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  // For SSL connections (required by Render in production)
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  // SSL required for Render PostgreSQL (both local dev and production)
+  ssl: process.env.DATABASE_URL?.includes('render.com') ? { rejectUnauthorized: false } : (process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false),
   // Connection pool settings
   max: 20,
   idleTimeoutMillis: 30000,

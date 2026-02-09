@@ -16,7 +16,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { createBrowserClient } from "@supabase/ssr"
 
 type QuestionType = "mcq" | "matching" | "fill" | "reorder" | "truefalse"
 
@@ -59,7 +58,6 @@ export default function AdminPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [questionToEdit, setQuestionToEdit] = useState<Question | null>(null)
-  const [supabase, setSupabase] = useState<any>(null) // Initialize supabase client state
 
   const subjects = ["history", "geography", "combined"]
   const levels = [1, 2, 3]
@@ -69,190 +67,81 @@ export default function AdminPage() {
     const savedUser = sessionStorage.getItem("adminUser")
     if (savedUser) {
       setCurrentUser(savedUser)
-      const sb = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-      setSupabase(sb)
     } else {
       setShowLoginModal(true)
     }
   }, [])
 
   useEffect(() => {
-    if (currentUser && supabase) {
-      // Check if currentUser and supabase are initialized
-      fetchQuestions()
+    if (currentUser) {
+      if (viewMode === "all") {
+        fetchAllQuestions()
+      } else {
+        fetchQuestions()
+      }
     }
-  }, [selectedSubject, selectedLevel, currentUser, supabase])
+  }, [selectedSubject, selectedLevel, currentUser, viewMode])
 
   const initializeBaseData = async () => {
-    if (!supabase) return
-    console.log("[v0] Initializing base data...")
-    await supabase
-      .from("subjects")
-      .insert([
-        { name: "history", description: "History of Mauritius" },
-        { name: "geography", description: "Geography of Mauritius" },
-        { name: "combined", description: "Combined History and Geography" },
-      ])
-      .or("name.eq.history,name.eq.geography,name.eq.combined") // Use .or to avoid duplicates if they somehow exist
+    // Base data (subjects, levels, question_types) already exists in Render DB
+    // No initialization needed - data was seeded during migration
+    console.log("[v0] Base data already exists in Render DB")
+  }
 
-    await supabase
-      .from("levels")
-      .insert([
-        { level_number: 1, difficulty: "Easy" },
-        { level_number: 2, difficulty: "Medium" },
-        { level_number: 3, difficulty: "Hard" },
-      ])
-      .or("level_number.eq.1,level_number.eq.2,level_number.eq.3") // Use .or to avoid duplicates
+  // Helper to transform API question data to local Question format
+  const transformApiQuestion = (q: any): Question => {
+    const type = q.question_type || "mcq"
+    let typeSpecificData: any = {}
 
-    await supabase
-      .from("question_types")
-      .insert([{ name: "mcq" }, { name: "matching" }, { name: "fill" }, { name: "reorder" }, { name: "truefalse" }])
-      .or("name.eq.mcq,name.eq.matching,name.eq.fill,name.eq.reorder,name.eq.truefalse") // Use .or to avoid duplicates
+    if (type === "mcq" && q.mcq_options) {
+      const opts = q.mcq_options.sort((a: any, b: any) => a.option_order - b.option_order)
+      const mcqOptions: { [key: string]: string } = {}
+      opts.forEach((opt: any, index: number) => {
+        const key = String.fromCharCode(65 + index)
+        mcqOptions[key] = opt.option_text
+      })
+      const correctOpt = opts.find((o: any) => o.is_correct)
+      const correctKey = correctOpt ? String.fromCharCode(65 + opts.indexOf(correctOpt)) : ""
+      typeSpecificData = { options: { ...mcqOptions, correct: correctKey }, answer: correctKey }
+    } else if (type === "matching" && q.matching_pairs) {
+      const pairs = q.matching_pairs.sort((a: any, b: any) => a.pair_order - b.pair_order)
+      const transformedPairs = pairs.map((p: any) => ({ left: p.left_item, right: p.right_item }))
+      typeSpecificData = { pairs: transformedPairs, answer: transformedPairs }
+    } else if (type === "fill" && q.fill_answers) {
+      typeSpecificData = { answer: q.fill_answers[0]?.answer_text }
+    } else if (type === "reorder" && q.reorder_items) {
+      const items = q.reorder_items.sort((a: any, b: any) => a.item_order - b.item_order)
+      typeSpecificData = {
+        options: items.map((i: any) => i.item_text),
+        answer: items.map((i: any) => i.item_text),
+      }
+    } else if (type === "truefalse" && q.truefalse_answers) {
+      typeSpecificData = { answer: q.truefalse_answers[0]?.correct_answer }
+    }
+
+    return {
+      id: q.id.toString(),
+      type,
+      subject: q.subject || "history",
+      level: parseInt(q.level) || 1,
+      question: q.question_text,
+      timer: q.timer_seconds,
+      createdBy: q.created_by || "MES",
+      image: q.image_url || "",
+      ...typeSpecificData,
+      createdAt: q.created_at ? new Date(q.created_at).getTime() : Date.now(),
+      updatedAt: q.updated_at ? new Date(q.updated_at).getTime() : Date.now(),
+    }
   }
 
   const fetchQuestions = async () => {
-    if (!supabase) return // Ensure supabase client is available
     try {
       setLoading(true)
-
-      const { data: subjectsCheck } = await supabase.from("subjects").select("id").limit(1)
-      if (!subjectsCheck || subjectsCheck.length === 0) {
-        await initializeBaseData()
-      }
-
-      const { data: subjectData, error: subjectError } = await supabase
-        .from("subjects")
-        .select("id")
-        .ilike("name", selectedSubject)
-        .single()
-
-      if (subjectError || !subjectData) {
-        console.log("[v0] Subject not found")
-        setQuestions([])
-        setLoading(false)
-        return
-      }
-
-      const { data: levelData, error: levelError } = await supabase
-        .from("levels")
-        .select("id")
-        .eq("level_number", selectedLevel)
-        .single()
-
-      if (levelError || !levelData) {
-        console.log("[v0] Level not found")
-        setQuestions([])
-        setLoading(false)
-        return
-      }
-
-      const { data: questionsData, error: questionsError } = await supabase
-        .from("questions")
-        .select(`
-          id,
-          question_text,
-          timer_seconds,
-          created_at,
-          updated_at,
-          subject_id,
-          level_id,
-          question_type_id,
-          image_url,
-          created_by,
-          subjects(name),
-          levels(level_number),
-          question_types(name)
-        `)
-        .eq("subject_id", subjectData.id)
-        .eq("level_id", levelData.id)
-
-      if (questionsError) throw questionsError
-
-      if (questionsData) {
-        const transformedQuestions = await Promise.all(
-          questionsData.map(async (q: any) => {
-            const type = q.question_types?.name || "mcq"
-            const subject = q.subjects?.name || selectedSubject
-            const level = q.levels?.level_number || selectedLevel
-
-            let typeSpecificData = {}
-            if (type === "mcq") {
-              const { data: options } = await supabase
-                .from("mcq_options")
-                .select("option_text, is_correct, option_order") // Fetch relevant fields
-                .eq("question_id", q.id)
-                .order("option_order")
-              const formattedOptions = options.map((opt: any) => ({
-                text: opt.option_text,
-                correct: opt.is_correct,
-                order: opt.option_order,
-              }))
-              // Map to the expected format
-              const mcqOptions: { [key: string]: string } = {}
-              formattedOptions
-                .sort((a, b) => a.order - b.order)
-                .forEach((opt, index) => {
-                  const key = String.fromCharCode(65 + index) // A, B, C, D
-                  mcqOptions[key] = opt.text
-                })
-              const correctAnswerKey =
-                formattedOptions.find((opt) => opt.correct)?.order !== undefined
-                  ? String.fromCharCode(65 + formattedOptions.find((opt) => opt.correct).order)
-                  : ""
-              typeSpecificData = { options: { ...mcqOptions, correct: correctAnswerKey }, answer: correctAnswerKey }
-            } else if (type === "matching") {
-              const { data: pairs } = await supabase
-                .from("matching_pairs")
-                .select("left_item, right_item, pair_order")
-                .eq("question_id", q.id)
-                .order("pair_order")
-              const transformedPairs = pairs?.map((p: any) => ({ left: p.left_item, right: p.right_item })) || []
-              typeSpecificData = {
-                pairs: transformedPairs,
-                answer: transformedPairs,
-              }
-            } else if (type === "fill") {
-              const { data: answers } = await supabase
-                .from("fill_answers")
-                .select("answer_text")
-                .eq("question_id", q.id)
-              typeSpecificData = { answer: answers?.[0]?.answer_text }
-            } else if (type === "reorder") {
-              const { data: items } = await supabase
-                .from("reorder_items")
-                .select("item_text, item_order")
-                .eq("question_id", q.id)
-                .order("item_order")
-              const sortedItems = items.sort((a: any, b: any) => a.item_order - b.item_order)
-              typeSpecificData = {
-                options: sortedItems.map((item: any) => item.item_text),
-                answer: sortedItems.map((item: any) => item.item_text),
-              } // Options are the items, answer is the correctly ordered list
-            } else if (type === "truefalse") {
-              const { data: answers } = await supabase
-                .from("truefalse_answers")
-                .select("correct_answer")
-                .eq("question_id", q.id)
-              typeSpecificData = { answer: answers?.[0]?.correct_answer }
-            }
-
-            return {
-              id: q.id.toString(),
-              type,
-              subject,
-              level,
-              question: q.question_text,
-              timer: q.timer_seconds,
-              createdBy: q.created_by || "MES", // DB enforces MES or MIE only
-              image: q.image_url,
-              ...typeSpecificData,
-              createdAt: new Date(q.created_at).getTime(),
-              updatedAt: new Date(q.updated_at).getTime(),
-            }
-          }),
-        )
-        setQuestions(transformedQuestions)
-      }
+      const params = new URLSearchParams({ subject: selectedSubject, level: String(selectedLevel) })
+      const res = await fetch(`/api/admin/questions?${params}`)
+      if (!res.ok) throw new Error("Failed to fetch questions")
+      const data = await res.json()
+      setQuestions(data.map(transformApiQuestion))
     } catch (error) {
       console.error("Error fetching questions:", error)
     } finally {
@@ -261,116 +150,12 @@ export default function AdminPage() {
   }
 
   const fetchAllQuestions = async () => {
-    if (!supabase) return // Ensure supabase client is available
     try {
       setLoading(true)
-
-      const { data: questionsData, error: questionsError } = await supabase
-        .from("questions")
-        .select(`
-          id,
-          question_text,
-          timer_seconds,
-          created_at,
-          updated_at,
-          subject_id,
-          level_id,
-          question_type_id,
-          image_url,
-          created_by,
-          subjects(name),
-          levels(level_number),
-          question_types(name)
-        `)
-        .order("created_at", { ascending: false })
-
-      if (questionsError) throw questionsError
-
-      if (questionsData) {
-        const transformedQuestions = await Promise.all(
-          questionsData.map(async (q: any) => {
-            const type = q.question_types?.name || "mcq"
-            const subject = q.subjects?.name || "history"
-            const level = q.levels?.level_number || 1
-
-            let typeSpecificData = {}
-            if (type === "mcq") {
-              const { data: options } = await supabase
-                .from("mcq_options")
-                .select("option_text, is_correct, option_order") // Fetch relevant fields
-                .eq("question_id", q.id)
-                .order("option_order")
-              const formattedOptions = options.map((opt: any) => ({
-                text: opt.option_text,
-                correct: opt.is_correct,
-                order: opt.option_order,
-              }))
-              // Map to the expected format
-              const mcqOptions: { [key: string]: string } = {}
-              formattedOptions
-                .sort((a, b) => a.order - b.order)
-                .forEach((opt, index) => {
-                  const key = String.fromCharCode(65 + index) // A, B, C, D
-                  mcqOptions[key] = opt.text
-                })
-              const correctAnswerKey =
-                formattedOptions.find((opt) => opt.correct)?.order !== undefined
-                  ? String.fromCharCode(65 + formattedOptions.find((opt) => opt.correct).order)
-                  : ""
-              typeSpecificData = { options: { ...mcqOptions, correct: correctAnswerKey }, answer: correctAnswerKey }
-            } else if (type === "matching") {
-              const { data: pairs } = await supabase
-                .from("matching_pairs")
-                .select("left_item, right_item, pair_order")
-                .eq("question_id", q.id)
-                .order("pair_order")
-              const transformedPairs = pairs?.map((p: any) => ({ left: p.left_item, right: p.right_item })) || []
-              typeSpecificData = {
-                pairs: transformedPairs,
-                answer: transformedPairs,
-              }
-            } else if (type === "fill") {
-              const { data: answers } = await supabase
-                .from("fill_answers")
-                .select("answer_text")
-                .eq("question_id", q.id)
-              typeSpecificData = { answer: answers?.[0]?.answer_text }
-            } else if (type === "reorder") {
-              const { data: items } = await supabase
-                .from("reorder_items")
-                .select("item_text, item_order")
-                .eq("question_id", q.id)
-                .order("item_order")
-              const sortedItems = items.sort((a: any, b: any) => a.item_order - b.item_order)
-              typeSpecificData = {
-                options: sortedItems.map((item: any) => item.item_text),
-                answer: sortedItems.map((item: any) => item.item_text),
-              } // Options are the items, answer is the correctly ordered list
-            } else if (type === "truefalse") {
-              const { data: answers } = await supabase
-                .from("truefalse_answers")
-                .select("correct_answer")
-                .eq("question_id", q.id)
-              typeSpecificData = { answer: answers?.[0]?.correct_answer }
-            }
-
-            return {
-              id: q.id.toString(),
-              type,
-              subject,
-              level,
-              question: q.question_text,
-              timer: q.timer_seconds,
-              createdBy: q.created_by || "MES", // DB enforces MES or MIE only
-              image: q.image_url || "", // Use image_url from database
-              ...typeSpecificData,
-              createdAt: new Date(q.created_at).getTime(),
-              updatedAt: new Date(q.updated_at).getTime(),
-            }
-          }),
-        )
-        setAllQuestions(transformedQuestions)
-      }
+      const res = await fetch("/api/admin/questions")
+      if (!res.ok) throw new Error("Failed to fetch questions")
+      const data = await res.json()
+      setAllQuestions(data.map(transformApiQuestion))
     } catch (error) {
       console.error("Error fetching all questions:", error)
       alert("Failed to fetch questions")
@@ -378,36 +163,6 @@ export default function AdminPage() {
       setLoading(false)
     }
   }
-
-  useEffect(() => {
-    if (currentUser) {
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      )
-      setSupabase(supabase)
-      // Fetch all questions initially if viewMode is 'all' or if it's the first load
-      if (viewMode === "all") {
-        fetchAllQuestions()
-      }
-      // Fetch filtered questions if viewMode is 'filtered'
-      if (viewMode === "filtered") {
-        fetchQuestions()
-      }
-    }
-  }, [currentUser, viewMode]) // Re-run when viewMode changes
-
-  // Adjusting useEffect to correctly trigger fetching based on viewMode
-  useEffect(() => {
-    if (currentUser && supabase) {
-      if (viewMode === "all") {
-        fetchAllQuestions()
-      } else {
-        // viewMode === "filtered"
-        fetchQuestions()
-      }
-    }
-  }, [selectedSubject, selectedLevel, currentUser, supabase, viewMode])
 
   const handleAddQuestion = (type: QuestionType) => {
     setEditingId(null)
@@ -448,46 +203,17 @@ export default function AdminPage() {
 
   const handleDeleteQuestion = async (id: string) => {
     if (!confirm("Delete this question?")) return
-    if (!supabase) return
 
     try {
-      // First delete type-specific data, then the main question
-      const { data: qType } = await supabase.from("questions").select("question_type_id").eq("id", id).single()
-      if (qType) {
-        const { data: typeName } = await supabase
-          .from("question_types")
-          .select("name")
-          .eq("id", qType.question_type_id)
-          .single()
-        switch (typeName.name) {
-          case "mcq":
-            await supabase.from("mcq_options").delete().eq("question_id", id)
-            break
-          case "matching":
-            await supabase.from("matching_pairs").delete().eq("question_id", id)
-            break
-          case "fill":
-            await supabase.from("fill_answers").delete().eq("question_id", id)
-            break
-          case "reorder":
-            await supabase.from("reorder_items").delete().eq("question_id", id)
-            break
-          case "truefalse":
-            await supabase.from("truefalse_answers").delete().eq("question_id", id)
-            break
-          default:
-            break
-        }
+      const res = await fetch(`/api/admin/questions?id=${id}`, { method: "DELETE" })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || "Delete failed")
       }
-
-      const { error } = await supabase.from("questions").delete().eq("id", id)
-      if (error) throw error
       alert("Question deleted successfully!")
-      // Refresh questions based on the current viewMode
       if (viewMode === "filtered") {
         fetchQuestions()
       } else {
-        // viewMode === "all"
         fetchAllQuestions()
       }
     } catch (error) {
@@ -505,42 +231,12 @@ export default function AdminPage() {
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return
     if (!confirm(`Delete ${selectedIds.length} selected question(s)? This cannot be undone.`)) return
-    if (!supabase) return
 
     try {
       setLoading(true)
       for (const id of selectedIds) {
         try {
-          // Delete type-specific rows first
-          const { data: qType } = await supabase.from("questions").select("question_type_id").eq("id", id).single()
-          if (qType) {
-            const { data: typeName } = await supabase
-              .from("question_types")
-              .select("name")
-              .eq("id", qType.question_type_id)
-              .single()
-            switch (typeName?.name) {
-              case "mcq":
-                await supabase.from("mcq_options").delete().eq("question_id", id)
-                break
-              case "matching":
-                await supabase.from("matching_pairs").delete().eq("question_id", id)
-                break
-              case "fill":
-                await supabase.from("fill_answers").delete().eq("question_id", id)
-                break
-              case "reorder":
-                await supabase.from("reorder_items").delete().eq("question_id", id)
-                break
-              case "truefalse":
-                await supabase.from("truefalse_answers").delete().eq("question_id", id)
-                break
-              default:
-                break
-            }
-          }
-
-          await supabase.from("questions").delete().eq("id", id)
+          await fetch(`/api/admin/questions?id=${id}`, { method: "DELETE" })
         } catch (err) {
           console.error("Error deleting question id", id, err)
         }
@@ -548,7 +244,6 @@ export default function AdminPage() {
 
       alert(`${selectedIds.length} question(s) deleted successfully!`)
       clearSelection()
-      // Refresh
       if (viewMode === "filtered") {
         fetchQuestions()
       } else {
@@ -615,7 +310,7 @@ export default function AdminPage() {
     })
   }
 
-  // Upload image to Supabase Storage
+  // Upload image to storage
   const uploadImageToStorage = async (blob: Blob, questionId?: string): Promise<string> => {
     const formDataUpload = new FormData()
     formDataUpload.append('file', blob, `image-${Date.now()}.jpg`)
@@ -637,7 +332,7 @@ export default function AdminPage() {
     return data.url
   }
 
-  // Check if URL is an external image (not Supabase Storage)
+  // Check if URL is an external image
   const isExternalImageUrl = (url: string): boolean => {
     if (!url || url.startsWith('data:')) return false
     if (url.includes('supabase.co/storage')) return false
@@ -752,10 +447,8 @@ export default function AdminPage() {
       return
     }
 
-    if (!supabase) return
-
     try {
-      // Upload pending image to Supabase Storage if exists
+      // Upload pending image to storage if exists
       let imageUrl = formData.image || ""
       if (pendingImageBlob) {
         try {
@@ -767,234 +460,91 @@ export default function AdminPage() {
           return
         }
       } else if (imageUrl && isExternalImageUrl(imageUrl)) {
-        // If there's an external URL, download and upload to Supabase
         try {
           const blob = await downloadExternalImage(imageUrl)
           imageUrl = await uploadImageToStorage(blob, editingId || undefined)
         } catch (downloadError) {
           console.error("Error downloading external image:", downloadError)
-          // Keep external URL if download fails
           alert("Could not download external image. It will be kept as external URL.")
         }
       }
 
-      // Fetch IDs for subject, level, and type, creating them if they don't exist
-      const ensureSubjectLevelType = async () => {
-        const subjectName = formData.subject ? formData.subject.toLowerCase() : selectedSubject.toLowerCase()
-        let levelNum: any = formData.level || selectedLevel
-        const typeName = selectedType
-
-        let subjectId: number
-        let levelId: number
-        let typeId: number
-
-        // Ensure Subject - fetch all and find case-insensitive match
-        const { data: allSubjects } = await supabase.from("subjects").select("id, name")
-        const matchedSubject = allSubjects?.find(s => s.name.toLowerCase() === subjectName)
-        
-        if (!matchedSubject) {
-          const { data: insertedSub, error: subError } = await supabase
-            .from("subjects")
-            .insert([{ name: subjectName, description: `Auto-generated ${subjectName}` }])
-            .select("id")
-            .single()
-          if (subError) throw subError
-          subjectId = insertedSub.id
-        } else {
-          subjectId = matchedSubject.id
+      // Build answer_data for API
+      const buildAnswerData = () => {
+        if (selectedType === "mcq" && formData.options) {
+          const optionsObj = formData.options as { A: string; B: string; C: string; D: string; correct: string }
+          const optionLetters = ["A", "B", "C", "D"]
+          return {
+            options: optionLetters.map((letter, index) => ({
+              text: optionsObj[letter as keyof typeof optionsObj] || "",
+              is_correct: formData.answer === letter,
+            })),
+          }
+        } else if (selectedType === "matching" && formData.pairs) {
+          return { pairs: formData.pairs.map((pair) => ({ left: pair.left, right: pair.right })) }
+        } else if (selectedType === "fill" && formData.answer) {
+          return { answers: [formData.answer as string] }
+        } else if (selectedType === "reorder" && formData.options && Array.isArray(formData.options)) {
+          return {
+            items: (formData.options as string[]).map((item, index) => ({
+              text: item,
+              correct_position: index + 1,
+            })),
+          }
+        } else if (selectedType === "truefalse") {
+          return {
+            correct_answer: formData.answer === true || formData.answer === "true",
+            explanation: "",
+          }
         }
-
-        // Ensure Level
-        const { data: allLevels } = await supabase.from("levels").select("id, level_number")
-        const matchedLevel = allLevels?.find(l => l.level_number === levelNum)
-        
-        if (!matchedLevel) {
-          const { data: insertedLvl, error: lvlError } = await supabase
-            .from("levels")
-            .insert([{ level_number: levelNum, name: `Level ${levelNum}`, difficulty: `Level ${levelNum}` }])
-            .select("id")
-            .single()
-          if (lvlError) throw lvlError
-          levelId = insertedLvl.id
-        } else {
-          levelId = matchedLevel.id
-        }
-
-        // Ensure Question Type
-        const { data: allTypes } = await supabase.from("question_types").select("id, name")
-        const matchedType = allTypes?.find(t => t.name === typeName)
-        
-        if (!matchedType) {
-          const { data: insertedType, error: typeError } = await supabase
-            .from("question_types")
-            .insert([{ name: typeName }])
-            .select("id")
-            .single()
-          if (typeError) throw typeError
-          typeId = insertedType.id
-        } else {
-          typeId = matchedType.id
-        }
-
-        return { subject_id: subjectId, level_id: levelId, question_type_id: typeId }
+        return {}
       }
 
-      const { subject_id, level_id, question_type_id } = await ensureSubjectLevelType()
+      const subjectName = formData.subject ? formData.subject.toLowerCase() : selectedSubject.toLowerCase()
+      const levelNum = formData.level || selectedLevel
 
       if (editingId) {
-        // UPDATE operation
-        const { error: updateError } = await supabase
-          .from("questions")
-          .update({
+        // UPDATE via API
+        const res = await fetch("/api/admin/questions", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: parseInt(editingId),
+            subject: subjectName,
+            level: levelNum,
+            type: selectedType,
             question_text: formData.question,
-            timer_seconds: formData.timer || 30,
-            subject_id: subject_id,
-            level_id: level_id,
-            question_type_id: question_type_id,
             image_url: imageUrl,
-            updated_at: new Date().toISOString(),
-            created_by: currentUser, // Update created_by on edit as well
-          })
-          .eq("id", editingId)
-
-        if (updateError) throw updateError
-
-        // Delete old type-specific data
-        await supabase.from("mcq_options").delete().eq("question_id", editingId)
-        await supabase.from("matching_pairs").delete().eq("question_id", editingId)
-        await supabase.from("fill_answers").delete().eq("question_id", editingId)
-        await supabase.from("reorder_items").delete().eq("question_id", editingId)
-        await supabase.from("truefalse_answers").delete().eq("question_id", editingId)
-
-        // Insert new type-specific data
-        if (selectedType === "mcq" && formData.options) {
-          const optionsObj = formData.options as { A: string; B: string; C: string; D: string; correct: string }
-          const optionLetters = ["A", "B", "C", "D"]
-          const mcqInserts = optionLetters.map((letter, index) => ({
-            question_id: parseInt(editingId),
-            option_order: index + 1,
-            option_text: optionsObj[letter as keyof typeof optionsObj] || "",
-            is_correct: formData.answer === letter,
-          }))
-          const { error: mcqError } = await supabase.from("mcq_options").insert(mcqInserts)
-          if (mcqError) throw mcqError
-        } else if (selectedType === "matching" && formData.pairs) {
-          const matchingInserts = formData.pairs.map((pair, index) => ({
-            question_id: parseInt(editingId),
-            pair_order: index + 1,
-            left_item: pair.left,
-            right_item: pair.right,
-          }))
-          const { error: matchError } = await supabase.from("matching_pairs").insert(matchingInserts)
-          if (matchError) throw matchError
-        } else if (selectedType === "fill" && formData.answer) {
-          const { error: fillError } = await supabase.from("fill_answers").insert({
-            question_id: parseInt(editingId),
-            answer_text: formData.answer as string,
-            case_sensitive: false,
-          })
-          if (fillError) throw fillError
-        } else if (selectedType === "reorder" && formData.options && Array.isArray(formData.options)) {
-          const reorderInserts = (formData.options as string[]).map((item, index) => ({
-            question_id: parseInt(editingId),
-            item_order: index + 1,
-            item_text: item,
-            correct_position: index + 1,
-          }))
-          const { error: reorderError } = await supabase.from("reorder_items").insert(reorderInserts)
-          if (reorderError) throw reorderError
-        } else if (selectedType === "truefalse") {
-          const { error: tfError } = await supabase.from("truefalse_answers").insert({
-            question_id: parseInt(editingId),
-            correct_answer: formData.answer === true || formData.answer === "true",
-            explanation: null,
-          })
-          if (tfError) throw tfError
+            timer_seconds: formData.timer || 30,
+            answer_data: buildAnswerData(),
+            created_by: currentUser,
+          }),
+        })
+        if (!res.ok) {
+          const err = await res.json()
+          throw new Error(err.error || "Update failed")
         }
-
         alert("Question updated successfully!")
       } else {
-        // CREATE operation
-        console.log("[MCQ DEBUG] Inserting question with:", {
-          question_text: formData.question,
-          timer_seconds: formData.timer || 30,
-          subject_id: subject_id,
-          level_id: level_id,
-          question_type_id: question_type_id,
-          image_url: imageUrl,
-          created_by: currentUser,
+        // CREATE via API
+        const res = await fetch("/api/admin/questions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            subject: subjectName,
+            level: levelNum,
+            type: selectedType,
+            question_text: formData.question,
+            image_url: imageUrl,
+            timer_seconds: formData.timer || 30,
+            answer_data: buildAnswerData(),
+            created_by: currentUser,
+          }),
         })
-        
-        const { data: newQuestion, error: insertError } = await supabase
-          .from("questions")
-          .insert([
-            {
-              question_text: formData.question,
-              timer_seconds: formData.timer || 30,
-              subject_id: subject_id,
-              level_id: level_id,
-              question_type_id: question_type_id,
-              image_url: imageUrl,
-              created_by: currentUser,
-            },
-          ])
-          .select("id, created_at")
-          .single()
-        
-        console.log("[MCQ DEBUG] Question insert result:", { newQuestion, insertError })
-        if (insertError) throw insertError
-
-        const newQuestionId = newQuestion.id
-        console.log("[MCQ DEBUG] New question ID:", newQuestionId)
-
-        // Insert type-specific data directly instead of using RPC
-        if (selectedType === "mcq" && formData.options) {
-          const optionsObj = formData.options as { A: string; B: string; C: string; D: string; correct: string }
-          const optionLetters = ["A", "B", "C", "D"]
-          const mcqInserts = optionLetters.map((letter, index) => ({
-            question_id: newQuestionId,
-            option_order: index + 1,
-            option_text: optionsObj[letter as keyof typeof optionsObj] || "",
-            is_correct: formData.answer === letter,
-          }))
-          console.log("[MCQ DEBUG] Inserting MCQ options:", mcqInserts)
-          const { error: mcqError } = await supabase.from("mcq_options").insert(mcqInserts)
-          console.log("[MCQ DEBUG] MCQ options insert error:", mcqError)
-          if (mcqError) throw mcqError
-        } else if (selectedType === "matching" && formData.pairs) {
-          const matchingInserts = formData.pairs.map((pair, index) => ({
-            question_id: newQuestionId,
-            pair_order: index + 1,
-            left_item: pair.left,
-            right_item: pair.right,
-          }))
-          const { error: matchError } = await supabase.from("matching_pairs").insert(matchingInserts)
-          if (matchError) throw matchError
-        } else if (selectedType === "fill" && formData.answer) {
-          const { error: fillError } = await supabase.from("fill_answers").insert({
-            question_id: newQuestionId,
-            answer_text: formData.answer as string,
-            case_sensitive: false,
-          })
-          if (fillError) throw fillError
-        } else if (selectedType === "reorder" && formData.options && Array.isArray(formData.options)) {
-          const reorderInserts = (formData.options as string[]).map((item, index) => ({
-            question_id: newQuestionId,
-            item_order: index + 1,
-            item_text: item,
-            correct_position: index + 1,
-          }))
-          const { error: reorderError } = await supabase.from("reorder_items").insert(reorderInserts)
-          if (reorderError) throw reorderError
-        } else if (selectedType === "truefalse") {
-          const { error: tfError } = await supabase.from("truefalse_answers").insert({
-            question_id: newQuestionId,
-            correct_answer: formData.answer === true || formData.answer === "true",
-            explanation: null,
-          })
-          if (tfError) throw tfError
+        if (!res.ok) {
+          const err = await res.json()
+          throw new Error(err.error || "Create failed")
         }
-
         alert("Question created successfully!")
       }
 
@@ -1010,91 +560,69 @@ export default function AdminPage() {
       }
     } catch (error: any) {
       console.error("Error saving question:", error)
-      // Handle Supabase PostgresError which has message property
-      const errorMessage = error?.message || error?.details || error?.hint || JSON.stringify(error) || "Failed to save question"
+      const errorMessage = error?.message || JSON.stringify(error) || "Failed to save question"
       alert(`Error: ${errorMessage}`)
     }
   }
 
   const handleSaveEditedQuestion = async (updatedQuestion: Question) => {
-    if (!supabase) return
-
     try {
-      const { error: updateError } = await supabase
-        .from("questions")
-        .update({
-          question_text: updatedQuestion.question,
-          timer_seconds: updatedQuestion.timer,
-          image_url: updatedQuestion.image, // Assuming image is handled by URL
-          updated_at: new Date().toISOString(),
-          created_by: currentUser, // Update created_by on edit
-        })
-        .eq("id", updatedQuestion.id)
-
-      if (updateError) throw updateError
-
-      // Delete old type-specific data
-      const questionId = parseInt(updatedQuestion.id)
-      await supabase.from("mcq_options").delete().eq("question_id", questionId)
-      await supabase.from("matching_pairs").delete().eq("question_id", questionId)
-      await supabase.from("fill_answers").delete().eq("question_id", questionId)
-      await supabase.from("reorder_items").delete().eq("question_id", questionId)
-      await supabase.from("truefalse_answers").delete().eq("question_id", questionId)
-
-      // Insert new type-specific data
+      // Build answer_data for API based on question type
+      let answer_data: any = {}
       if (updatedQuestion.type === "mcq" && updatedQuestion.options) {
         const optionsObj = updatedQuestion.options as { A: string; B: string; C: string; D: string; correct: string }
         const optionLetters = ["A", "B", "C", "D"]
-        const mcqInserts = optionLetters.map((letter, index) => ({
-          question_id: questionId,
-          option_order: index + 1,
-          option_text: optionsObj[letter as keyof typeof optionsObj] || "",
-          is_correct: updatedQuestion.answer === letter,
-        }))
-        const { error: mcqError } = await supabase.from("mcq_options").insert(mcqInserts)
-        if (mcqError) throw mcqError
+        answer_data = {
+          options: optionLetters.map((letter, index) => ({
+            text: optionsObj[letter as keyof typeof optionsObj] || "",
+            is_correct: updatedQuestion.answer === letter,
+          })),
+        }
       } else if (updatedQuestion.type === "matching" && updatedQuestion.pairs) {
-        const matchingInserts = updatedQuestion.pairs.map((pair, index) => ({
-          question_id: questionId,
-          pair_order: index + 1,
-          left_item: pair.left,
-          right_item: pair.right,
-        }))
-        const { error: matchError } = await supabase.from("matching_pairs").insert(matchingInserts)
-        if (matchError) throw matchError
+        answer_data = { pairs: updatedQuestion.pairs.map((pair) => ({ left: pair.left, right: pair.right })) }
       } else if (updatedQuestion.type === "fill" && updatedQuestion.answer) {
-        const { error: fillError } = await supabase.from("fill_answers").insert({
-          question_id: questionId,
-          answer_text: updatedQuestion.answer as string,
-          case_sensitive: false,
-        })
-        if (fillError) throw fillError
+        answer_data = { answers: [updatedQuestion.answer as string] }
       } else if (updatedQuestion.type === "reorder" && updatedQuestion.options && Array.isArray(updatedQuestion.options)) {
-        const reorderInserts = (updatedQuestion.options as string[]).map((item, index) => ({
-          question_id: questionId,
-          item_order: index + 1,
-          item_text: item,
-          correct_position: index + 1,
-        }))
-        const { error: reorderError } = await supabase.from("reorder_items").insert(reorderInserts)
-        if (reorderError) throw reorderError
+        answer_data = {
+          items: (updatedQuestion.options as string[]).map((item, index) => ({
+            text: item,
+            correct_position: index + 1,
+          })),
+        }
       } else if (updatedQuestion.type === "truefalse") {
-        const { error: tfError } = await supabase.from("truefalse_answers").insert({
-          question_id: questionId,
+        answer_data = {
           correct_answer: updatedQuestion.answer === true || updatedQuestion.answer === "true",
-          explanation: null,
-        })
-        if (tfError) throw tfError
+          explanation: "",
+        }
+      }
+
+      const res = await fetch("/api/admin/questions", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: parseInt(updatedQuestion.id),
+          subject: updatedQuestion.subject,
+          level: updatedQuestion.level,
+          type: updatedQuestion.type,
+          question_text: updatedQuestion.question,
+          image_url: updatedQuestion.image || "",
+          timer_seconds: updatedQuestion.timer || 30,
+          answer_data,
+          created_by: currentUser,
+        }),
+      })
+
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || "Update failed")
       }
 
       setEditModalOpen(false)
       setQuestionToEdit(null)
       alert("Question updated successfully!")
-      // Refresh questions based on the current viewMode
       if (viewMode === "filtered") {
         fetchQuestions()
       } else {
-        // viewMode === "all"
         fetchAllQuestions()
       }
     } catch (error) {
@@ -1104,8 +632,6 @@ export default function AdminPage() {
   }
 
   const handleExcelImport = async (questions: any[]) => {
-    if (!supabase) return
-    
     // Validate and normalize currentUser
     const normalizedUser = currentUser ? currentUser.trim().toUpperCase() : null
     if (!normalizedUser || (normalizedUser !== 'MES' && normalizedUser !== 'MIE')) {
@@ -1166,18 +692,13 @@ export default function AdminPage() {
 
   const filteredQuestions = questions.filter((q) => q.subject === selectedSubject && q.level === selectedLevel)
 
-  if (!currentUser || !supabase) {
+  if (!currentUser) {
     return (
       <AdminLoginModal
         onClose={() => setShowLoginModal(false)}
         onLogin={(username) => {
           sessionStorage.setItem("adminUser", username)
           setCurrentUser(username)
-          const sb = createBrowserClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-          )
-          setSupabase(sb)
           setShowLoginModal(false)
         }}
       />
@@ -1485,7 +1006,6 @@ export default function AdminPage() {
             onClick={() => {
               sessionStorage.removeItem("adminUser")
               setCurrentUser(null)
-              setSupabase(null) // Clear supabase client on logout
               setShowLoginModal(true)
             }}
             variant="outline"

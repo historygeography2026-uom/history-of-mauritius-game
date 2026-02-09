@@ -1,8 +1,7 @@
-import { auth } from "@/lib/auth"
 import { pool } from "@/lib/db"
 import { NextRequest, NextResponse } from "next/server"
 
-// GET all questions with filtering
+// GET all questions with filtering + type-specific details
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -24,7 +23,7 @@ export async function GET(request: NextRequest) {
     const params: any[] = []
 
     if (subject && subject !== "all") {
-      query += ` AND s.name = $${params.length + 1}`
+      query += ` AND LOWER(s.name) = LOWER($${params.length + 1})`
       params.push(subject)
     }
 
@@ -41,7 +40,50 @@ export async function GET(request: NextRequest) {
     query += ` ORDER BY q.created_at DESC`
 
     const result = await pool.query(query, params)
-    return NextResponse.json(result.rows)
+
+    // Enrich each question with type-specific details
+    const enrichedQuestions = await Promise.all(
+      result.rows.map(async (q: any) => {
+        const qType = q.question_type
+        let details: any = {}
+
+        if (qType === "mcq") {
+          const opts = await pool.query(
+            "SELECT option_text, is_correct, option_order FROM mcq_options WHERE question_id = $1 ORDER BY option_order",
+            [q.id]
+          )
+          details.mcq_options = opts.rows
+        } else if (qType === "matching") {
+          const pairs = await pool.query(
+            "SELECT left_item, right_item, pair_order FROM matching_pairs WHERE question_id = $1 ORDER BY pair_order",
+            [q.id]
+          )
+          details.matching_pairs = pairs.rows
+        } else if (qType === "fill") {
+          const ans = await pool.query(
+            "SELECT answer_text FROM fill_answers WHERE question_id = $1",
+            [q.id]
+          )
+          details.fill_answers = ans.rows
+        } else if (qType === "reorder") {
+          const items = await pool.query(
+            "SELECT item_text, item_order FROM reorder_items WHERE question_id = $1 ORDER BY item_order",
+            [q.id]
+          )
+          details.reorder_items = items.rows
+        } else if (qType === "truefalse") {
+          const tf = await pool.query(
+            "SELECT correct_answer FROM truefalse_answers WHERE question_id = $1",
+            [q.id]
+          )
+          details.truefalse_answers = tf.rows
+        }
+
+        return { ...q, ...details }
+      })
+    )
+
+    return NextResponse.json(enrichedQuestions)
   } catch (error) {
     console.error("Error fetching questions:", error)
     return NextResponse.json({ error: "Failed to fetch questions" }, { status: 500 })
@@ -51,13 +93,8 @@ export async function GET(request: NextRequest) {
 // POST - Create new question
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth()
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
     const body = await request.json()
-    const { subject, level, type, question_text, image_url, timer_seconds, answer_data } = body
+    const { subject, level, type, question_text, image_url, timer_seconds, answer_data, created_by } = body
 
     // Get IDs from names
     const [subjectResult, levelResult, typeResult] = await Promise.all([
@@ -82,7 +119,7 @@ export async function POST(request: NextRequest) {
         question_text,
         image_url || null,
         timer_seconds || 30,
-        session.user.email,
+        created_by || "MES",
       ]
     )
 
@@ -138,13 +175,8 @@ export async function POST(request: NextRequest) {
 // PUT - Update question
 export async function PUT(request: NextRequest) {
   try {
-    const session = await auth()
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
     const body = await request.json()
-    const { id, subject, level, type, question_text, image_url, timer_seconds, answer_data } = body
+    const { id, subject, level, type, question_text, image_url, timer_seconds, answer_data, created_by } = body
 
     // Get IDs
     const [subjectResult, levelResult, typeResult] = await Promise.all([
@@ -229,11 +261,6 @@ export async function PUT(request: NextRequest) {
 // DELETE - Delete question
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await auth()
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
     const { searchParams } = new URL(request.url)
     const id = searchParams.get("id")
 
