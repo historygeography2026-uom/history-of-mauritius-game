@@ -84,9 +84,9 @@ export async function GET(request: NextRequest) {
     )
 
     return NextResponse.json(enrichedQuestions)
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching questions:", error)
-    return NextResponse.json({ error: "Failed to fetch questions" }, { status: 500 })
+    return NextResponse.json({ error: "Failed to fetch questions", details: error?.message }, { status: 500 })
   }
 }
 

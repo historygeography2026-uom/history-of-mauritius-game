@@ -8,7 +8,7 @@ export const pool = new Pool({
   // Connection pool settings
   max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 10000,
 })
 
 pool.on('error', (err) => {
