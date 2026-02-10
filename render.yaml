@@ -6,7 +6,7 @@ services:
     plan: standard
     branch: main
     buildCommand: npm run build
-    startCommand: npm start
+    startCommand: sh scripts/start.sh
     healthCheckPath: /
     
     # Environment variables
@@ -40,10 +40,18 @@ services:
         sync: false
       - key: FACEBOOK_APP_SECRET
         sync: false
+      - key: RENDER_DISK_PATH
+        value: /var/data
     
     # Connect to PostgreSQL
     databases:
       - name: mauritius-game-db
+
+    # Persistent disk for image storage
+    disk:
+      name: question-images
+      mountPath: /var/data
+      sizeGB: 1
 
   # PostgreSQL Database
   - type: pserv

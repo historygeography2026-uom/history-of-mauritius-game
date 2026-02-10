@@ -5,6 +5,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Star, GripVertical, Volume2 } from "lucide-react"
+import Image from "next/image"
 import { DodoMascot, getRandomMessage } from "@/components/dodo-mascot"
 import { GameConfetti } from "@/components/game-confetti"
 import { useGameSounds } from "@/hooks/use-game-sounds"
@@ -156,6 +157,19 @@ export default function ReorderGame({
         <p className="mb-8 text-xl text-muted-foreground font-semibold">
           👆 Drag and drop to put these events in the correct order from oldest to newest!
         </p>
+
+      {/* Show question image if provided from DB */}
+      {question?.image && (
+        <div className="mb-6 overflow-hidden rounded-2xl border-4 border-primary/20 animate-pop-in">
+          <Image
+            src={question.image}
+            alt="Question image"
+            width={400}
+            height={250}
+            className="w-full h-auto object-cover"
+          />
+        </div>
+      )}
 
       <div className="mb-8 space-y-4">
         {items.map((item, index) => (

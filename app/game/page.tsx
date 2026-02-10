@@ -95,7 +95,10 @@ const GamePage = () => {
     }
   }, [subject, level, questions, qLoading, qError])
 
-  // Initialize level timer when questions are loaded
+  // Initialize level timer and start countdown when questions are loaded
+  // PERF FIX: Combined into one effect using a local variable for countdown,
+  // removing levelTimeLeft from deps to prevent interval recreation every second.
+  // Also moved setShowTimeoutScreen/setLevelTimedOut out of setState updater.
   useEffect(() => {
     if (!mixedQuestions.length || allCompleted || levelTimedOut) return
     
@@ -103,26 +106,23 @@ const GamePage = () => {
     const totalTime = mixedQuestions.reduce((sum, q) => sum + (q.timer || GAME_CONFIG.DEFAULT_QUESTION_TIMER), 0)
     setLevelInitialTime(totalTime)
     setLevelTimeLeft(totalTime)
-  }, [mixedQuestions]) // Only run once when questions are loaded
 
-  // Level-wide countdown timer
-  useEffect(() => {
-    if (!mixedQuestions.length || allCompleted || levelTimedOut || levelTimeLeft <= 0) return
-
+    // Use local variable to drive countdown — avoids putting levelTimeLeft in deps
+    let remaining = totalTime
     const timer = setInterval(() => {
-      setLevelTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer)
-          setShowTimeoutScreen(true)
-          setLevelTimedOut(true)
-          return 0
-        }
-        return prev - 1
-      })
+      remaining -= 1
+      if (remaining <= 0) {
+        clearInterval(timer)
+        setLevelTimeLeft(0)
+        setShowTimeoutScreen(true)
+        setLevelTimedOut(true)
+      } else {
+        setLevelTimeLeft(remaining)
+      }
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [mixedQuestions, allCompleted, levelTimedOut, levelTimeLeft])
+  }, [mixedQuestions, allCompleted, levelTimedOut])
 
   // Handle level timeout - show timeout screen then end exercise
   useEffect(() => {
@@ -197,10 +197,11 @@ const GamePage = () => {
   }
 
   // Persist results to leaderboard when all questions are completed or level times out
+  // PERF FIX: Only trigger on allCompleted to avoid running on every answered question
   useEffect(() => {
+    if (!allCompleted) return
     const persistResults = async () => {
       try {
-        if (!allCompleted) return
         // Points model: configurable points per star
         const total_points = totalStars * GAME_CONFIG.POINTS_PER_STAR
         const questionsCompleted = Object.keys(answeredQuestions).length
@@ -223,7 +224,8 @@ const GamePage = () => {
       }
     }
     void persistResults()
-  }, [allCompleted, subject, level, totalStars, answeredQuestions, mixedQuestions.length, levelTimedOut])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allCompleted])
 
   const TimeoutScreen = () => (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50">

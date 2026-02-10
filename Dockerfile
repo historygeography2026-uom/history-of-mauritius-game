@@ -15,6 +15,9 @@ RUN npm install -g pnpm && \
 # Copy application code
 COPY . .
 
+# Make startup script executable
+RUN chmod +x scripts/start.sh
+
 # Build the Next.js application
 RUN npm run build
 
@@ -24,5 +27,5 @@ EXPOSE 3000
 # Set environment
 ENV NODE_ENV=production
 
-# Start the application
-CMD ["npm", "start"]
+# Start the application — syncs images to persistent disk then starts Next.js
+CMD ["sh", "scripts/start.sh"]

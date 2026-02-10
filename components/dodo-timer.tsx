@@ -1,7 +1,5 @@
 "use client"
 
-import { useEffect, useState } from "react"
-
 interface DodoTimerProps {
   timeLeft: number
   initialTime: number
@@ -9,14 +7,12 @@ interface DodoTimerProps {
 }
 
 export function DodoTimer({ timeLeft, initialTime, onTimeUp }: DodoTimerProps) {
-  const [isRunning, setIsRunning] = useState(false)
-  const percentage = (timeLeft / initialTime) * 100
+  // PERF FIX: Derive isRunning directly from props instead of syncing via
+  // useEffect + useState, which caused an unnecessary extra re-render every second.
+  const isRunning = timeLeft > 0
+  const percentage = initialTime > 0 ? (timeLeft / initialTime) * 100 : 0
   const isWarning = percentage < 30
   const isCritical = percentage < 10
-
-  useEffect(() => {
-    setIsRunning(timeLeft > 0)
-  }, [timeLeft])
 
   // Format time as MM:SS
   const formatTime = (seconds: number) => {

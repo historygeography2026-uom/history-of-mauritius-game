@@ -1,8 +1,11 @@
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
+import { writeFile, mkdir, unlink } from "fs/promises"
+import path from "path"
 
-const BUCKET_NAME = "question-images"
+// Render persistent disk mount point (or local fallback for dev)
+const IMAGES_DIR = process.env.RENDER_DISK_PATH
+  ? path.join(process.env.RENDER_DISK_PATH, "question-images")
+  : path.join(process.cwd(), "public", "uploads")
 
 export async function POST(request: Request) {
   try {
@@ -23,33 +26,14 @@ export async function POST(request: Request) {
       )
     }
 
-    // Limit file size to 5MB
-    const maxSize = 5 * 1024 * 1024
+    // Limit file size to 10MB
+    const maxSize = 10 * 1024 * 1024
     if (file.size > maxSize) {
       return NextResponse.json(
-        { error: "File too large. Maximum size is 5MB" },
+        { error: "File too large. Maximum size is 10MB" },
         { status: 400 }
       )
     }
-
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
-          },
-          set(name: string, value: string, options: any) {
-            cookieStore.set(name, value, options)
-          },
-          remove(name: string, options: any) {
-            cookieStore.set(name, "", { ...options, maxAge: 0 })
-          },
-        },
-      }
-    )
 
     // Generate unique filename
     const fileExt = file.name.split(".").pop() || "jpg"
@@ -58,33 +42,22 @@ export async function POST(request: Request) {
     const fileName = questionId
       ? `question-${questionId}-${timestamp}.${fileExt}`
       : `temp-${timestamp}-${randomId}.${fileExt}`
+    const filePath = path.join(IMAGES_DIR, fileName)
 
-    // Convert file to buffer
+    // Create directory if it doesn't exist
+    await mkdir(IMAGES_DIR, { recursive: true })
+
+    // Convert file to buffer and write to disk
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
+    await writeFile(filePath, buffer)
 
-    // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
-      .from(BUCKET_NAME)
-      .upload(fileName, buffer, {
-        contentType: file.type,
-        upsert: true,
-      })
-
-    if (error) {
-      console.error("Upload error:", error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from(BUCKET_NAME)
-      .getPublicUrl(fileName)
+    // Return the URL path — stored in questions.image_url by the admin
+    const imageUrl = `/api/images/${fileName}`
 
     return NextResponse.json({
       success: true,
-      url: urlData.publicUrl,
-      path: data.path,
+      url: imageUrl,
     })
   } catch (error: any) {
     console.error("Error uploading image:", error)
@@ -92,54 +65,18 @@ export async function POST(request: Request) {
   }
 }
 
-// Delete an image from storage
+// Delete an image file from disk
 export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
-    const path = searchParams.get("path")
     const url = searchParams.get("url")
 
-    // Extract path from URL if path not provided directly
-    let filePath = path
-    if (!filePath && url) {
-      // Extract filename from Supabase URL
-      // URL format: https://xxx.supabase.co/storage/v1/object/public/question-images/filename.jpg
-      const match = url.match(/\/question-images\/(.+)$/)
-      if (match) {
-        filePath = match[1]
+    if (url) {
+      const fileName = url.split("/").pop()
+      if (fileName) {
+        const filePath = path.join(IMAGES_DIR, fileName)
+        try { await unlink(filePath) } catch { /* file may already be gone */ }
       }
-    }
-
-    if (!filePath) {
-      return NextResponse.json({ error: "No file path provided" }, { status: 400 })
-    }
-
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
-          },
-          set(name: string, value: string, options: any) {
-            cookieStore.set(name, value, options)
-          },
-          remove(name: string, options: any) {
-            cookieStore.set(name, "", { ...options, maxAge: 0 })
-          },
-        },
-      }
-    )
-
-    const { error } = await supabase.storage
-      .from(BUCKET_NAME)
-      .remove([filePath])
-
-    if (error) {
-      console.error("Delete error:", error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })

@@ -61,10 +61,11 @@ export default function QuestionEditModal({ question, isOpen, onClose, onSave }:
 
   if (!formData) return null
 
-  // Check if URL is an external image (not Supabase Storage)
+  // Check if URL is an external image (not stored on our server)
   const isExternalImageUrl = (url: string): boolean => {
     if (!url || url.startsWith('data:')) return false
-    if (url.includes('supabase.co/storage')) return false
+    if (url.startsWith('/api/images/')) return false
+    if (url.startsWith('/')) return false
     return url.startsWith('http://') || url.startsWith('https://')
   }
 
@@ -125,7 +126,7 @@ export default function QuestionEditModal({ question, isOpen, onClose, onSave }:
       setIsSaving(true)
       let finalFormData = { ...formData }
 
-      // If there's an external image URL, download and upload to Supabase
+      // If there's an external image URL, download and upload to server
       if (formData.image && isExternalImageUrl(formData.image)) {
         try {
           const blob = await downloadExternalImage(formData.image)
@@ -201,7 +202,7 @@ export default function QuestionEditModal({ question, isOpen, onClose, onSave }:
     })
   }
 
-  // Upload image to Supabase Storage
+  // Upload image to Render persistent disk
   const uploadImageToStorage = async (blob: Blob, questionId?: string): Promise<string> => {
     const formData = new FormData()
     formData.append('file', blob, `image-${Date.now()}.jpg`)
@@ -223,7 +224,7 @@ export default function QuestionEditModal({ question, isOpen, onClose, onSave }:
     return data.url
   }
 
-  // Delete image from Supabase Storage
+  // Delete image from server storage
   const deleteImageFromStorage = async (imageUrl: string) => {
     if (!imageUrl || !imageUrl.includes('question-images')) return
     
@@ -246,10 +247,10 @@ export default function QuestionEditModal({ question, isOpen, onClose, onSave }:
         const { blob, previewUrl } = await resizeImageToBlob(file)
         setImagePreview(previewUrl)
         
-        // Upload to Supabase Storage
+        // Upload to Render persistent disk
         const uploadedUrl = await uploadImageToStorage(blob, formData.id)
         
-        // Delete old image if it was stored in Supabase
+        // Delete old image if it was stored on our server
         if (formData.image && formData.image.includes('question-images')) {
           await deleteImageFromStorage(formData.image)
         }
@@ -413,7 +414,7 @@ export default function QuestionEditModal({ question, isOpen, onClose, onSave }:
                       size="sm"
                       variant="outline"
                       onClick={async () => {
-                        // Delete from storage if it's a Supabase URL
+                        // Delete from server storage if stored locally
                         if (formData.image && formData.image.includes('question-images')) {
                           await deleteImageFromStorage(formData.image)
                         }
@@ -426,7 +427,7 @@ export default function QuestionEditModal({ question, isOpen, onClose, onSave }:
                       Remove
                     </Button>
                     <span className="text-xs text-muted-foreground">
-                      {formData.image?.includes('question-images') ? '✓ Stored in Supabase' : 'External URL'}
+                      {formData.image?.includes('question-images') || formData.image?.startsWith('/api/images/') ? '✓ Stored on server' : 'External URL'}
                     </span>
                   </div>
                 </div>

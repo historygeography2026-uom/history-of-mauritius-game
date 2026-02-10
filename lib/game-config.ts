@@ -26,7 +26,7 @@ export const GAME_CONFIG = {
 
   /**
    * Demo/Guest account credentials for quick login.
-   * This account should be pre-created in Supabase.
+   * This account should be pre-created in the database.
    */
   DEMO_ACCOUNT: {
     EMAIL: "demo@mauritius-game.com",

@@ -332,10 +332,12 @@ export default function AdminPage() {
     return data.url
   }
 
-  // Check if URL is an external image
+  // Check if URL is an external image (needs to be downloaded and re-uploaded)
   const isExternalImageUrl = (url: string): boolean => {
     if (!url || url.startsWith('data:')) return false
-    if (url.includes('supabase.co/storage')) return false
+    // Images already on our server are fine
+    if (url.startsWith('/api/images/')) return false
+    if (url.startsWith('/')) return false // local public folder images
     return url.startsWith('http://') || url.startsWith('https://')
   }
 

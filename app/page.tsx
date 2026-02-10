@@ -39,7 +39,7 @@ export default function SubjectSelection() {
   }, [session])
 
   const handleLogout = async () => {
-    await signOut({ redirectTo: "/" })
+    await signOut({ callbackUrl: "/" })
   }
 
   const subjects = [

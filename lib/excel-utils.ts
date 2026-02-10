@@ -54,7 +54,7 @@ export const generateExcelTemplate = () => {
     { Instructions: "• timer: Time in seconds (default: 30)" },
     { Instructions: "" },
     { Instructions: "OPTIONAL FIELDS:" },
-    { Instructions: "• imageUrl: Direct URL to an image (http/https, will be downloaded and stored in Supabase)" },
+    { Instructions: "• imageUrl: Direct URL to an image (http/https, will be downloaded and stored on server)" },
     { Instructions: "" },
     { Instructions: "QUESTION TYPE SPECIFIC FIELDS:" },
     { Instructions: "MCQ: optionA, optionB, optionC, optionD, correctAnswer (must match one option exactly)" },

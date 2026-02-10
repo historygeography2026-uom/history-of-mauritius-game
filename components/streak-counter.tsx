@@ -13,10 +13,14 @@ export function StreakCounter({ currentStreak, showMultiplier = true, size = "md
   const [isAnimating, setIsAnimating] = useState(false)
   const [prevStreak, setPrevStreak] = useState(currentStreak)
 
+  // PERF FIX: Always update prevStreak to prevent infinite animation toggle loop.
+  // Previously, prevStreak was only updated in the else branch, so when
+  // currentStreak > prevStreak the animation would toggle on/off every second forever.
   useEffect(() => {
     if (currentStreak > prevStreak) {
       setIsAnimating(true)
       const timer = setTimeout(() => setIsAnimating(false), 1000)
+      setPrevStreak(currentStreak)
       return () => clearTimeout(timer)
     }
     setPrevStreak(currentStreak)

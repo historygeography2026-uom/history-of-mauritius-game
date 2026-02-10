@@ -1,17 +1,9 @@
-import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
+// OAuth callbacks are handled by NextAuth at /api/auth/callback/*
+// This route exists only as a fallback redirect
 export async function GET(request: NextRequest) {
-  const requestUrl = new URL(request.url)
-  const code = requestUrl.searchParams.get("code")
-  const redirectTo = requestUrl.searchParams.get("redirectTo") || "/"
-
-  if (code) {
-    const supabase = await createClient()
-    await supabase.auth.exchangeCodeForSession(code)
-  }
-
-  // URL to redirect to after sign in process completes
+  const redirectTo = new URL(request.url).searchParams.get("redirectTo") || "/"
   return NextResponse.redirect(new URL(redirectTo, request.url))
 }

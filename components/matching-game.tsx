@@ -176,6 +176,19 @@ export default function MatchingGame({
         <p className="text-blue-800">Click a picture or word on the left, then click what it matches on the right!</p>
       </div>
 
+      {/* Show question image if provided from DB */}
+      {question?.image && (
+        <div className="mb-6 overflow-hidden rounded-2xl border-4 border-primary/20 animate-pop-in">
+          <Image
+            src={question.image}
+            alt="Question image"
+            width={400}
+            height={250}
+            className="w-full h-auto object-cover"
+          />
+        </div>
+      )}
+
       <div className="grid gap-8 md:grid-cols-2">
         {/* Left Column */}
         <div className="space-y-4">

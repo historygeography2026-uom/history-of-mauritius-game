@@ -15,34 +15,36 @@ const SOUND_URLS = {
 
 type SoundType = keyof typeof SOUND_URLS
 
+// PERF FIX: Singleton Audio elements shared across all hook instances.
+// Previously, every component calling useGameSounds() created 7 Audio elements
+// and destroyed them on unmount (14+ elements alive, 7 recreated per question change).
+let sharedAudioInitialized = false
+const sharedAudioElements = new Map<SoundType, HTMLAudioElement>()
+
+function ensureAudioInitialized() {
+  if (sharedAudioInitialized || typeof window === "undefined") return
+  sharedAudioInitialized = true
+
+  Object.entries(SOUND_URLS).forEach(([key, url]) => {
+    const audio = new Audio(url)
+    audio.preload = "auto"
+    audio.volume = 0.5
+    sharedAudioElements.set(key as SoundType, audio)
+  })
+}
+
 export function useGameSounds() {
-  const audioRefs = useRef<Map<SoundType, HTMLAudioElement>>(new Map())
   const isMuted = useRef(false)
 
-  // Preload sounds on mount
+  // Initialize shared audio elements once globally
   useEffect(() => {
-    if (typeof window === "undefined") return
-
-    Object.entries(SOUND_URLS).forEach(([key, url]) => {
-      const audio = new Audio(url)
-      audio.preload = "auto"
-      audio.volume = 0.5
-      audioRefs.current.set(key as SoundType, audio)
-    })
-
-    return () => {
-      audioRefs.current.forEach((audio) => {
-        audio.pause()
-        audio.src = ""
-      })
-      audioRefs.current.clear()
-    }
+    ensureAudioInitialized()
   }, [])
 
   const playSound = useCallback((sound: SoundType, volume = 0.5) => {
     if (isMuted.current) return
     
-    const audio = audioRefs.current.get(sound)
+    const audio = sharedAudioElements.get(sound)
     if (audio) {
       audio.volume = volume
       audio.currentTime = 0

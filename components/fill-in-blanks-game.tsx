@@ -189,6 +189,18 @@ export default function FillInBlanksGame({
         Fill in the Blank! ✏️
       </h2>
 
+      {/* Show image for DB questions (single mode) or built-in questions */}
+      {isSingleMode && singleQuestion?.image && (
+        <div className="mb-6 overflow-hidden rounded-2xl border-4 border-primary/20 animate-pop-in">
+          <Image
+            src={singleQuestion.image}
+            alt="Question image"
+            width={350}
+            height={200}
+            className="w-full h-auto object-cover"
+          />
+        </div>
+      )}
       {!isSingleMode && builtInQuestions[currentQuestionIndex].image && (
         <div className="mb-6 overflow-hidden rounded-2xl border-4 border-primary/20 animate-pop-in">
           <Image

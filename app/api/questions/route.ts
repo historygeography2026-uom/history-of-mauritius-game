@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     // Fetch questions
     let query = `
       SELECT 
-        q.id, q.question_text, q.timer_seconds,
+        q.id, q.question_text, q.timer_seconds, q.image_url,
         s.name as subject, l.level_number as level, qt.name as question_type
       FROM questions q
       JOIN subjects s ON q.subject_id = s.id
@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
           title: q.question_text,
           type,
           timer: q.timer_seconds,
+          image: q.image_url || undefined,
         }
 
         // Fetch type-specific data
