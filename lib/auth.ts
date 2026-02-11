@@ -1,8 +1,8 @@
-import NextAuth from "next-auth"
-import Credentials from "next-auth/providers/credentials"
-import Google from "next-auth/providers/google"
-import Facebook from "next-auth/providers/facebook"
-import { Adapter } from "next-auth/adapters"
+import type { NextAuthOptions } from "next-auth"
+import CredentialsProvider from "next-auth/providers/credentials"
+import GoogleProvider from "next-auth/providers/google"
+import FacebookProvider from "next-auth/providers/facebook"
+import type { Adapter } from "next-auth/adapters"
 import { pool } from "@/lib/db"
 import { verifyPassword } from "./auth-utils"
 
@@ -128,12 +128,12 @@ function PostgresAdapter(client: any): Adapter {
   } as Adapter
 }
 
-const authConfig = {
+export const authOptions: NextAuthOptions = {
   adapter: PostgresAdapter(pool),
   
   providers: [
     // Email/Password authentication
-    Credentials({
+    CredentialsProvider({
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email", placeholder: "your@email.com" },
@@ -181,14 +181,14 @@ const authConfig = {
     }),
 
     // Google OAuth
-    Google({
+    GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
       allowDangerousEmailAccountLinking: true,
     }),
 
     // Facebook OAuth
-    Facebook({
+    FacebookProvider({
       clientId: process.env.FACEBOOK_APP_ID || "",
       clientSecret: process.env.FACEBOOK_APP_SECRET || "",
       allowDangerousEmailAccountLinking: true,
@@ -240,6 +240,3 @@ const authConfig = {
   // Enable debug in development
   debug: process.env.NODE_ENV === "development",
 }
-
-// Single NextAuth instance — export everything from one call
-export const { handlers: { GET, POST }, auth, signIn, signOut } = NextAuth(authConfig)

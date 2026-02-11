@@ -1,10 +1,11 @@
-import { auth } from "@/lib/auth"
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
 import { pool } from "@/lib/db"
 import { NextRequest, NextResponse } from "next/server"
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await auth()
+    const session = await getServerSession(authOptions)
 
     // Only allow users to fetch their own profile
     if (!session?.user?.id || session.user.id !== params.id) {

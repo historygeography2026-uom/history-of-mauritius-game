@@ -1,4 +1,3 @@
-import { auth as nextAuthMiddleware } from "@/lib/auth"
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 

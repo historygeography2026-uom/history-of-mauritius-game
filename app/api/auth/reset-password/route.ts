@@ -1,11 +1,12 @@
 import { pool } from "@/lib/db"
 import { hashPassword } from "@/lib/auth-utils"
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth()
+    const session = await getServerSession(authOptions)
 
     // Verify admin credentials (simple check - in production use proper admin roles)
     const { email, newPassword } = await request.json()
