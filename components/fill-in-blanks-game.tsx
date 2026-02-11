@@ -91,8 +91,10 @@ export default function FillInBlanksGame({
   const getSentence = () => {
     if (isSingleMode) {
       const q = singleQuestion.question || singleQuestion.title || ""
-      // If it already has _____, use as-is
-      if (q.includes("_____")) return q
+      // Normalize any sequence of 3+ underscores to exactly _____
+      const normalized = q.replace(/_{3,}/g, "_____")
+      // If it already has _____, use the normalized version
+      if (normalized.includes("_____")) return normalized
       // Otherwise, try to replace the answer with blank
       const ans = singleQuestion.answer || ""
       if (ans && q.toLowerCase().includes(ans.toLowerCase())) {
