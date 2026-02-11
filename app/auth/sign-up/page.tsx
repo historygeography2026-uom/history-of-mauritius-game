@@ -66,7 +66,7 @@ export default function SignUpPage() {
       })
 
       if (result?.ok) {
-        router.push("/auth/sign-up-success")
+        router.push("/")
       } else {
         setError("Sign-up successful but login failed. Please log in manually.")
       }
@@ -83,7 +83,7 @@ export default function SignUpPage() {
 
     try {
       await signIn("google", {
-        callbackUrl: "/auth/sign-up-success",
+        callbackUrl: "/",
       })
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")
@@ -97,7 +97,7 @@ export default function SignUpPage() {
 
     try {
       await signIn("facebook", {
-        callbackUrl: "/auth/sign-up-success",
+        callbackUrl: "/",
       })
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")
