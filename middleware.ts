@@ -7,6 +7,7 @@ export async function middleware(request: NextRequest) {
     "/auth/login",
     "/auth/sign-up",
     "/auth/sign-up-success",
+    "/auth/forgot-password",
     "/auth/callback",
   ]
   
