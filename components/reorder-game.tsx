@@ -124,10 +124,10 @@ export default function ReorderGame({
   return (
     <>
       <GameConfetti trigger={showConfetti} type="levelComplete" />
-      <Card className="border-4 border-primary/30 bg-card p-6 md:p-8 animate-pop-in relative overflow-visible">
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-bold text-card-foreground md:text-3xl">
+      <Card className="border-4 border-primary/30 bg-card p-4 md:p-5 animate-pop-in relative overflow-visible">
+        <div className="mb-2 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold text-card-foreground md:text-2xl">
               Timeline Challenge! 📅
             </h2>
             <Button
@@ -154,31 +154,31 @@ export default function ReorderGame({
           </div>
         </div>
 
-        <p className="mb-8 text-xl text-muted-foreground font-semibold">
-          👆 Drag and drop to put these events in the correct order from oldest to newest!
+        <p className="mb-3 text-base text-muted-foreground font-semibold">
+          👆 Drag and drop to put these events in the correct order!
         </p>
 
       {/* Show question image if provided from DB */}
       {question?.image && (
-        <div className="mb-6 overflow-hidden rounded-2xl border-4 border-primary/20 animate-pop-in">
+        <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 animate-pop-in">
           <Image
             src={question.image}
             alt="Question image"
             width={400}
-            height={250}
-            className="w-full h-auto object-cover"
+            height={200}
+            className="w-full h-auto object-cover max-h-[120px]"
           />
         </div>
       )}
 
-      <div className="mb-8 space-y-4">
+      <div className="mb-3 space-y-2">
         {items.map((item, index) => (
           <div
             key={`${item.event}-${index}`}
             draggable={!showResult}
             onDragStart={() => handleDragStart(index)}
             onDragOver={(e) => handleDragOver(e, index)}
-            className={`flex cursor-move items-center gap-4 rounded-2xl border-4 p-6 md:p-8 transition-all ${
+            className={`flex cursor-move items-center gap-3 rounded-xl border-2 p-3 md:p-4 transition-all ${
               showResult && item.event === correctOrder[index]?.event
                 ? "border-green-400 bg-gradient-to-r from-green-100 to-green-200 animate-correct-glow"
                 : showResult
@@ -186,13 +186,13 @@ export default function ReorderGame({
                   : "border-primary/30 bg-gradient-to-r from-blue-50 to-purple-50 hover:border-primary hover:scale-[1.02] hover:shadow-lg"
             }`}
           >
-            <GripVertical className="h-8 w-8 text-muted-foreground" />
+            <GripVertical className="h-6 w-6 text-muted-foreground" />
             <div className="flex-1">
-              <p className="text-2xl font-bold text-primary">{item.year || ""}</p>
-              <p className="text-xl text-card-foreground">{item.event || "Event"}</p>
+              <p className="text-lg font-bold text-primary">{item.year || ""}</p>
+              <p className="text-base text-card-foreground">{item.event || "Event"}</p>
             </div>
             {showResult && (
-              <span className="text-4xl">{item.event === correctOrder[index]?.event ? "✓" : "✗"}</span>
+              <span className="text-2xl">{item.event === correctOrder[index]?.event ? "✓" : "✗"}</span>
             )}
           </div>
         ))}
@@ -201,25 +201,25 @@ export default function ReorderGame({
       {!showResult ? (
         <Button
           onClick={handleCheckOrder}
-          className="w-full bg-gradient-to-r from-primary to-secondary text-white hover:opacity-90 text-2xl py-8 hover:scale-105 transition-all rounded-2xl shadow-lg font-bold"
+          className="w-full bg-gradient-to-r from-primary to-secondary text-white hover:opacity-90 text-lg py-4 hover:scale-105 transition-all rounded-xl shadow-lg font-bold"
         >
           Check My Order! ✓
         </Button>
       ) : (
-        <div className="space-y-6">
-          <div className={`rounded-3xl p-8 text-center ${isCorrect ? "bg-gradient-to-br from-green-100 to-green-200 border-4 border-green-400" : "bg-gradient-to-br from-orange-100 to-orange-200 border-4 border-orange-400"}`}>
-            <p className="text-4xl md:text-5xl font-bold text-card-foreground animate-bounce-in">
+        <div className="space-y-3">
+          <div className={`rounded-2xl p-4 text-center ${isCorrect ? "bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-400" : "bg-gradient-to-br from-orange-100 to-orange-200 border-2 border-orange-400"}`}>
+            <p className="text-2xl md:text-3xl font-bold text-card-foreground animate-bounce-in">
               {isCorrect ? "🎉 Perfect Timeline!" : "💪 Try again!"}
             </p>
             {!isCorrect && (
-              <p className="mt-4 text-xl text-card-foreground">Look at the order carefully and try reordering!</p>
+              <p className="mt-1 text-base text-card-foreground">Look at the order carefully and try reordering!</p>
             )}
           </div>
 
           {!isCorrect && (
             <Button
               onClick={handleTryAgain}
-              className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-2xl py-8 hover:scale-105 transition-all rounded-2xl shadow-lg font-bold"
+              className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-4 hover:scale-105 transition-all rounded-xl shadow-lg font-bold"
             >
               Try Again! 🔄
             </Button>

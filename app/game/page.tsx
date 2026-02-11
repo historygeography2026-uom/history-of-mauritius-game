@@ -463,8 +463,8 @@ const GamePage = () => {
           <StreakMilestone streak={showStreakMilestone} onClose={handleStreakClose} />
         )}
 
-        {/* Game container - centered */}
-        <div className="p-4 md:p-8 flex items-center justify-center min-h-[calc(100vh-200px)]">
+        {/* Game container - compact, no-scroll on desktop */}
+        <div className="p-2 md:p-4 flex items-start justify-center">
           <div className="w-full max-w-4xl">
             {showTimeoutScreen && <TimeoutScreen />} {/* Conditionally render TimeoutScreen */}
             {renderQuestion()}

@@ -140,10 +140,10 @@ export default function MatchingGame({
   return (
     <>
       <GameConfetti trigger={showConfetti} type={matched.size === matchPairs.length ? "levelComplete" : "correct"} />
-      <Card className="border-4 border-primary/30 bg-card p-6 md:p-8 animate-pop-in relative overflow-visible">
-        <div className="mb-8 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-bold text-card-foreground md:text-3xl">
+      <Card className="border-4 border-primary/30 bg-card p-4 md:p-5 animate-pop-in relative overflow-visible">
+        <div className="mb-2 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold text-card-foreground md:text-2xl">
               Match the Pairs! 🔗
             </h2>
             <Button
@@ -171,28 +171,27 @@ export default function MatchingGame({
           </div>
         </div>
 
-      <div className="mb-8 rounded-lg bg-blue-50 p-4 border-2 border-blue-200">
-        <p className="text-lg text-blue-900 font-semibold">📌 How to play:</p>
-        <p className="text-blue-800">Click a picture or word on the left, then click what it matches on the right!</p>
+      <div className="mb-2 rounded-lg bg-blue-50 p-2 border border-blue-200">
+        <p className="text-sm text-blue-900 font-semibold">📌 Click a picture or word on the left, then click what it matches on the right!</p>
       </div>
 
       {/* Show question image if provided from DB */}
       {question?.image && (
-        <div className="mb-6 overflow-hidden rounded-2xl border-4 border-primary/20 animate-pop-in">
+        <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 animate-pop-in">
           <Image
             src={question.image}
             alt="Question image"
             width={400}
-            height={250}
-            className="w-full h-auto object-cover"
+            height={200}
+            className="w-full h-auto object-cover max-h-[120px]"
           />
         </div>
       )}
 
-      <div className="grid gap-8 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2">
         {/* Left Column */}
-        <div className="space-y-4">
-          <h3 className="text-xl font-bold text-primary mb-4">🎯 Choose one:</h3>
+        <div className="space-y-2">
+          <h3 className="text-base font-bold text-primary mb-1">🎯 Choose one:</h3>
           {matchPairs.map((item, index) => (
             <div key={index} className="relative">
               <Button
@@ -208,17 +207,17 @@ export default function MatchingGame({
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 {item.leftImage && (
-                  <div className="overflow-hidden rounded-lg border-3 border-white">
+                  <div className="overflow-hidden rounded-lg border-2 border-white">
                     <Image
                       src={item.leftImage || "/placeholder.svg"}
                       alt={item.left || "Item"}
-                      width={140}
-                      height={100}
+                      width={100}
+                      height={60}
                       className="object-cover"
                     />
                   </div>
                 )}
-                <span className="font-bold text-base">{item.left || "Item"}</span>
+                <span className="font-bold text-sm">{item.left || "Item"}</span>
               </Button>
               {matched.has(index) && (
                 <div className="absolute -top-3 -right-3 bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-2xl animate-bounce-gentle">
@@ -230,14 +229,14 @@ export default function MatchingGame({
         </div>
 
         {/* Right Column */}
-        <div className="space-y-4">
-          <h3 className="text-xl font-bold text-primary mb-4">🎯 Pick a match:</h3>
+        <div className="space-y-2">
+          <h3 className="text-base font-bold text-primary mb-1">🎯 Pick a match:</h3>
           {rightItems.map((item, index) => (
             <Button
               key={index}
               onClick={() => handleRightClick(index)}
               disabled={selectedLeft === null}
-              className={`h-auto w-full p-6 text-base transition-all animate-pop-in rounded-xl font-semibold ${
+              className={`h-auto w-full p-3 text-sm transition-all animate-pop-in rounded-xl font-semibold ${
                 selectedRight === index
                   ? "bg-yellow-400 text-gray-900 border-4 border-yellow-500 scale-105 shadow-lg animate-pulse"
                   : selectedLeft !== null
@@ -255,10 +254,10 @@ export default function MatchingGame({
       {/* Feedback Message */}
       {feedback.show && (
         <div
-          className={`mt-8 rounded-2xl p-6 text-center text-xl font-bold animate-pop-in ${
+          className={`mt-3 rounded-xl p-3 text-center text-base font-bold animate-pop-in ${
             feedback.correct
-              ? "bg-green-100 text-green-700 border-4 border-green-500"
-              : "bg-red-100 text-red-700 border-4 border-red-500"
+              ? "bg-green-100 text-green-700 border-2 border-green-500"
+              : "bg-red-100 text-red-700 border-2 border-red-500"
           }`}
         >
           {feedback.correct ? (
@@ -270,9 +269,9 @@ export default function MatchingGame({
       )}
 
       {matched.size === matchPairs.length && matchPairs.length > 0 && (
-        <div className="mt-8 rounded-3xl bg-gradient-to-r from-yellow-100 to-green-100 p-8 text-center animate-bounce-in border-4 border-green-500 shadow-xl">
-          <p className="text-4xl font-black text-green-600 mb-2">🏆 Amazing!</p>
-          <p className="text-2xl font-bold text-green-700">All pairs matched perfectly!</p>
+        <div className="mt-3 rounded-2xl bg-gradient-to-r from-yellow-100 to-green-100 p-4 text-center animate-bounce-in border-2 border-green-500 shadow-lg">
+          <p className="text-2xl font-black text-green-600 mb-1">🏆 Amazing!</p>
+          <p className="text-lg font-bold text-green-700">All pairs matched perfectly!</p>
         </div>
       )}
     </Card>

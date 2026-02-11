@@ -143,8 +143,8 @@ export default function MultipleChoiceGame({
   return (
     <>
       <GameConfetti trigger={showConfetti} type="correct" />
-      <Card className="border-4 border-primary/30 bg-card p-6 md:p-8 animate-pop-in relative overflow-visible">
-        <div className="mb-6 flex items-center justify-between">
+      <Card className="border-4 border-primary/30 bg-card p-4 md:p-5 animate-pop-in relative overflow-visible">
+        <div className="mb-2 flex items-center justify-between">
           <span className="text-lg font-bold text-muted-foreground">
             {isSingleMode ? "Question" : `Question ${currentQuestionIndex + 1} of ${builtInQuestions.length}`}
           </span>
@@ -164,19 +164,19 @@ export default function MultipleChoiceGame({
         </div>
 
       {question.image && (
-        <div className="mb-6 overflow-hidden rounded-2xl border-4 border-primary/20 animate-pop-in">
+        <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 animate-pop-in">
           <Image
             src={question.image || "/placeholder.svg"}
             alt={question.imageAlt || "Question image"}
             width={400}
-            height={300}
-            className="w-full h-auto object-cover"
+            height={200}
+            className="w-full h-auto object-cover max-h-[160px]"
           />
         </div>
       )}
 
-      <div className="mb-8 flex items-start gap-3">
-        <h2 className="text-2xl font-bold leading-relaxed text-card-foreground md:text-3xl flex-1">
+      <div className="mb-3 flex items-start gap-2">
+        <h2 className="text-lg font-bold leading-snug text-card-foreground md:text-xl flex-1">
           {question.question}
         </h2>
         <Button
@@ -190,13 +190,13 @@ export default function MultipleChoiceGame({
         </Button>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-2">
         {(question.options || []).map((option, index) => (
           <Button
             key={index}
             onClick={() => !showResult && handleAnswer(index)}
             disabled={showResult}
-            className={`h-auto w-full justify-start p-6 md:p-8 text-left text-xl md:text-2xl transition-all rounded-2xl ${
+            className={`h-auto w-full justify-start p-3 md:p-4 text-left text-base md:text-lg transition-all rounded-xl ${
               showResult
                 ? index === question.correctAnswer
                   ? "bg-gradient-to-r from-green-400 to-green-500 text-white border-4 border-green-300 animate-correct-glow shadow-lg"
@@ -206,7 +206,7 @@ export default function MultipleChoiceGame({
                 : "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:from-primary/90 hover:to-primary/70 hover:scale-[1.02] shadow-md hover:shadow-lg"
             } ${shakeWrong && selectedAnswer === index ? "animate-shake" : ""}`}
           >
-            <span className="mr-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/20 text-2xl font-bold">
+            <span className="mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-lg font-bold">
               {String.fromCharCode(65 + index)}
             </span>
             {option}
@@ -215,17 +215,17 @@ export default function MultipleChoiceGame({
       </div>
 
       {showResult && (
-        <div className="mt-8 space-y-6 animate-pop-in">
+        <div className="mt-3 space-y-3 animate-pop-in">
           <div
-            className={`rounded-3xl p-8 text-center ${isCorrect ? "bg-gradient-to-br from-green-100 to-green-200 border-4 border-green-400" : "bg-gradient-to-br from-orange-100 to-orange-200 border-4 border-orange-400"}`}
+            className={`rounded-2xl p-4 text-center ${isCorrect ? "bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-400" : "bg-gradient-to-br from-orange-100 to-orange-200 border-2 border-orange-400"}`}
           >
-            <p className="mb-4 text-4xl md:text-5xl font-bold animate-bounce-in">{isCorrect ? "🎉 Awesome!" : "💪 Good try!"}</p>
-            <p className="text-xl text-card-foreground">{question.funFact}</p>
+            <p className="mb-1 text-2xl md:text-3xl font-bold animate-bounce-in">{isCorrect ? "🎉 Awesome!" : "💪 Good try!"}</p>
+            <p className="text-base text-card-foreground">{question.funFact}</p>
           </div>
 
           <Button
             onClick={handleNext}
-            className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-2xl py-8 hover:scale-105 transition-all rounded-2xl shadow-lg font-bold"
+            className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-4 hover:scale-105 transition-all rounded-xl shadow-lg font-bold"
           >
             {isSingleMode ? "Continue →" : currentQuestionIndex < builtInQuestions.length - 1 ? "Next Question →" : "Finish! 🎊"}
           </Button>
