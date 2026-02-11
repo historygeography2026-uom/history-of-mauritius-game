@@ -83,7 +83,7 @@ export default function SignUpPage() {
 
     try {
       await signIn("google", {
-        redirectTo: "/auth/sign-up-success",
+        callbackUrl: "/auth/sign-up-success",
       })
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")
@@ -97,7 +97,7 @@ export default function SignUpPage() {
 
     try {
       await signIn("facebook", {
-        redirectTo: "/auth/sign-up-success",
+        callbackUrl: "/auth/sign-up-success",
       })
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")

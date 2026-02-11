@@ -238,12 +238,24 @@ export default function SubjectSelection() {
           </div>
 
           <div className="flex gap-2 items-center">
-            {/* All users are now authenticated - show user info and logout */}
-            <div className="text-sm text-muted-foreground mr-2">Welcome, {profile?.full_name || session?.user?.email || "Student"}!</div>
-            <Button onClick={handleLogout} variant="outline" className="flex items-center gap-2 bg-transparent">
-              <LogOut className="h-4 w-4" />
-              Logout
-            </Button>
+            {session ? (
+              <>
+                <div className="text-sm text-muted-foreground mr-2">Welcome, {profile?.name || session?.user?.name || session?.user?.email || "Student"}!</div>
+                <Button onClick={handleLogout} variant="outline" className="flex items-center gap-2 bg-transparent">
+                  <LogOut className="h-4 w-4" />
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link href="/auth/login">
+                  <Button variant="outline" className="bg-transparent">Login</Button>
+                </Link>
+                <Link href="/auth/sign-up">
+                  <Button className="bg-primary text-primary-foreground">Sign Up</Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
 

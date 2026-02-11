@@ -57,7 +57,7 @@ export default function LoginPage() {
 
     try {
       await signIn("google", {
-        redirectTo: redirectTo,
+        callbackUrl: redirectTo,
       })
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")
@@ -71,7 +71,7 @@ export default function LoginPage() {
 
     try {
       await signIn("facebook", {
-        redirectTo: redirectTo,
+        callbackUrl: redirectTo,
       })
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")
