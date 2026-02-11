@@ -157,7 +157,7 @@ export default function MultipleChoiceGame({
               speechText={mascotMessage}
             />
             <div className="flex items-center gap-2 bg-secondary/20 px-4 py-2 rounded-full">
-              <Star className="h-6 w-6 fill-secondary text-secondary animate-wiggle" />
+              <Star className="h-6 w-6 fill-secondary text-secondary" />
               <span className="text-xl font-bold text-secondary">{score}</span>
             </div>
           </div>
@@ -176,7 +176,7 @@ export default function MultipleChoiceGame({
       )}
 
       <div className="mb-8 flex items-start gap-3">
-        <h2 className="text-2xl font-bold leading-relaxed text-card-foreground md:text-3xl animate-bounce-gentle flex-1">
+        <h2 className="text-2xl font-bold leading-relaxed text-card-foreground md:text-3xl flex-1">
           {question.question}
         </h2>
         <Button

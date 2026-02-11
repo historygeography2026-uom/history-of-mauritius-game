@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { memo, useEffect, useState } from "react"
 import { Flame } from "lucide-react"
 
 interface StreakCounterProps {
@@ -9,7 +9,8 @@ interface StreakCounterProps {
   size?: "sm" | "md" | "lg"
 }
 
-export function StreakCounter({ currentStreak, showMultiplier = true, size = "md" }: StreakCounterProps) {
+// PERF FIX: Memoize to prevent re-render from parent timer ticks
+export const StreakCounter = memo(function StreakCounter({ currentStreak, showMultiplier = true, size = "md" }: StreakCounterProps) {
   const [isAnimating, setIsAnimating] = useState(false)
   const [prevStreak, setPrevStreak] = useState(currentStreak)
 
@@ -108,7 +109,7 @@ export function StreakCounter({ currentStreak, showMultiplier = true, size = "md
       )}
     </div>
   )
-}
+})
 
 // Streak milestone celebration component
 interface StreakMilestoneProps {

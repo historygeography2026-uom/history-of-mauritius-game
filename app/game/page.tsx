@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useMemo, memo } from "react"
 import { useSearchParams, useRouter } from "next/navigation" // Added useRouter
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -136,7 +136,7 @@ const GamePage = () => {
     return () => clearTimeout(timeout)
   }, [showTimeoutScreen, levelTimedOut])
 
-  const handleQuestionComplete = (stars: number) => {
+  const handleQuestionComplete = useCallback((stars: number) => {
     // Guard: Prevent duplicate completion calls for the same question
     if (!mixedQuestions[currentQuestionIndex]) return
     if (answeredQuestions[currentQuestionIndex] !== undefined) return
@@ -194,7 +194,8 @@ const GamePage = () => {
       recordLevelCompleted(subject, finalStars, maxPossibleStars, timeRemainingPercent)
       setAllCompleted(true)
     }
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentQuestionIndex, mixedQuestions, allCompleted, answeredQuestions, currentStreak, totalStars, levelTimeLeft, levelInitialTime, subject])
 
   // Persist results to leaderboard when all questions are completed or level times out
   // PERF FIX: Only trigger on allCompleted to avoid running on every answered question
@@ -270,6 +271,16 @@ const GamePage = () => {
         </div>
       </Card>
     </div>
+  )
+
+  // PERF FIX: Stable callback refs to prevent child re-renders
+  const noopCallback = useCallback(() => {}, [])
+  const handleStreakClose = useCallback(() => setShowStreakMilestone(null), [])
+
+  // PERF FIX: Memoize progress percentage to avoid recalculation
+  const progressPercent = useMemo(
+    () => mixedQuestions.length > 0 ? ((currentQuestionIndex + 1) / mixedQuestions.length) * 100 : 0,
+    [currentQuestionIndex, mixedQuestions.length]
   )
 
   if (loading) {
@@ -397,15 +408,15 @@ const GamePage = () => {
   const renderQuestion = () => {
     switch (currentQuestion?.type) {
       case "mcq":
-        return <MultipleChoiceGame onComplete={handleQuestionComplete} onBack={() => {}} question={currentQuestion} />
+        return <MultipleChoiceGame onComplete={handleQuestionComplete} onBack={noopCallback} question={currentQuestion} />
       case "matching":
-        return <MatchingGame onComplete={handleQuestionComplete} onBack={() => {}} question={currentQuestion} />
+        return <MatchingGame onComplete={handleQuestionComplete} onBack={noopCallback} question={currentQuestion} />
       case "fill":
-        return <FillInBlanksGame onComplete={handleQuestionComplete} onBack={() => {}} question={currentQuestion} />
+        return <FillInBlanksGame onComplete={handleQuestionComplete} onBack={noopCallback} question={currentQuestion} />
       case "reorder":
-        return <ReorderGame onComplete={handleQuestionComplete} onBack={() => {}} question={currentQuestion} />
+        return <ReorderGame onComplete={handleQuestionComplete} onBack={noopCallback} question={currentQuestion} />
       case "truefalse":
-        return <TrueFalseGame onComplete={handleQuestionComplete} onBack={() => {}} question={currentQuestion} />
+        return <TrueFalseGame onComplete={handleQuestionComplete} onBack={noopCallback} question={currentQuestion} />
       default:
         return null
     }
@@ -413,17 +424,8 @@ const GamePage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10">
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-10 left-5 w-40 h-40 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-        <div
-          className="absolute top-40 right-10 w-40 h-40 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"
-          style={{ animationDelay: "2s" }}
-        ></div>
-        <div
-          className="absolute -bottom-8 left-20 w-40 h-40 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"
-          style={{ animationDelay: "4s" }}
-        ></div>
-      </div>
+      {/* PERF FIX: Removed GPU-heavy background blobs (blur-3xl + mix-blend-multiply × 3)
+          that caused browser freeze when combined with timer re-renders every second */}
 
       <div className="relative z-10">
         <div className="bg-white/80 backdrop-blur-sm sticky top-0 p-4">
@@ -442,10 +444,10 @@ const GamePage = () => {
                 <DodoTimer
                   timeLeft={levelTimeLeft}
                   initialTime={levelInitialTime}
-                  onTimeUp={() => {}} // Pass an empty function as the parent handles timeout now
+                  onTimeUp={noopCallback}
                 />
                 <div className="flex items-center gap-2 rounded-full bg-secondary/20 px-4 py-3">
-                  <Star className="h-6 w-6 fill-secondary text-secondary animate-wiggle" />
+                  <Star className="h-6 w-6 fill-secondary text-secondary" />
                   <span className="text-xl font-bold text-secondary">{totalStars}</span>
                 </div>
               </div>
@@ -454,7 +456,7 @@ const GamePage = () => {
             <div className="h-3 bg-gray-200 rounded-full overflow-hidden shadow-inner">
               <div
                 className="h-full bg-gradient-to-r from-secondary to-primary transition-all duration-500"
-                style={{ width: `${((currentQuestionIndex + 1) / mixedQuestions.length) * 100}%` }}
+                style={{ width: `${progressPercent}%` }}
               ></div>
             </div>
           </div>
@@ -462,7 +464,7 @@ const GamePage = () => {
 
         {/* Streak Milestone Popup */}
         {showStreakMilestone && (
-          <StreakMilestone streak={showStreakMilestone} onClose={() => setShowStreakMilestone(null)} />
+          <StreakMilestone streak={showStreakMilestone} onClose={handleStreakClose} />
         )}
 
         {/* Game container - centered */}

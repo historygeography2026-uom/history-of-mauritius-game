@@ -1,12 +1,16 @@
 "use client"
 
+import { memo } from "react"
+
 interface DodoTimerProps {
   timeLeft: number
   initialTime: number
   onTimeUp?: () => void
 }
 
-export function DodoTimer({ timeLeft, initialTime, onTimeUp }: DodoTimerProps) {
+// PERF FIX: Memoize to prevent re-render from parent timer ticks when nothing changed.
+// Custom comparator: only re-render when timeLeft actually changes (ignore onTimeUp ref changes).
+export const DodoTimer = memo(function DodoTimer({ timeLeft, initialTime, onTimeUp }: DodoTimerProps) {
   // PERF FIX: Derive isRunning directly from props instead of syncing via
   // useEffect + useState, which caused an unnecessary extra re-render every second.
   const isRunning = timeLeft > 0
@@ -34,8 +38,8 @@ export function DodoTimer({ timeLeft, initialTime, onTimeUp }: DodoTimerProps) {
 
   return (
     <div className="flex items-center gap-3">
-      {/* Animated Dodo running */}
-      <div className={`relative ${isRunning ? "animate-bounce-gentle" : ""}`}>
+      {/* Animated Dodo running - PERF FIX: reduced animation count */}
+      <div className="relative">
         <svg
           viewBox="0 0 80 80"
           className={`w-16 h-16 ${isCritical ? "animate-wiggle" : ""}`}
@@ -55,8 +59,8 @@ export function DodoTimer({ timeLeft, initialTime, onTimeUp }: DodoTimerProps) {
           {/* Belly */}
           <ellipse cx="40" cy="48" rx="14" ry="16" fill="#D4C4A8" />
 
-          {/* Running legs */}
-          <g className={isRunning ? "animate-leg-run" : ""}>
+          {/* Running legs - PERF FIX: removed high-frequency leg-run animation */}
+          <g>
             {/* Left leg */}
             <ellipse
               cx="33"
@@ -85,14 +89,13 @@ export function DodoTimer({ timeLeft, initialTime, onTimeUp }: DodoTimerProps) {
             />
           </g>
 
-          {/* Wings - flapping when running */}
+          {/* Wings - PERF FIX: removed high-frequency wing-flap animation */}
           <ellipse
             cx="22"
             cy="42"
             rx="6"
             ry="12"
             fill="#6B5344"
-            className={isRunning ? "animate-wing-flap origin-right" : ""}
           />
           <ellipse
             cx="58"
@@ -100,8 +103,6 @@ export function DodoTimer({ timeLeft, initialTime, onTimeUp }: DodoTimerProps) {
             rx="6"
             ry="12"
             fill="#6B5344"
-            className={isRunning ? "animate-wing-flap origin-left" : ""}
-            style={{ animationDelay: "0.1s" }}
           />
 
           {/* Head */}
@@ -185,18 +186,7 @@ export function DodoTimer({ timeLeft, initialTime, onTimeUp }: DodoTimerProps) {
           )}
         </svg>
 
-        {/* Running dust particles */}
-        {isRunning && (
-          <div className="absolute bottom-0 left-0 right-0 flex justify-center gap-1">
-            {[...Array(3)].map((_, i) => (
-              <div
-                key={i}
-                className="w-1.5 h-1.5 bg-amber-300 rounded-full animate-dust-particle opacity-60"
-                style={{ animationDelay: `${i * 0.15}s` }}
-              />
-            ))}
-          </div>
-        )}
+        {/* PERF FIX: Removed dust particles (3 more high-frequency infinite animations) */}
       </div>
 
       {/* Timer display */}
@@ -226,4 +216,7 @@ export function DodoTimer({ timeLeft, initialTime, onTimeUp }: DodoTimerProps) {
       </div>
     </div>
   )
-}
+}, (prevProps, nextProps) => {
+  // Only re-render when timeLeft or initialTime actually changes
+  return prevProps.timeLeft === nextProps.timeLeft && prevProps.initialTime === nextProps.initialTime
+})

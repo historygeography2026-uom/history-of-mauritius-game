@@ -127,7 +127,7 @@ export default function ReorderGame({
       <Card className="border-4 border-primary/30 bg-card p-6 md:p-8 animate-pop-in relative overflow-visible">
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-bold text-card-foreground md:text-3xl animate-bounce-gentle">
+            <h2 className="text-2xl font-bold text-card-foreground md:text-3xl">
               Timeline Challenge! 📅
             </h2>
             <Button
@@ -149,7 +149,7 @@ export default function ReorderGame({
               speechText={mascotMessage}
             />
             <div className="flex items-center gap-2 bg-secondary/20 px-4 py-2 rounded-full">
-              <Star className="h-6 w-6 fill-secondary text-secondary animate-wiggle" />
+              <Star className="h-6 w-6 fill-secondary text-secondary" />
             </div>
           </div>
         </div>

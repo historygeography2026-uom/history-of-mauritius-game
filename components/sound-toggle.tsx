@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { memo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Volume2, VolumeX } from "lucide-react"
 
@@ -9,7 +9,8 @@ interface SoundToggleProps {
   className?: string
 }
 
-export function SoundToggle({ onToggle, className = "" }: SoundToggleProps) {
+// PERF FIX: Memoize to prevent re-render from parent timer ticks
+export const SoundToggle = memo(function SoundToggle({ onToggle, className = "" }: SoundToggleProps) {
   const [isMuted, setIsMuted] = useState(false)
 
   const handleToggle = () => {
@@ -33,4 +34,4 @@ export function SoundToggle({ onToggle, className = "" }: SoundToggleProps) {
       )}
     </Button>
   )
-}
+})
