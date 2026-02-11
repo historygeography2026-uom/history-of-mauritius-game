@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo, memo } from "react"
+import { useState, useEffect, useCallback, useMemo, memo, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation" // Added useRouter
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -40,6 +40,9 @@ const GamePage = () => {
   const [answeredQuestions, setAnsweredQuestions] = useState<any>({})
   const [levelTimeLeft, setLevelTimeLeft] = useState(0) // Level-wide timer
   const [levelInitialTime, setLevelInitialTime] = useState(0) // Total time for level
+  // PERF FIX: Refs for timer values so handleQuestionComplete doesn't recreate every second
+  const levelTimeLeftRef = useRef(0)
+  const levelInitialTimeRef = useRef(0)
   const [showTimeoutScreen, setShowTimeoutScreen] = useState(false) // Added state for timeout screen
   const [levelTimedOut, setLevelTimedOut] = useState(false) // Track if level timed out
   const [error, setError] = useState<string | null>(null)
@@ -105,7 +108,9 @@ const GamePage = () => {
     // Calculate total time for level: sum of all question timers, or default timer per question
     const totalTime = mixedQuestions.reduce((sum, q) => sum + (q.timer || GAME_CONFIG.DEFAULT_QUESTION_TIMER), 0)
     setLevelInitialTime(totalTime)
+    levelInitialTimeRef.current = totalTime
     setLevelTimeLeft(totalTime)
+    levelTimeLeftRef.current = totalTime
 
     // Use local variable to drive countdown — avoids putting levelTimeLeft in deps
     let remaining = totalTime
@@ -118,6 +123,7 @@ const GamePage = () => {
         setLevelTimedOut(true)
       } else {
         setLevelTimeLeft(remaining)
+        levelTimeLeftRef.current = remaining
       }
     }, 1000)
 
@@ -190,12 +196,12 @@ const GamePage = () => {
       playLevelComplete()
       const finalStars = totalStars + stars
       const maxPossibleStars = mixedQuestions.length * 3 // Assuming max 3 stars per question
-      const timeRemainingPercent = (levelTimeLeft / levelInitialTime) * 100
+      const timeRemainingPercent = (levelTimeLeftRef.current / levelInitialTimeRef.current) * 100
       recordLevelCompleted(subject, finalStars, maxPossibleStars, timeRemainingPercent)
       setAllCompleted(true)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentQuestionIndex, mixedQuestions, allCompleted, answeredQuestions, currentStreak, totalStars, levelTimeLeft, levelInitialTime, subject])
+  }, [currentQuestionIndex, mixedQuestions, allCompleted, answeredQuestions, currentStreak, totalStars, subject])
 
   // Persist results to leaderboard when all questions are completed or level times out
   // PERF FIX: Only trigger on allCompleted to avoid running on every answered question
@@ -309,17 +315,7 @@ const GamePage = () => {
       <>
         <GameConfetti trigger={showLevelCompleteConfetti} type="levelComplete" duration={5000} />
         <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 p-4 md:p-8">
-          <div className="fixed inset-0 pointer-events-none overflow-hidden">
-            <div className="absolute top-10 left-5 w-40 h-40 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-            <div
-              className="absolute top-40 right-10 w-40 h-40 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"
-              style={{ animationDelay: "2s" }}
-            ></div>
-            <div
-              className="absolute -bottom-8 left-20 w-40 h-40 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"
-              style={{ animationDelay: "4s" }}
-            ></div>
-          </div>
+          {/* PERF FIX: Removed GPU-heavy blobs from completion screen too */}
 
           <div className="mx-auto max-w-2xl relative z-10">
             <Button onClick={() => router.push("/")} className="mb-6 bg-secondary hover:bg-secondary/90 text-white">
