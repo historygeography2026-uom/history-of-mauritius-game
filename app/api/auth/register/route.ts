@@ -1,11 +1,6 @@
 import { NextResponse } from "next/server"
-import { Pool } from "pg"
+import { pool } from "@/lib/db"
 import { hashPassword } from "@/lib/auth-utils"
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
-})
 
 export async function POST(request: Request) {
   try {
@@ -56,9 +51,9 @@ export async function POST(request: Request) {
       // Hash password
       const passwordHash = await hashPassword(password)
 
-      // Create new user
+      // Create new user (snake_case columns to match DB schema)
       const result = await client.query(
-        'INSERT INTO users (email, name, password_hash, "emailVerified", "createdAt", "updatedAt") VALUES ($1, $2, $3, NOW(), NOW(), NOW()) RETURNING id, email, name',
+        'INSERT INTO users (email, name, password_hash, email_verified, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW(), NOW()) RETURNING id, email, name',
         [email, name, passwordHash]
       )
 

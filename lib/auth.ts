@@ -6,6 +6,18 @@ import { Adapter } from "next-auth/adapters"
 import { pool } from "@/lib/db"
 import { verifyPassword } from "./auth-utils"
 
+// Extend NextAuth types to include user.id on session
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string
+      name?: string | null
+      email?: string | null
+      image?: string | null
+    }
+  }
+}
+
 // Minimal PostgreSQL adapter for NextAuth
 function PostgresAdapter(client: any): Adapter {
   return {
@@ -63,7 +75,12 @@ function PostgresAdapter(client: any): Adapter {
     },
     getSessionAndUser: async (sessionToken) => {
       const result = await client.query(
-        'SELECT sessions.*, users.* FROM sessions JOIN users ON sessions.user_id = users.id WHERE sessions.session_token = $1',
+        `SELECT 
+          sessions.user_id, sessions.session_token, sessions.expires,
+          users.id as user_id_from_users, users.name, users.email, users.image, users.email_verified
+        FROM sessions 
+        JOIN users ON sessions.user_id = users.id 
+        WHERE sessions.session_token = $1`,
         [sessionToken]
       )
       if (!result.rows[0]) return null
@@ -75,7 +92,7 @@ function PostgresAdapter(client: any): Adapter {
           expires: row.expires,
         },
         user: {
-          id: row.id,
+          id: row.user_id_from_users,
           name: row.name,
           email: row.email,
           image: row.image,
@@ -178,9 +195,9 @@ const authConfig = {
     }),
   ],
 
-  // Use database sessions instead of JWT
+  // Use JWT sessions — required for Credentials provider to work
   session: {
-    strategy: "database" as const,
+    strategy: "jwt" as const,
     maxAge: 30 * 24 * 60 * 60, // 30 days
     updateAge: 24 * 60 * 60, // Update session every 24 hours
   },
@@ -191,29 +208,31 @@ const authConfig = {
     error: "/auth/login",
   },
 
-  // Callbacks for session enrichment and event handling
+  // Callbacks for session enrichment
   callbacks: {
-    async session({ session, user }: any) {
-      if (session.user) {
-        session.user.id = user.id
-      }
-      return session
-    },
-
     async jwt({ token, user }: any) {
+      // On initial sign-in, persist user id into the JWT token
       if (user) {
         token.id = user.id
       }
       return token
     },
+
+    async session({ session, token }: any) {
+      // Populate session.user.id from the JWT token
+      if (session.user && token?.id) {
+        session.user.id = token.id
+      }
+      return session
+    },
   },
 
   // Event handlers
   events: {
-    async signIn({ user, account, profile, isNewUser }: any) {
-      console.log(`[auth] User ${user?.email} signed in. New user: ${isNewUser}`)
+    async signIn({ user }: any) {
+      console.log(`[auth] User ${user?.email} signed in`)
     },
-    async signOut({ token }: any) {
+    async signOut() {
       console.log(`[auth] User signed out`)
     },
   },
@@ -222,9 +241,5 @@ const authConfig = {
   debug: process.env.NODE_ENV === "development",
 }
 
-const handler = NextAuth(authConfig)
-
-export const GET = handler
-export const POST = handler
-
-export const { auth, signIn, signOut } = NextAuth(authConfig)
+// Single NextAuth instance — export everything from one call
+export const { handlers: { GET, POST }, auth, signIn, signOut } = NextAuth(authConfig)
