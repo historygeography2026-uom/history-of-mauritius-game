@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Sparkles, ArrowLeft, Settings, Trophy, LogOut, Map } from "lucide-react"
+import { Sparkles, ArrowLeft, Settings, Trophy, LogOut, Map, Clock } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
@@ -227,6 +227,12 @@ export default function SubjectSelection() {
               <Button className="bg-accent hover:bg-accent/90 text-white flex items-center gap-2">
                 <Trophy className="h-5 w-5" />
                 Leaderboard
+              </Button>
+            </Link>
+            <Link href="/history">
+              <Button className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                My Progress
               </Button>
             </Link>
             <Link href="/admin">

@@ -30,7 +30,8 @@ export async function GET(request: Request) {
     const query = `
       SELECT 
         lb.id, lb.player_name, lb.total_points, lb.stars_earned, lb.created_at,
-        lb.subject_id, lb.level_id,
+        lb.subject_id, lb.level_id, lb.user_id,
+        lb.questions_completed, lb.total_questions, lb.timed_out,
         s.name as subject_name,
         l.level_number
       FROM leaderboard lb
@@ -65,7 +66,7 @@ export async function GET(request: Request) {
 
     const payload = bestRows.map((r) => ({
       id: r.id,
-      user_id: null,
+      user_id: r.user_id || null,
       display_name: r.player_name || "Player",
       avatar_url: null,
       total_points: r.total_points,
@@ -73,6 +74,9 @@ export async function GET(request: Request) {
       created_at: r.created_at,
       subject: r.subject_name,
       level: r.level_number,
+      questions_completed: r.questions_completed || 0,
+      total_questions: r.total_questions || 0,
+      timed_out: r.timed_out || false,
     }))
 
     return NextResponse.json(payload)
@@ -85,7 +89,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { player_name, subject, level, total_points, stars_earned } = body
+    const { player_name, user_id, subject, level, total_points, stars_earned, questions_completed, total_questions, timed_out } = body
 
     if (!player_name || !subject || !level) {
       return NextResponse.json({ error: "player_name, subject, and level are required" }, { status: 400 })
@@ -104,10 +108,20 @@ export async function POST(request: Request) {
     }
 
     const result = await pool.query(
-      `INSERT INTO leaderboard (player_name, subject_id, level_id, total_points, stars_earned)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO leaderboard (player_name, user_id, subject_id, level_id, total_points, stars_earned, questions_completed, total_questions, timed_out)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
-      [player_name, subjectResult.rows[0].id, levelResult.rows[0].id, total_points || 0, stars_earned || 0]
+      [
+        player_name,
+        user_id || null,
+        subjectResult.rows[0].id,
+        levelResult.rows[0].id,
+        total_points || 0,
+        stars_earned || 0,
+        questions_completed || 0,
+        total_questions || 0,
+        timed_out || false,
+      ]
     )
 
     return NextResponse.json(result.rows[0])

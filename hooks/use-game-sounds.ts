@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useRef } from "react"
+import { useCallback, useEffect } from "react"
 
 // Sound URLs - using free sound effects
 const SOUND_URLS = {
@@ -21,6 +21,16 @@ type SoundType = keyof typeof SOUND_URLS
 let sharedAudioInitialized = false
 const sharedAudioElements = new Map<SoundType, HTMLAudioElement>()
 
+// FIX: Global mute state shared across ALL hook instances.
+// Previously each useGameSounds() had its own useRef(false) for isMuted,
+// so toggling mute on the game page didn't affect child component sounds.
+let globalIsMuted = false
+
+// Export getter so other modules (e.g. speakText) can check mute state
+export function isGameMuted(): boolean {
+  return globalIsMuted
+}
+
 function ensureAudioInitialized() {
   if (sharedAudioInitialized || typeof window === "undefined") return
   sharedAudioInitialized = true
@@ -34,15 +44,13 @@ function ensureAudioInitialized() {
 }
 
 export function useGameSounds() {
-  const isMuted = useRef(false)
-
   // Initialize shared audio elements once globally
   useEffect(() => {
     ensureAudioInitialized()
   }, [])
 
   const playSound = useCallback((sound: SoundType, volume = 0.5) => {
-    if (isMuted.current) return
+    if (globalIsMuted) return
     
     const audio = sharedAudioElements.get(sound)
     if (audio) {
@@ -55,12 +63,12 @@ export function useGameSounds() {
   }, [])
 
   const toggleMute = useCallback(() => {
-    isMuted.current = !isMuted.current
-    return isMuted.current
+    globalIsMuted = !globalIsMuted
+    return globalIsMuted
   }, [])
 
   const setMuted = useCallback((muted: boolean) => {
-    isMuted.current = muted
+    globalIsMuted = muted
   }, [])
 
   return {

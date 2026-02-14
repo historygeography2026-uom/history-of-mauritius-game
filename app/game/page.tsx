@@ -19,6 +19,8 @@ import { useGameSounds } from "@/hooks/use-game-sounds"
 import { StreakCounter, StreakMilestone } from "@/components/streak-counter"
 import { DodoTimer } from "@/components/dodo-timer"
 import { useAchievements } from "@/hooks/use-achievements"
+import { saveProgress } from "@/components/progress-map"
+import { useSession } from "next-auth/react"
 
 // Declare subjectNames variable
 const subjectNames = {
@@ -32,6 +34,7 @@ const subjectNames = {
 const GamePage = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { data: session } = useSession()
   const [mixedQuestions, setMixedQuestions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
@@ -43,6 +46,7 @@ const GamePage = () => {
   // PERF FIX: Refs for timer values so handleQuestionComplete doesn't recreate every second
   const levelTimeLeftRef = useRef(0)
   const levelInitialTimeRef = useRef(0)
+  const isAdvancingRef = useRef(false) // Guard against rapid-click Continue skipping questions
   const [showTimeoutScreen, setShowTimeoutScreen] = useState(false) // Added state for timeout screen
   const [levelTimedOut, setLevelTimedOut] = useState(false) // Track if level timed out
   const [error, setError] = useState<string | null>(null)
@@ -147,6 +151,9 @@ const GamePage = () => {
     if (!mixedQuestions[currentQuestionIndex]) return
     if (answeredQuestions[currentQuestionIndex] !== undefined) return
     if (allCompleted) return
+    if (isAdvancingRef.current) return // Block rapid clicks during advancement
+
+    isAdvancingRef.current = true // Lock advancement
 
     const currentQuestion = mixedQuestions[currentQuestionIndex]
     const isCorrect = stars > 0
@@ -187,6 +194,7 @@ const GamePage = () => {
         () => {
           setShowStreakMilestone(null) // Clear streak popup before moving to next question
           setCurrentQuestionIndex((prev) => prev + 1)
+          isAdvancingRef.current = false // Unlock for next question
         },
         stars === 0 ? 1000 : 1500, // Shorter pause after timeout, longer after a correct answer
       )
@@ -198,7 +206,10 @@ const GamePage = () => {
       const maxPossibleStars = mixedQuestions.length * 3 // Assuming max 3 stars per question
       const timeRemainingPercent = (levelTimeLeftRef.current / levelInitialTimeRef.current) * 100
       recordLevelCompleted(subject, finalStars, maxPossibleStars, timeRemainingPercent)
+      // Persist progress to localStorage for level unlock & star retention
+      saveProgress(subject, parseInt(level), finalStars, true)
       setAllCompleted(true)
+      isAdvancingRef.current = false
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentQuestionIndex, mixedQuestions, allCompleted, answeredQuestions, currentStreak, totalStars, subject])
@@ -207,16 +218,24 @@ const GamePage = () => {
   // PERF FIX: Only trigger on allCompleted to avoid running on every answered question
   useEffect(() => {
     if (!allCompleted) return
+    // Also save progress to localStorage on timeout (partial completion)
+    if (levelTimedOut) {
+      saveProgress(subject, parseInt(level), totalStars, false)
+    }
     const persistResults = async () => {
       try {
         // Points model: configurable points per star
         const total_points = totalStars * GAME_CONFIG.POINTS_PER_STAR
         const questionsCompleted = Object.keys(answeredQuestions).length
         const totalQuestions = mixedQuestions.length
+        const playerName = session?.user?.name || "Guest"
+        const userId = session?.user?.id || null
         await fetch("/api/leaderboard", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            player_name: playerName,
+            user_id: userId,
             subject,
             level,
             stars_earned: totalStars,
@@ -311,6 +330,15 @@ const GamePage = () => {
   }
 
   if (allCompleted) {
+    // Calculate accumulated stars across all levels for this subject
+    const savedProgress = typeof window !== "undefined" ? localStorage.getItem(`progress_${subject}`) : null
+    const progress = savedProgress ? JSON.parse(savedProgress) : {}
+    const previousAccumulatedStars = Object.entries(progress)
+      .filter(([lvl]) => lvl !== level) // Exclude current level (will add current below)
+      .reduce((sum, [, data]: [string, any]) => sum + (data?.stars || 0), 0)
+    const currentLevelBestStars = Math.max(progress[level]?.stars || 0, totalStars)
+    const totalAccumulatedStars = previousAccumulatedStars + currentLevelBestStars
+
     return (
       <>
         <GameConfetti trigger={showLevelCompleteConfetti} type="levelComplete" duration={5000} />
@@ -364,11 +392,22 @@ const GamePage = () => {
               ))}
             </div>
 
-            <div className="mb-8 rounded-xl bg-gradient-to-r from-secondary to-primary p-6">
-              <p className="mb-2 text-sm text-secondary-foreground">Total Stars Earned</p>
+            {/* This Level Stars */}
+            <div className="mb-4 rounded-xl bg-gradient-to-r from-secondary to-primary p-6">
+              <p className="mb-2 text-sm text-secondary-foreground">Stars Earned This Level</p>
               <div className="flex items-center justify-center gap-3">
                 <Star className="h-10 w-10 fill-secondary text-secondary animate-wiggle" />
                 <span className="text-5xl font-bold text-white">{totalStars}</span>
+              </div>
+            </div>
+
+            {/* Accumulated Stars Across All Levels */}
+            <div className="mb-8 rounded-xl bg-gradient-to-r from-yellow-400 to-orange-500 p-5">
+              <p className="mb-2 text-sm text-white/90">Total Accumulated Stars ({subjectNames[subject as keyof typeof subjectNames] || subject})</p>
+              <div className="flex items-center justify-center gap-3">
+                <Trophy className="h-8 w-8 text-white animate-bounce-gentle" />
+                <span className="text-4xl font-bold text-white">{totalAccumulatedStars}</span>
+                <Star className="h-8 w-8 fill-white text-white" />
               </div>
             </div>
 
@@ -377,6 +416,12 @@ const GamePage = () => {
               className="w-full bg-gradient-to-r from-primary to-secondary text-white hover:opacity-90 py-8 text-2xl font-bold rounded-2xl shadow-lg hover:scale-105 transition-all"
             >
               🏠 Back to Home
+            </Button>
+            <Button
+              onClick={() => router.push("/history")}
+              className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:opacity-90 py-4 text-lg font-bold rounded-2xl shadow-lg hover:scale-105 transition-all mt-3"
+            >
+              📊 View My Progress
             </Button>
           </Card>
         </div>

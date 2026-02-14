@@ -3,14 +3,15 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Star, Volume2, ThumbsUp, ThumbsDown } from "lucide-react"
+import { Star, Volume2 } from "lucide-react"
 import Image from "next/image"
 import { DodoMascot, getRandomMessage } from "@/components/dodo-mascot"
 import { GameConfetti } from "@/components/game-confetti"
-import { useGameSounds } from "@/hooks/use-game-sounds"
+import { useGameSounds, isGameMuted } from "@/hooks/use-game-sounds"
 
 // Text-to-speech function
 const speakText = (text: string) => {
+  if (isGameMuted()) return
   if (typeof window !== "undefined" && "speechSynthesis" in window) {
     // Cancel any ongoing speech
     window.speechSynthesis.cancel()
@@ -139,7 +140,7 @@ export default function TrueFalseGame({
   return (
     <>
       <GameConfetti trigger={showConfetti} type="correct" />
-      <Card className="border-4 border-primary/30 bg-card p-4 md:p-5 animate-pop-in relative overflow-visible">
+      <Card className="border-4 border-primary/30 bg-card p-3 md:p-4 animate-pop-in relative overflow-visible">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-lg font-bold text-muted-foreground">
           {isSingleMode ? "Question" : `Question ${currentQuestionIndex + 1} of ${builtInQuestions.length}`}
@@ -160,24 +161,25 @@ export default function TrueFalseGame({
       </div>
 
       <h2 className="mb-2 text-xl font-bold text-card-foreground md:text-2xl">
-        True or False? ✓✗
+        True or False? 👍👎
       </h2>
 
       {question.image && (
-        <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 animate-pop-in">
+        <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 animate-pop-in bg-white flex items-center justify-center">
           <Image
             src={question.image || "/placeholder.svg"}
             alt={question.imageAlt || "Question image"}
-            width={400}
-            height={200}
-            className="w-full h-auto object-cover max-h-[160px]"
+            width={500}
+            height={300}
+            className="w-full h-auto object-contain max-h-[160px]"
+            style={{ imageRendering: 'auto' }}
           />
         </div>
       )}
 
-      <div className="mb-3 rounded-xl bg-muted p-4">
+      <div className="mb-2 rounded-xl bg-muted p-3">
         <div className="flex items-center gap-2 justify-center">
-          <p className="text-center text-lg leading-snug text-card-foreground md:text-xl">{question.statement}</p>
+          <p className="text-center text-lg leading-snug text-card-foreground md:text-xl break-words">{question.statement}</p>
           <Button
             variant="ghost"
             size="icon"
@@ -194,16 +196,16 @@ export default function TrueFalseGame({
         <div className="grid gap-3 md:grid-cols-2">
           <Button
             onClick={() => handleAnswer(true)}
-            className={`h-24 md:h-28 bg-gradient-to-br from-green-400 to-green-600 text-white hover:from-green-500 hover:to-green-700 text-2xl md:text-3xl font-bold hover:scale-105 transition-all shadow-lg hover:shadow-xl border-4 border-green-300 rounded-2xl flex flex-col items-center justify-center gap-2 ${buttonPressed === "true" ? "animate-button-press scale-95" : ""}`}
+            className={`h-16 md:h-20 bg-gradient-to-br from-green-400 to-green-600 text-white hover:from-green-500 hover:to-green-700 text-xl md:text-2xl font-bold hover:scale-105 transition-all shadow-lg hover:shadow-xl border-4 border-green-300 rounded-2xl flex flex-col items-center justify-center gap-1 ${buttonPressed === "true" ? "animate-button-press scale-95" : ""}`}
           >
-            <ThumbsUp className="h-8 w-8 md:h-10 md:w-10" />
+            <span className="text-3xl md:text-4xl" role="img" aria-label="thumbs up">👍</span>
             <span>TRUE</span>
           </Button>
           <Button
             onClick={() => handleAnswer(false)}
-            className={`h-24 md:h-28 bg-gradient-to-br from-red-400 to-red-600 text-white hover:from-red-500 hover:to-red-700 text-2xl md:text-3xl font-bold hover:scale-105 transition-all shadow-lg hover:shadow-xl border-4 border-red-300 rounded-2xl flex flex-col items-center justify-center gap-2 ${buttonPressed === "false" ? "animate-button-press scale-95" : ""}`}
+            className={`h-16 md:h-20 bg-gradient-to-br from-red-400 to-red-600 text-white hover:from-red-500 hover:to-red-700 text-xl md:text-2xl font-bold hover:scale-105 transition-all shadow-lg hover:shadow-xl border-4 border-red-300 rounded-2xl flex flex-col items-center justify-center gap-1 ${buttonPressed === "false" ? "animate-button-press scale-95" : ""}`}
           >
-            <ThumbsDown className="h-8 w-8 md:h-10 md:w-10" />
+            <span className="text-3xl md:text-4xl" role="img" aria-label="thumbs down">👎</span>
             <span>FALSE</span>
           </Button>
         </div>
@@ -220,7 +222,7 @@ export default function TrueFalseGame({
 
           <Button
             onClick={handleNext}
-            className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-4 hover:scale-105 transition-all rounded-xl shadow-lg font-bold"
+            className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-3 hover:scale-105 transition-all rounded-xl shadow-lg font-bold"
           >
             {isSingleMode ? "Continue →" : currentQuestionIndex < builtInQuestions.length - 1 ? "Next Question →" : "Finish! 🎊"}
           </Button>

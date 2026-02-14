@@ -189,6 +189,13 @@ export function ProgressMap({ subject, subjectColor, subjectIcon, onSelectLevel,
                     <span className="text-white font-bold text-sm">{level.title}</span>
                   </div>
 
+                  {/* Unlock requirement for locked levels */}
+                  {!level.isUnlocked && (
+                    <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold shadow-md whitespace-nowrap border border-red-300">
+                      🔒 Complete Level {level.id - 1} first
+                    </div>
+                  )}
+
                   {/* Stars display */}
                   {level.isUnlocked && (
                     <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 flex gap-1">

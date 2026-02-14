@@ -8,10 +8,11 @@ import { Star, Volume2 } from "lucide-react"
 import Image from "next/image"
 import { DodoMascot, getRandomMessage } from "@/components/dodo-mascot"
 import { GameConfetti } from "@/components/game-confetti"
-import { useGameSounds } from "@/hooks/use-game-sounds"
+import { useGameSounds, isGameMuted } from "@/hooks/use-game-sounds"
 
 // Text-to-speech function
 const speakText = (text: string) => {
+  if (isGameMuted()) return
   if (typeof window !== "undefined" && "speechSynthesis" in window) {
     // Cancel any ongoing speech
     window.speechSynthesis.cancel()
@@ -115,7 +116,7 @@ export default function FillInBlanksGame({
 
   const getHint = () => {
     if (isSingleMode) {
-      return singleQuestion.hint || `Think about it!`
+      return singleQuestion.instruction || singleQuestion.hint || `Think about it!`
     }
     return builtInQuestions[currentQuestionIndex].hint
   }
@@ -167,7 +168,7 @@ export default function FillInBlanksGame({
   return (
     <>
       <GameConfetti trigger={showConfetti} type="correct" />
-      <Card className="border-4 border-primary/30 bg-card p-4 md:p-5 animate-pop-in relative overflow-visible">
+      <Card className="border-4 border-primary/30 bg-card p-3 md:p-4 animate-pop-in relative overflow-visible">
         <div className="mb-2 flex items-center justify-between">
           <span className="text-lg font-bold text-muted-foreground">
             {isSingleMode ? "Question" : `Question ${currentQuestionIndex + 1} of ${builtInQuestions.length}`}
@@ -193,33 +194,35 @@ export default function FillInBlanksGame({
 
       {/* Show image for DB questions (single mode) or built-in questions */}
       {isSingleMode && singleQuestion?.image && (
-        <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 animate-pop-in">
+        <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 animate-pop-in bg-white flex items-center justify-center">
           <Image
             src={singleQuestion.image}
             alt="Question image"
-            width={350}
-            height={200}
-            className="w-full h-auto object-cover max-h-[160px]"
+            width={500}
+            height={300}
+            className="w-full h-auto object-contain max-h-[160px]"
+            style={{ imageRendering: 'auto' }}
           />
         </div>
       )}
       {!isSingleMode && builtInQuestions[currentQuestionIndex].image && (
-        <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 animate-pop-in">
+        <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 animate-pop-in bg-white flex items-center justify-center">
           <Image
             src={builtInQuestions[currentQuestionIndex].image || "/placeholder.svg"}
             alt={builtInQuestions[currentQuestionIndex].imageAlt || "Question image"}
-            width={350}
-            height={200}
-            className="w-full h-auto object-cover max-h-[160px]"
+            width={500}
+            height={300}
+            className="w-full h-auto object-contain max-h-[160px]"
+            style={{ imageRendering: 'auto' }}
           />
         </div>
       )}
 
-      <div className="mb-3 rounded-xl bg-muted p-4">
+      <div className="mb-2 rounded-xl bg-muted p-3">
         <div className="flex items-start gap-2">
-          <p className="text-lg leading-snug text-card-foreground md:text-xl flex-1">
+          <p className="text-base leading-snug text-card-foreground md:text-lg flex-1 break-words">
             {sentenceParts[0]}
-            <span className={`mx-2 inline-block min-w-[200px] border-b-4 px-2 font-bold ${
+            <span className={`mx-1 inline-block min-w-[100px] max-w-full border-b-4 px-2 font-bold ${
               showResult
                 ? isCorrect
                   ? "border-green-500 text-green-600"
@@ -259,7 +262,7 @@ export default function FillInBlanksGame({
           <Button
             onClick={handleSubmit}
             disabled={!answer}
-            className="w-full bg-gradient-to-r from-primary to-secondary text-white hover:opacity-90 text-lg py-4 hover:scale-105 transition-all rounded-xl shadow-lg font-bold"
+            className="w-full bg-gradient-to-r from-primary to-secondary text-white hover:opacity-90 text-lg py-3 hover:scale-105 transition-all rounded-xl shadow-lg font-bold"
           >
             Check Answer ✓
           </Button>
@@ -281,7 +284,7 @@ export default function FillInBlanksGame({
 
           <Button
             onClick={handleNext}
-            className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-4 hover:scale-105 transition-all rounded-xl shadow-lg font-bold"
+            className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-3 hover:scale-105 transition-all rounded-xl shadow-lg font-bold"
           >
             {isSingleMode ? "Continue →" : currentQuestionIndex < builtInQuestions.length - 1 ? "Next Question →" : "Finish! 🎊"}
           </Button>

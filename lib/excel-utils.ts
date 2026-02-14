@@ -5,6 +5,7 @@ export interface ExcelQuestion {
   level: number
   type: "mcq" | "matching" | "fill" | "reorder" | "truefalse"
   question: string
+  instruction?: string
   imageUrl?: string
   timer: number
   // MCQ fields
@@ -54,6 +55,7 @@ export const generateExcelTemplate = () => {
     { Instructions: "• timer: Time in seconds (default: 30)" },
     { Instructions: "" },
     { Instructions: "OPTIONAL FIELDS:" },
+    { Instructions: "• instruction: Custom instruction text displayed to the student (e.g. 'Match each country with its capital')" },
     { Instructions: "• imageUrl: Direct URL to an image (http/https, will be downloaded and stored on server)" },
     { Instructions: "" },
     { Instructions: "QUESTION TYPE SPECIFIC FIELDS:" },
@@ -126,6 +128,7 @@ export const generateExcelTemplate = () => {
       level: 1,
       type: "matching",
       question: "Match the following pairs",
+      instruction: "Match each item on the left with its description on the right",
       imageUrl: "",
       timer: 45,
       leftItem1: "Dodo",
@@ -166,6 +169,7 @@ export const generateExcelTemplate = () => {
       level: 1,
       type: "fill",
       question: "The Dodo bird is _______ and no longer exists.",
+      instruction: "Type the missing word to complete the sentence",
       imageUrl: "",
       timer: 30,
       answer: "extinct",
@@ -201,6 +205,7 @@ export const generateExcelTemplate = () => {
       level: 1,
       type: "reorder",
       question: "Arrange the following events in chronological order",
+      instruction: "Put these historical events in order from earliest to latest",
       imageUrl: "",
       timer: 45,
       step1: "1638 - Dutch settlement",
@@ -481,6 +486,7 @@ export const validateExcelQuestions = (questions: ExcelQuestion[]): ValidationRe
         level: Number(q.level),
         timer: Number(q.timer) || 30,
         question: toStr(q.question),
+        instruction: toStr(q.instruction),
         optionA: toStr(q.optionA),
         optionB: toStr(q.optionB),
         optionC: toStr(q.optionC),

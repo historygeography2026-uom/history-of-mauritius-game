@@ -7,10 +7,11 @@ import { Star, Volume2 } from "lucide-react"
 import Image from "next/image"
 import { DodoMascot, getRandomMessage } from "@/components/dodo-mascot"
 import { GameConfetti } from "@/components/game-confetti"
-import { useGameSounds } from "@/hooks/use-game-sounds"
+import { useGameSounds, isGameMuted } from "@/hooks/use-game-sounds"
 
 // Text-to-speech function
 const speakText = (text: string) => {
+  if (isGameMuted()) return
   if (typeof window !== "undefined" && "speechSynthesis" in window) {
     // Cancel any ongoing speech
     window.speechSynthesis.cancel()
@@ -66,12 +67,14 @@ export default function MatchingGame({
   const [selectedLeft, setSelectedLeft] = useState<number | null>(null)
   const [selectedRight, setSelectedRight] = useState<number | null>(null)
   const [matched, setMatched] = useState<Set<number>>(new Set())
+  const [matchedRight, setMatchedRight] = useState<Set<number>>(new Set())
   const [score, setScore] = useState(0)
   const [wrongMatch, setWrongMatch] = useState(false)
   const [feedback, setFeedback] = useState<{ show: boolean; correct: boolean }>({ show: false, correct: false })
   const [mascotMood, setMascotMood] = useState<"idle" | "happy" | "sad" | "thinking" | "celebrating" | "encouraging">("idle")
   const [mascotMessage, setMascotMessage] = useState("")
   const [showConfetti, setShowConfetti] = useState(false)
+  const [showComplete, setShowComplete] = useState(false)
   const { playCorrect, playWrong, playClick } = useGameSounds()
 
   useEffect(() => {
@@ -79,6 +82,7 @@ export default function MatchingGame({
     setMatchPairs(pairsToUse)
     setRightItems([...pairsToUse.map((p: MatchPair) => p.right || "")].sort(() => Math.random() - 0.5))
     setMatched(new Set())
+    setMatchedRight(new Set())
     setFeedback({ show: false, correct: false })
     setSelectedLeft(null)
     setSelectedRight(null)
@@ -93,6 +97,7 @@ export default function MatchingGame({
 
   const handleRightClick = (index: number) => {
     if (selectedLeft === null) return
+    if (matchedRight.has(index)) return
     playClick()
     setSelectedRight(index)
 
@@ -104,6 +109,9 @@ export default function MatchingGame({
       const newMatched = new Set(matched)
       newMatched.add(selectedLeft)
       setMatched(newMatched)
+      const newMatchedRight = new Set(matchedRight)
+      newMatchedRight.add(index)
+      setMatchedRight(newMatchedRight)
       setScore(score + 1)
       setFeedback({ show: true, correct: true })
       setMascotMood("happy")
@@ -115,7 +123,7 @@ export default function MatchingGame({
       if (newMatched.size === matchPairs.length) {
         setMascotMood("celebrating")
         setMascotMessage(getRandomMessage("levelComplete"))
-        setTimeout(() => onComplete(1), 1500)
+        setShowComplete(true) // Show Continue button instead of auto-advancing
       }
     } else {
       setFeedback({ show: true, correct: false })
@@ -140,7 +148,7 @@ export default function MatchingGame({
   return (
     <>
       <GameConfetti trigger={showConfetti} type={matched.size === matchPairs.length ? "levelComplete" : "correct"} />
-      <Card className="border-4 border-primary/30 bg-card p-4 md:p-5 animate-pop-in relative overflow-visible">
+      <Card className="border-4 border-primary/30 bg-card p-3 md:p-4 animate-pop-in relative overflow-visible">
         <div className="mb-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-bold text-card-foreground md:text-2xl">
@@ -172,32 +180,33 @@ export default function MatchingGame({
         </div>
 
       <div className="mb-2 rounded-lg bg-blue-50 p-2 border border-blue-200">
-        <p className="text-sm text-blue-900 font-semibold">📌 Click a picture or word on the left, then click what it matches on the right!</p>
+        <p className="text-sm text-blue-900 font-semibold">📌 {question?.instruction || "Click a picture or word on the left, then click what it matches on the right!"}</p>
       </div>
 
       {/* Show question image if provided from DB */}
       {question?.image && (
-        <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 animate-pop-in">
+        <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 animate-pop-in bg-white flex items-center justify-center">
           <Image
             src={question.image}
             alt="Question image"
-            width={400}
-            height={200}
-            className="w-full h-auto object-cover max-h-[120px]"
+            width={500}
+            height={300}
+            className="w-full h-auto object-contain max-h-[160px]"
+            style={{ imageRendering: 'auto' }}
           />
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-2">
         {/* Left Column */}
-        <div className="space-y-2">
-          <h3 className="text-base font-bold text-primary mb-1">🎯 Choose one:</h3>
+        <div className="space-y-1.5">
+          <h3 className="text-sm font-bold text-primary mb-1">🎯 Choose one:</h3>
           {matchPairs.map((item, index) => (
             <div key={index} className="relative">
               <Button
                 onClick={() => handleLeftClick(index)}
                 disabled={matched.has(index)}
-                className={`h-auto w-full p-4 text-lg transition-all animate-pop-in flex flex-col items-center gap-3 rounded-xl ${
+                className={`h-auto w-full p-3 text-base transition-all animate-pop-in flex flex-col items-center gap-2 rounded-xl ${
                   matched.has(index)
                     ? "bg-green-500 text-white border-4 border-green-600 opacity-70 cursor-default"
                     : selectedLeft === index
@@ -217,7 +226,7 @@ export default function MatchingGame({
                     />
                   </div>
                 )}
-                <span className="font-bold text-sm">{item.left || "Item"}</span>
+                <span className="font-bold text-sm break-words whitespace-normal text-center w-full">{item.left || "Item"}</span>
               </Button>
               {matched.has(index) && (
                 <div className="absolute -top-3 -right-3 bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-2xl animate-bounce-gentle">
@@ -229,24 +238,32 @@ export default function MatchingGame({
         </div>
 
         {/* Right Column */}
-        <div className="space-y-2">
-          <h3 className="text-base font-bold text-primary mb-1">🎯 Pick a match:</h3>
+        <div className="space-y-1.5">
+          <h3 className="text-sm font-bold text-primary mb-1">🎯 Pick a match:</h3>
           {rightItems.map((item, index) => (
-            <Button
-              key={index}
-              onClick={() => handleRightClick(index)}
-              disabled={selectedLeft === null}
-              className={`h-auto w-full p-3 text-sm transition-all animate-pop-in rounded-xl font-semibold ${
-                selectedRight === index
-                  ? "bg-yellow-400 text-gray-900 border-4 border-yellow-500 scale-105 shadow-lg animate-pulse"
-                  : selectedLeft !== null
-                    ? "bg-gradient-to-br from-orange-400 to-orange-500 text-white hover:from-orange-500 hover:to-orange-600 hover:scale-105 hover:shadow-lg cursor-pointer"
-                    : "bg-gray-300 text-gray-600 cursor-not-allowed"
-              }`}
-              style={{ animationDelay: `${index * 0.1 + 0.2}s` }}
-            >
-              {item || "Match"}
-            </Button>
+            <div key={index} className="relative">
+              <Button
+                onClick={() => handleRightClick(index)}
+                disabled={selectedLeft === null || matchedRight.has(index)}
+                className={`h-auto w-full p-3 text-sm transition-all animate-pop-in rounded-xl font-semibold ${
+                  matchedRight.has(index)
+                    ? "bg-green-500 text-white border-4 border-green-600 opacity-70 cursor-default"
+                    : selectedRight === index
+                      ? "bg-yellow-400 text-gray-900 border-4 border-yellow-500 scale-105 shadow-lg animate-pulse"
+                      : selectedLeft !== null
+                        ? "bg-gradient-to-br from-orange-400 to-orange-500 text-white hover:from-orange-500 hover:to-orange-600 hover:scale-105 hover:shadow-lg cursor-pointer"
+                        : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                }`}
+                style={{ animationDelay: `${index * 0.1 + 0.2}s` }}
+              >
+                <span className="break-words whitespace-normal text-center w-full">{item || "Match"}</span>
+              </Button>
+              {matchedRight.has(index) && (
+                <div className="absolute -top-3 -right-3 bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-2xl animate-bounce-gentle">
+                  ✓
+                </div>
+              )}
+            </div>
           ))}
         </div>
       </div>
@@ -254,7 +271,7 @@ export default function MatchingGame({
       {/* Feedback Message */}
       {feedback.show && (
         <div
-          className={`mt-3 rounded-xl p-3 text-center text-base font-bold animate-pop-in ${
+          className={`mt-2 rounded-xl p-2 text-center text-sm font-bold animate-pop-in ${
             feedback.correct
               ? "bg-green-100 text-green-700 border-2 border-green-500"
               : "bg-red-100 text-red-700 border-2 border-red-500"
@@ -269,9 +286,17 @@ export default function MatchingGame({
       )}
 
       {matched.size === matchPairs.length && matchPairs.length > 0 && (
-        <div className="mt-3 rounded-2xl bg-gradient-to-r from-yellow-100 to-green-100 p-4 text-center animate-bounce-in border-2 border-green-500 shadow-lg">
-          <p className="text-2xl font-black text-green-600 mb-1">🏆 Amazing!</p>
-          <p className="text-lg font-bold text-green-700">All pairs matched perfectly!</p>
+        <div className="mt-3 space-y-3">
+          <div className="rounded-2xl bg-gradient-to-r from-yellow-100 to-green-100 p-4 text-center animate-bounce-in border-2 border-green-500 shadow-lg">
+            <p className="text-2xl font-black text-green-600 mb-1">🏆 Amazing!</p>
+            <p className="text-lg font-bold text-green-700">All pairs matched perfectly!</p>
+          </div>
+          <Button
+            onClick={() => onComplete(1)}
+            className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-3 hover:scale-105 transition-all rounded-xl shadow-lg font-bold"
+          >
+            Continue →
+          </Button>
         </div>
       )}
     </Card>

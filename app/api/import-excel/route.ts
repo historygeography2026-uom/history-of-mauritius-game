@@ -60,6 +60,7 @@ interface ExcelQuestion {
   level: number
   type: string
   question: string
+  instruction?: string
   optionA?: string
   optionB?: string
   optionC?: string
@@ -169,27 +170,39 @@ export async function POST(req: NextRequest) {
 
         // Insert question using pg pool (Render PostgreSQL)
         const questionResult = await pool.query(
-          `INSERT INTO questions (subject_id, level_id, question_type_id, question_text, image_url, timer_seconds, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)
+          `INSERT INTO questions (subject_id, level_id, question_type_id, question_text, instruction, image_url, timer_seconds, created_by)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
            RETURNING id`,
-          [subjectId, levelId, typeId, q.question, finalImageUrl, q.timer || 30, createdBy]
+          [subjectId, levelId, typeId, q.question, q.instruction || null, finalImageUrl, q.timer || 30, createdBy]
         )
         const questionId = questionResult.rows[0].id
 
         // Insert type-specific data
         if (q.type === "mcq") {
+          // Normalize correctAnswer for robust matching (trim whitespace, case-insensitive)
+          const correctAnswerNorm = (q.correctAnswer || "").toString().trim().toLowerCase()
           const options = [
-            { text: q.optionA || "", correct: q.correctAnswer === q.optionA },
-            { text: q.optionB || "", correct: q.correctAnswer === q.optionB },
-            { text: q.optionC || "", correct: q.correctAnswer === q.optionC },
-            { text: q.optionD || "", correct: q.correctAnswer === q.optionD },
+            { text: (q.optionA || "").toString().trim(), order: 1 },
+            { text: (q.optionB || "").toString().trim(), order: 2 },
+            { text: (q.optionC || "").toString().trim(), order: 3 },
+            { text: (q.optionD || "").toString().trim(), order: 4 },
           ]
-          for (let i = 0; i < options.length; i++) {
+          
+          // Find which option matches the correct answer (case-insensitive, trimmed)
+          let foundCorrect = false
+          for (const option of options) {
+            const isCorrect = option.text.toLowerCase() === correctAnswerNorm
+            if (isCorrect) foundCorrect = true
             await pool.query(
               `INSERT INTO mcq_options (question_id, option_order, option_text, is_correct)
                VALUES ($1, $2, $3, $4)`,
-              [questionId, i + 1, options[i].text, options[i].correct]
+              [questionId, option.order, option.text, isCorrect]
             )
+          }
+          
+          if (!foundCorrect) {
+            console.warn(`[import] WARNING: correctAnswer "${q.correctAnswer}" does not match any option for question: "${q.question?.substring(0, 50)}"`)
+            errors.push(`Warning: correctAnswer "${q.correctAnswer}" doesn't match any option for: "${q.question?.substring(0, 40)}..."`)
           }
         } else if (q.type === "matching") {
           const pairs = []

@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     // Fetch questions
     let query = `
       SELECT 
-        q.id, q.question_text, q.timer_seconds, q.image_url,
+        q.id, q.question_text, q.instruction, q.timer_seconds, q.image_url,
         s.name as subject, l.level_number as level, qt.name as question_type
       FROM questions q
       JOIN subjects s ON q.subject_id = s.id
@@ -22,8 +22,13 @@ export async function GET(request: NextRequest) {
     const params: any[] = []
 
     if (!all) {
-      query += ` AND s.name = $${params.length + 1}`
-      params.push(subject)
+      // "combined" means pull from BOTH history and geography banks
+      if (subject === "combined") {
+        query += ` AND s.name IN ('history', 'geography')`
+      } else {
+        query += ` AND s.name = $${params.length + 1}`
+        params.push(subject)
+      }
       query += ` AND l.level_number = $${params.length + 1}`
       params.push(Number(level))
     }
@@ -43,6 +48,7 @@ export async function GET(request: NextRequest) {
         const baseQuestion = {
           id: q.id,
           title: q.question_text,
+          instruction: q.instruction || undefined,
           type,
           timer: q.timer_seconds,
           image: q.image_url || undefined,
@@ -56,11 +62,14 @@ export async function GET(request: NextRequest) {
             [q.id]
           )
           const correctIndex = options.rows.findIndex((opt: any) => opt.is_correct)
+          if (correctIndex === -1) {
+            console.warn(`[questions API] No correct answer marked for MCQ question id=${q.id}: "${q.question_text?.substring(0, 50)}"`)
+          }
           return {
             ...baseQuestion,
             question: q.question_text,
             options: options.rows.map((opt: any) => opt.option_text),
-            correct: correctIndex + 1,
+            correct: correctIndex >= 0 ? correctIndex + 1 : 1, // Fallback to 1 if none marked (should never happen with fixed import)
           }
         } else if (type === "matching") {
           const pairs = await pool.query(
@@ -92,11 +101,17 @@ export async function GET(request: NextRequest) {
              WHERE question_id = $1 ORDER BY item_order`,
             [q.id]
           )
+          // items: texts in shuffled/display order (by item_order)
+          // correct: texts sorted by correct_position (the actual correct sequence)
+          const itemTexts = items.rows.map((item: any) => item.item_text)
+          const correctOrder = [...items.rows]
+            .sort((a: any, b: any) => a.correct_position - b.correct_position)
+            .map((item: any) => item.item_text)
           return {
             ...baseQuestion,
             question: q.question_text,
-            items: items.rows.map((item: any) => item.item_text),
-            correct: items.rows.sort((a: any, b: any) => a.correct_position - b.correct_position).map((item: any) => items.rows.indexOf(item) + 1),
+            items: itemTexts,
+            correct: correctOrder,
           }
         } else if (type === "truefalse") {
           const answer = await pool.query(

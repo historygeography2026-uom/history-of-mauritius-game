@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
 
     let query = `
       SELECT 
-        q.id, q.question_text, q.image_url, q.timer_seconds, 
+        q.id, q.question_text, q.instruction, q.image_url, q.timer_seconds, 
         q.created_by, q.created_at, q.updated_at,
         s.name as subject, l.level_number as level, qt.name as question_type
       FROM questions q
@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { subject, level, type, question_text, image_url, timer_seconds, answer_data, created_by } = body
+    const { subject, level, type, question_text, instruction, image_url, timer_seconds, answer_data, created_by } = body
 
     // Get IDs from names
     const [subjectResult, levelResult, typeResult] = await Promise.all([
@@ -109,14 +109,15 @@ export async function POST(request: NextRequest) {
 
     // Create question
     const questionResult = await pool.query(
-      `INSERT INTO questions (subject_id, level_id, question_type_id, question_text, image_url, timer_seconds, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO questions (subject_id, level_id, question_type_id, question_text, instruction, image_url, timer_seconds, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
       [
         subjectResult.rows[0].id,
         levelResult.rows[0].id,
         typeResult.rows[0].id,
         question_text,
+        instruction || null,
         image_url || null,
         timer_seconds || 30,
         created_by || "MES",
@@ -176,7 +177,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
-    const { id, subject, level, type, question_text, image_url, timer_seconds, answer_data, created_by } = body
+    const { id, subject, level, type, question_text, instruction, image_url, timer_seconds, answer_data, created_by } = body
 
     // Get IDs
     const [subjectResult, levelResult, typeResult] = await Promise.all([
@@ -189,13 +190,14 @@ export async function PUT(request: NextRequest) {
     await pool.query(
       `UPDATE questions 
        SET subject_id = $1, level_id = $2, question_type_id = $3, 
-           question_text = $4, image_url = $5, timer_seconds = $6, updated_at = NOW()
-       WHERE id = $7`,
+           question_text = $4, instruction = $5, image_url = $6, timer_seconds = $7, updated_at = NOW()
+       WHERE id = $8`,
       [
         subjectResult.rows[0].id,
         levelResult.rows[0].id,
         typeResult.rows[0].id,
         question_text,
+        instruction || null,
         image_url || null,
         timer_seconds || 30,
         id,
