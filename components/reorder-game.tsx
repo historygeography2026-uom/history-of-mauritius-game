@@ -166,10 +166,12 @@ export default function ReorderGame({
           <Image
             src={question.image}
             alt="Question image"
-            width={500}
-            height={300}
-            className="w-full h-auto object-contain max-h-[160px]"
-            style={{ imageRendering: 'auto' }}
+            width={1200}
+            height={800}
+            className="w-full h-auto object-contain max-h-[400px]"
+            quality={100}
+            unoptimized
+            priority
           />
         </div>
       )}

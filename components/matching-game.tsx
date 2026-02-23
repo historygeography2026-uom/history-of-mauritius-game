@@ -189,10 +189,12 @@ export default function MatchingGame({
           <Image
             src={question.image}
             alt="Question image"
-            width={500}
-            height={300}
-            className="w-full h-auto object-contain max-h-[160px]"
-            style={{ imageRendering: 'auto' }}
+            width={1200}
+            height={800}
+            className="w-full h-auto object-contain max-h-[400px]"
+            quality={100}
+            unoptimized
+            priority
           />
         </div>
       )}
@@ -220,9 +222,11 @@ export default function MatchingGame({
                     <Image
                       src={item.leftImage || "/placeholder.svg"}
                       alt={item.left || "Item"}
-                      width={100}
-                      height={60}
+                      width={200}
+                      height={120}
                       className="object-cover"
+                      quality={100}
+                      unoptimized
                     />
                   </div>
                 )}
