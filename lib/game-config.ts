@@ -11,7 +11,7 @@ export const GAME_CONFIG = {
    * The game will randomly select this many questions from the question bank.
    * If the bank has fewer questions, all available questions will be used.
    */
-  QUESTIONS_PER_LEVEL: 20,
+  QUESTIONS_PER_LEVEL: 10,
 
   /**
    * Default timer duration (in seconds) per question.
