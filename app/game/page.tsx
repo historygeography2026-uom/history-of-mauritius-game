@@ -38,6 +38,7 @@ const GamePage = () => {
   
   // PERF FIX: Track if component is mounted to prevent state updates after unmount
   const isMountedRef = useRef(true)
+  const isUnmountingRef = useRef(false) // Flag to prevent any operations during unmount
   
   const [mixedQuestions, setMixedQuestions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -56,7 +57,7 @@ const GamePage = () => {
   const [error, setError] = useState<string | null>(null)
   const [showLevelCompleteConfetti, setShowLevelCompleteConfetti] = useState(false)
   const [currentStreak, setCurrentStreak] = useState(0)
-  const [showStreakMilestone, setShowStreakMilestone] = useState<number | null>(null)
+  const [showStreakMilestone, setShowStreakMilestone] = useState<string | null>(null)
   const { playLevelComplete, playStar, setMuted } = useGameSounds()
   const { recordQuestionAnswered, recordLevelCompleted, recordGameStarted } = useAchievements()
 
@@ -67,28 +68,32 @@ const GamePage = () => {
   // PERF FIX: Track all pending timeouts/intervals to clear on unmount
   const pendingTimeoutsRef = useRef<NodeJS.Timeout[]>([])
   const pendingIntervalsRef = useRef<NodeJS.Timer[]>([])
+  const timerIntervalRef = useRef<NodeJS.Timer | null>(null) // Store main timer for direct access
 
   // PERF FIX: Cleanup effect to prevent memory leaks from rapid navigation
   useEffect(() => {
     return () => {
+      isUnmountingRef.current = true // Set unmounting flag FIRST to block all async ops
       isMountedRef.current = false // Mark component as unmounted
       // CRITICAL: Clear ALL pending timeouts and intervals immediately
       pendingTimeoutsRef.current.forEach((timeout) => clearTimeout(timeout))
       pendingIntervalsRef.current.forEach((interval) => clearInterval(interval))
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current)
       pendingTimeoutsRef.current = []
       pendingIntervalsRef.current = []
+      timerIntervalRef.current = null
     }
   }, [])
 
 
   useEffect(() => {
     try {
-      if (!isMountedRef.current) return
+      if (isUnmountingRef.current || !isMountedRef.current) return
       setLoading(true)
       setError(null)
       if (qError) {
         console.error("[v0] useQuestions error:", qError)
-        if (!isMountedRef.current) return
+        if (isUnmountingRef.current || !isMountedRef.current) return
         setError("Failed to load questions.")
         setLoading(false)
         return
@@ -100,7 +105,7 @@ const GamePage = () => {
       console.log("[v0] Questions received:", questions?.length, questions)
       if (!questions || !Array.isArray(questions) || questions.length === 0) {
         console.warn("[v0] No questions found for", { subject, level })
-        if (!isMountedRef.current) return
+        if (isUnmountingRef.current || !isMountedRef.current) return
         setError("No questions found for this subject and level.")
         setLoading(false)
         return
@@ -117,26 +122,26 @@ const GamePage = () => {
       // Randomly select questions from the whole bank for this level
       const shuffled = shuffleArray(questions).slice(0, GAME_CONFIG.QUESTIONS_PER_LEVEL)
       console.log("[v0] Setting mixed questions:", shuffled.length)
-      if (!isMountedRef.current) return
+      if (isUnmountingRef.current || !isMountedRef.current) return
       setMixedQuestions(shuffled)
       setLoading(false)
     } catch (error: any) {
-      console.error("[v0] Error loading questions:", error)
-      setError(error.message || "Failed to load questions")
-      setLoading(false)
+      if (!isUnmountingRef.current) {
+        console.error("[v0] Error loading questions:", error)
+        setError(error.message || "Failed to load questions")
+        setLoading(false)
+      }
     }
   }, [subject, level, questions, qLoading, qError])
 
   // Initialize level timer and start countdown when questions are loaded
-  // PERF FIX: Combined into one effect using a local variable for countdown,
-  // removing levelTimeLeft from deps to prevent interval recreation every second.
-  // Also moved setShowTimeoutScreen/setLevelTimedOut out of setState updater.
+  // PERF FIX: Disable timer during rapid navigation to prevent state updates
   useEffect(() => {
-    if (!isMountedRef.current || !mixedQuestions.length || allCompleted || levelTimedOut) return
+    if (!isMountedRef.current || isUnmountingRef.current || !mixedQuestions.length || allCompleted || levelTimedOut) return
     
     // Calculate total time for level: sum of all question timers, or default timer per question
     const totalTime = mixedQuestions.reduce((sum, q) => sum + (q.timer || GAME_CONFIG.DEFAULT_QUESTION_TIMER), 0)
-    if (isMountedRef.current) {
+    if (isMountedRef.current && !isUnmountingRef.current) {
       setLevelInitialTime(totalTime)
       setLevelTimeLeft(totalTime)
     }
@@ -146,39 +151,44 @@ const GamePage = () => {
     // Use local variable to drive countdown — avoids putting levelTimeLeft in deps
     let remaining = totalTime
     const timer = setInterval(() => {
-      if (!isMountedRef.current) return
+      // CRITICAL: Check unmounting flag FIRST - prevents any state updates during unmount
+      if (isUnmountingRef.current || !isMountedRef.current) {
+        clearInterval(timer)
+        return
+      }
       remaining -= 1
       if (remaining <= 0) {
         clearInterval(timer)
-        if (isMountedRef.current) {
+        if (!isUnmountingRef.current && isMountedRef.current) {
           setLevelTimeLeft(0)
           setShowTimeoutScreen(true)
           setLevelTimedOut(true)
         }
       } else {
-        if (isMountedRef.current) {
+        if (!isUnmountingRef.current && isMountedRef.current) {
           setLevelTimeLeft(remaining)
         }
         levelTimeLeftRef.current = remaining
       }
     }, 1000)
 
+    timerIntervalRef.current = timer
     pendingIntervalsRef.current.push(timer)
     return () => {
       clearInterval(timer)
+      timerIntervalRef.current = null
       pendingIntervalsRef.current = pendingIntervalsRef.current.filter((t) => t !== timer)
     }
   }, [mixedQuestions, allCompleted, levelTimedOut])
 
   // Handle level timeout - show timeout screen then end exercise
   useEffect(() => {
-    if (!isMountedRef.current || !showTimeoutScreen || !levelTimedOut) return
+    if (isUnmountingRef.current || !isMountedRef.current || !showTimeoutScreen || !levelTimedOut) return
 
     const timeout = setTimeout(() => {
-      if (isMountedRef.current) {
-        setShowTimeoutScreen(false)
-        setAllCompleted(true) // End the exercise, points will be recorded
-      }
+      if (isUnmountingRef.current || !isMountedRef.current) return
+      setShowTimeoutScreen(false)
+      setAllCompleted(true) // End the exercise, points will be recorded
     }, 3500)
 
     pendingTimeoutsRef.current.push(timeout)
@@ -189,6 +199,9 @@ const GamePage = () => {
   }, [showTimeoutScreen, levelTimedOut])
 
   const handleQuestionComplete = useCallback((stars: number) => {
+    // CRITICAL: Exit immediately if unmounting to prevent all side effects
+    if (isUnmountingRef.current) return
+    
     // Guard: Prevent duplicate completion calls for the same question
     if (!mixedQuestions[currentQuestionIndex]) return
     if (answeredQuestions[currentQuestionIndex] !== undefined) return
@@ -200,8 +213,10 @@ const GamePage = () => {
     const currentQuestion = mixedQuestions[currentQuestionIndex]
     const isCorrect = stars > 0
     
-    // Record question for achievements
-    recordQuestionAnswered(isCorrect, currentQuestion.type)
+    // Record question for achievements (ONLY if not unmounting)
+    if (!isUnmountingRef.current) {
+      recordQuestionAnswered(isCorrect, currentQuestion.type)
+    }
     
     // Update streak
     if (isCorrect) {
@@ -210,7 +225,7 @@ const GamePage = () => {
       
       // Check for streak milestones (3, 5, 7, 10)
       if ([3, 5, 7, 10].includes(newStreak)) {
-        setShowStreakMilestone(newStreak)
+        setShowStreakMilestone(null) // Don't show during unmount
       }
     } else {
       setCurrentStreak(0)
@@ -226,15 +241,15 @@ const GamePage = () => {
     }))
     setTotalStars((prev) => prev + stars)
     
-    // Play star sound for correct answers
-    if (stars > 0) {
+    // Play star sound for correct answers (ONLY if not unmounting)
+    if (stars > 0 && !isUnmountingRef.current) {
       playStar()
     }
 
     if (currentQuestionIndex < mixedQuestions.length - 1) {
       const timeout = setTimeout(
         () => {
-          if (!isMountedRef.current) return
+          if (isUnmountingRef.current || !isMountedRef.current) return
           setShowStreakMilestone(null) // Clear streak popup before moving to next question
           setCurrentQuestionIndex((prev) => prev + 1)
           isAdvancingRef.current = false // Unlock for next question
@@ -243,16 +258,18 @@ const GamePage = () => {
       )
       pendingTimeoutsRef.current.push(timeout)
     } else {
-      // Level complete - trigger celebration
-      setShowLevelCompleteConfetti(true)
-      playLevelComplete()
-      const finalStars = totalStars + stars
-      const maxPossibleStars = mixedQuestions.length * 3 // Assuming max 3 stars per question
-      const timeRemainingPercent = (levelTimeLeftRef.current / levelInitialTimeRef.current) * 100
-      recordLevelCompleted(subject, finalStars, maxPossibleStars, timeRemainingPercent)
-      // Persist progress to localStorage for level unlock & star retention
-      saveProgress(subject, parseInt(level), finalStars, true)
-      setAllCompleted(true)
+      // Level complete - trigger celebration (ONLY if not unmounting)
+      if (!isUnmountingRef.current) {
+        setShowLevelCompleteConfetti(true)
+        playLevelComplete()
+        const finalStars = totalStars + stars
+        const maxPossibleStars = mixedQuestions.length * 3 // Assuming max 3 stars per question
+        const timeRemainingPercent = (levelTimeLeftRef.current / levelInitialTimeRef.current) * 100
+        recordLevelCompleted(subject, finalStars, maxPossibleStars, timeRemainingPercent)
+        // Persist progress to localStorage for level unlock & star retention
+        saveProgress(subject, parseInt(level), finalStars, true)
+        setAllCompleted(true)
+      }
       isAdvancingRef.current = false
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -261,13 +278,13 @@ const GamePage = () => {
   // Persist results to leaderboard when all questions are completed or level times out
   // PERF FIX: Only trigger on allCompleted to avoid running on every answered question
   useEffect(() => {
-    if (!isMountedRef.current || !allCompleted) return
+    if (isUnmountingRef.current || !isMountedRef.current || !allCompleted) return
     // Also save progress to localStorage on timeout (partial completion)
     if (levelTimedOut) {
       saveProgress(subject, parseInt(level), totalStars, false)
     }
     const persistResults = async () => {
-      if (!isMountedRef.current) return
+      if (isUnmountingRef.current || !isMountedRef.current) return
       try {
         // Points model: configurable points per star
         const total_points = totalStars * GAME_CONFIG.POINTS_PER_STAR
@@ -291,7 +308,7 @@ const GamePage = () => {
           }),
         })
       } catch (e) {
-        if (isMountedRef.current) {
+        if (!isUnmountingRef.current && isMountedRef.current) {
           console.error("[v0] Failed to save leaderboard entry", e)
         }
       }
@@ -384,7 +401,11 @@ const GamePage = () => {
           {/* PERF FIX: Removed GPU-heavy blobs from completion screen too */}
 
           <div className="mx-auto max-w-2xl relative z-10">
-            <Button onClick={() => router.push("/")} className="mb-6 bg-secondary hover:bg-secondary/90 text-white">
+            <Button onClick={() => {
+              // CRITICAL: Set unmounting flag BEFORE navigation to block all pending ops
+              isUnmountingRef.current = true
+              router.push("/")
+            }} className="mb-6 bg-secondary hover:bg-secondary/90 text-white">
               {" "}
               {/* Changed window.history.back to router.push("/") */}
               <ArrowLeft className="mr-2 h-5 w-5" />
