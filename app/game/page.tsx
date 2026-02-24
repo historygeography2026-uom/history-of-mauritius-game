@@ -35,6 +35,10 @@ const GamePage = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { data: session } = useSession()
+  
+  // PERF FIX: Track if component is mounted to prevent state updates after unmount
+  const isMountedRef = useRef(true)
+  
   const [mixedQuestions, setMixedQuestions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
@@ -60,12 +64,22 @@ const GamePage = () => {
   const level = searchParams.get("level") || "1"
   const { questions, isLoading: qLoading, error: qError } = useQuestions(subject, level)
 
+  // PERF FIX: Cleanup effect to prevent memory leaks from rapid navigation
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false // Mark component as unmounted
+    }
+  }, [])
+
+
   useEffect(() => {
     try {
+      if (!isMountedRef.current) return
       setLoading(true)
       setError(null)
       if (qError) {
         console.error("[v0] useQuestions error:", qError)
+        if (!isMountedRef.current) return
         setError("Failed to load questions.")
         setLoading(false)
         return
@@ -77,6 +91,7 @@ const GamePage = () => {
       console.log("[v0] Questions received:", questions?.length, questions)
       if (!questions || !Array.isArray(questions) || questions.length === 0) {
         console.warn("[v0] No questions found for", { subject, level })
+        if (!isMountedRef.current) return
         setError("No questions found for this subject and level.")
         setLoading(false)
         return
@@ -93,6 +108,7 @@ const GamePage = () => {
       // Randomly select questions from the whole bank for this level
       const shuffled = shuffleArray(questions).slice(0, GAME_CONFIG.QUESTIONS_PER_LEVEL)
       console.log("[v0] Setting mixed questions:", shuffled.length)
+      if (!isMountedRef.current) return
       setMixedQuestions(shuffled)
       setLoading(false)
     } catch (error: any) {
@@ -107,26 +123,33 @@ const GamePage = () => {
   // removing levelTimeLeft from deps to prevent interval recreation every second.
   // Also moved setShowTimeoutScreen/setLevelTimedOut out of setState updater.
   useEffect(() => {
-    if (!mixedQuestions.length || allCompleted || levelTimedOut) return
+    if (!isMountedRef.current || !mixedQuestions.length || allCompleted || levelTimedOut) return
     
     // Calculate total time for level: sum of all question timers, or default timer per question
     const totalTime = mixedQuestions.reduce((sum, q) => sum + (q.timer || GAME_CONFIG.DEFAULT_QUESTION_TIMER), 0)
-    setLevelInitialTime(totalTime)
+    if (isMountedRef.current) {
+      setLevelInitialTime(totalTime)
+      setLevelTimeLeft(totalTime)
+    }
     levelInitialTimeRef.current = totalTime
-    setLevelTimeLeft(totalTime)
     levelTimeLeftRef.current = totalTime
 
     // Use local variable to drive countdown — avoids putting levelTimeLeft in deps
     let remaining = totalTime
     const timer = setInterval(() => {
+      if (!isMountedRef.current) return
       remaining -= 1
       if (remaining <= 0) {
         clearInterval(timer)
-        setLevelTimeLeft(0)
-        setShowTimeoutScreen(true)
-        setLevelTimedOut(true)
+        if (isMountedRef.current) {
+          setLevelTimeLeft(0)
+          setShowTimeoutScreen(true)
+          setLevelTimedOut(true)
+        }
       } else {
-        setLevelTimeLeft(remaining)
+        if (isMountedRef.current) {
+          setLevelTimeLeft(remaining)
+        }
         levelTimeLeftRef.current = remaining
       }
     }, 1000)
@@ -136,11 +159,13 @@ const GamePage = () => {
 
   // Handle level timeout - show timeout screen then end exercise
   useEffect(() => {
-    if (!showTimeoutScreen || !levelTimedOut) return
+    if (!isMountedRef.current || !showTimeoutScreen || !levelTimedOut) return
 
     const timeout = setTimeout(() => {
-      setShowTimeoutScreen(false)
-      setAllCompleted(true) // End the exercise, points will be recorded
+      if (isMountedRef.current) {
+        setShowTimeoutScreen(false)
+        setAllCompleted(true) // End the exercise, points will be recorded
+      }
     }, 3500)
 
     return () => clearTimeout(timeout)
@@ -217,12 +242,13 @@ const GamePage = () => {
   // Persist results to leaderboard when all questions are completed or level times out
   // PERF FIX: Only trigger on allCompleted to avoid running on every answered question
   useEffect(() => {
-    if (!allCompleted) return
+    if (!isMountedRef.current || !allCompleted) return
     // Also save progress to localStorage on timeout (partial completion)
     if (levelTimedOut) {
       saveProgress(subject, parseInt(level), totalStars, false)
     }
     const persistResults = async () => {
+      if (!isMountedRef.current) return
       try {
         // Points model: configurable points per star
         const total_points = totalStars * GAME_CONFIG.POINTS_PER_STAR
@@ -246,7 +272,9 @@ const GamePage = () => {
           }),
         })
       } catch (e) {
-        console.error("[v0] Failed to save leaderboard entry", e)
+        if (isMountedRef.current) {
+          console.error("[v0] Failed to save leaderboard entry", e)
+        }
       }
     }
     void persistResults()
