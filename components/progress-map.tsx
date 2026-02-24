@@ -81,11 +81,6 @@ export function ProgressMap({ subject, subjectColor, subjectIcon, onSelectLevel,
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-200 via-sky-100 to-green-200 p-4 md:p-8 relative overflow-hidden">
-      {/* Decorative clouds */}
-      <div className="absolute top-10 left-10 text-6xl animate-float opacity-60">☁️</div>
-      <div className="absolute top-20 right-20 text-8xl animate-float opacity-50" style={{ animationDelay: "1s" }}>☁️</div>
-      <div className="absolute top-5 left-1/3 text-5xl animate-float opacity-40" style={{ animationDelay: "2s" }}>☁️</div>
-
       {/* Decorative elements */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-green-400 to-transparent"></div>
       <div className="absolute bottom-10 left-10 text-4xl">🌴</div>
@@ -154,11 +149,10 @@ export function ProgressMap({ subject, subjectColor, subjectIcon, onSelectLevel,
             return (
               <div
                 key={level.id}
-                className="absolute transform -translate-x-1/2 -translate-y-1/2 animate-pop-in"
+                className="absolute transform -translate-x-1/2 -translate-y-1/2"
                 style={{
                   left: `${pos.x}%`,
                   top: `${pos.y}%`,
-                  animationDelay: `${index * 0.2}s`,
                 }}
               >
                 {/* Level Node */}
@@ -175,7 +169,7 @@ export function ProgressMap({ subject, subjectColor, subjectIcon, onSelectLevel,
                       level.isCompleted
                         ? "bg-gradient-to-br from-green-400 to-green-600 border-green-300"
                         : level.isUnlocked
-                        ? "bg-gradient-to-br from-yellow-400 to-orange-500 border-yellow-300 animate-pulse-grow"
+                        ? "bg-gradient-to-br from-yellow-400 to-orange-500 border-yellow-300"
                         : "bg-gradient-to-br from-gray-400 to-gray-600 border-gray-300"
                     }`}
                   >
@@ -237,8 +231,8 @@ export function ProgressMap({ subject, subjectColor, subjectIcon, onSelectLevel,
                 {/* Decorative elements around nodes */}
                 {level.isCompleted && (
                   <>
-                    <div className="absolute -top-2 -right-2 text-2xl animate-bounce">🏆</div>
-                    <div className="absolute -bottom-2 -left-2 text-xl animate-wiggle">✨</div>
+                    <div className="absolute -top-2 -right-2 text-2xl">🏆</div>
+                    <div className="absolute -bottom-2 -left-2 text-xl">✨</div>
                   </>
                 )}
               </div>
@@ -247,14 +241,14 @@ export function ProgressMap({ subject, subjectColor, subjectIcon, onSelectLevel,
 
           {/* Treasure chest at the end */}
           <div
-            className="absolute transform -translate-x-1/2 animate-bounce-gentle"
+            className="absolute transform -translate-x-1/2"
             style={{ left: "90%", top: "60%" }}
           >
             <div className={`text-5xl ${levels.every(l => l.isCompleted) ? "" : "grayscale opacity-50"}`}>
               🎁
             </div>
             {levels.every(l => l.isCompleted) && (
-              <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-sm font-bold animate-pulse">
+              <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-sm font-bold">
                 Claim!
               </div>
             )}

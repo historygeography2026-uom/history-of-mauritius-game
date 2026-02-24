@@ -82,15 +82,6 @@ export default function SubjectSelection() {
     if (showProgressMap) {
       return (
         <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 p-4 md:p-8">
-          {/* Animated background elements */}
-          <div className="fixed inset-0 pointer-events-none overflow-hidden">
-            <div className="absolute top-10 left-5 w-40 h-40 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-            <div
-              className="absolute top-40 right-10 w-40 h-40 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"
-              style={{ animationDelay: "2s" }}
-            ></div>
-          </div>
-          
           <div className="mx-auto max-w-6xl relative z-10">
             <Button
               onClick={() => setShowProgressMap(false)}
@@ -125,19 +116,6 @@ export default function SubjectSelection() {
     
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 p-4 md:p-8">
-        {/* Animated background elements */}
-        <div className="fixed inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-10 left-5 w-40 h-40 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-          <div
-            className="absolute top-40 right-10 w-40 h-40 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"
-            style={{ animationDelay: "2s" }}
-          ></div>
-          <div
-            className="absolute -bottom-8 left-20 w-40 h-40 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"
-            style={{ animationDelay: "4s" }}
-          ></div>
-        </div>
-
         <div className="mx-auto max-w-4xl relative z-10">
           {/* Back Button and Map Toggle */}
           <div className="flex justify-between items-center mb-6">
@@ -161,11 +139,11 @@ export default function SubjectSelection() {
           {/* Subject Header */}
           <div className="mb-8 text-center">
             <div className="mb-4 flex items-center justify-center gap-2">
-              <Sparkles className="h-8 w-8 text-secondary animate-float" />
-              <h1 className="text-4xl font-bold text-primary md:text-5xl animate-pop-in">{subject?.title}</h1>
-              <Sparkles className="h-8 w-8 text-secondary animate-float" style={{ animationDelay: "1s" }} />
+              <Sparkles className="h-8 w-8 text-secondary" />
+              <h1 className="text-4xl font-bold text-primary md:text-5xl">{subject?.title}</h1>
+              <Sparkles className="h-8 w-8 text-secondary" />
             </div>
-            <p className="text-lg text-muted-foreground md:text-xl animate-pop-in" style={{ animationDelay: "0.2s" }}>
+            <p className="text-lg text-muted-foreground md:text-xl">
               {subject?.description}
             </p>
           </div>
@@ -175,8 +153,7 @@ export default function SubjectSelection() {
             {levels.map((level, index) => (
               <Card
                 key={level.id}
-                className="group cursor-pointer overflow-hidden border-4 border-primary/20 bg-card transition-all hover:scale-105 hover:border-primary hover:shadow-2xl animate-pop-in"
-                style={{ animationDelay: `${0.3 + index * 0.1}s` }}
+                className="group cursor-pointer overflow-hidden border-4 border-primary/20 bg-card transition-all hover:scale-105 hover:border-primary hover:shadow-2xl"
                 onClick={() => {
                   const queryParams = new URLSearchParams({
                     subject: selectedSubject,
@@ -207,19 +184,6 @@ export default function SubjectSelection() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 p-4 md:p-8">
-      {/* Animated background elements */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-10 left-5 w-40 h-40 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-        <div
-          className="absolute top-40 right-10 w-40 h-40 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"
-          style={{ animationDelay: "2s" }}
-        ></div>
-        <div
-          className="absolute -bottom-8 left-20 w-40 h-40 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"
-          style={{ animationDelay: "4s" }}
-        ></div>
-      </div>
-
       <div className="mx-auto max-w-6xl relative z-10">
         <div className="flex justify-between items-center mb-8">
           <div className="flex gap-2">
@@ -273,14 +237,11 @@ export default function SubjectSelection() {
           </div>
           
           <div className="mb-4 flex items-center justify-center gap-2">
-            <Sparkles className="h-10 w-10 text-secondary animate-float" />
-            <h1 className="text-5xl font-bold text-primary md:text-6xl animate-pop-in">History & Geography Game</h1>
-            <Sparkles className="h-10 w-10 text-secondary animate-float" style={{ animationDelay: "1s" }} />
+            <Sparkles className="h-10 w-10 text-secondary" />
+            <h1 className="text-5xl font-bold text-primary md:text-6xl">History & Geography Game</h1>
+            <Sparkles className="h-10 w-10 text-secondary" />
           </div>
-          <p
-            className="text-xl text-muted-foreground md:text-2xl animate-pop-in mt-4"
-            style={{ animationDelay: "0.2s" }}
-          >
+          <p className="text-xl text-muted-foreground md:text-2xl mt-4">
             Choose your subject and start learning! 🎓
           </p>
         </div>
@@ -290,13 +251,12 @@ export default function SubjectSelection() {
           {subjects.map((subject, index) => (
             <Card
               key={subject.id}
-              className={`group cursor-pointer overflow-hidden border-4 ${subject.borderColor} bg-card transition-all hover:scale-105 hover:shadow-2xl animate-pop-in`}
-              style={{ animationDelay: `${0.3 + index * 0.15}s` }}
+              className={`group cursor-pointer overflow-hidden border-4 ${subject.borderColor} bg-card transition-all hover:scale-105 hover:shadow-2xl`}
               onClick={() => setSelectedSubject(subject.id)}
             >
               <div className="p-8">
                 <div
-                  className={`mb-6 flex h-28 w-28 items-center justify-center rounded-3xl bg-gradient-to-br ${subject.color} text-7xl shadow-lg group-hover:animate-bounce-gentle transition-transform mx-auto`}
+                  className={`mb-6 flex h-28 w-28 items-center justify-center rounded-3xl bg-gradient-to-br ${subject.color} text-7xl shadow-lg transition-transform mx-auto`}
                 >
                   {subject.icon}
                 </div>
@@ -311,9 +271,9 @@ export default function SubjectSelection() {
         </div>
 
         {/* Info Card */}
-        <Card className="border-4 border-accent/30 bg-accent/10 animate-pop-in" style={{ animationDelay: "0.9s" }}>
+        <Card className="border-4 border-accent/30 bg-accent/10">
           <div className="p-8 text-center">
-            <Sparkles className="mx-auto mb-4 h-12 w-12 text-secondary animate-float" />
+            <Sparkles className="mx-auto mb-4 h-12 w-12 text-secondary" />
             <h3 className="mb-3 text-2xl font-bold text-card-foreground">Welcome to History & Geography Game 🌴</h3>
             <p className="text-lg leading-relaxed text-card-foreground">
               Select a subject above to begin your adventure! Each subject has 3 exciting levels with fun games, visual
