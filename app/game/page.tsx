@@ -64,10 +64,19 @@ const GamePage = () => {
   const level = searchParams.get("level") || "1"
   const { questions, isLoading: qLoading, error: qError } = useQuestions(subject, level)
 
+  // PERF FIX: Track all pending timeouts/intervals to clear on unmount
+  const pendingTimeoutsRef = useRef<NodeJS.Timeout[]>([])
+  const pendingIntervalsRef = useRef<NodeJS.Timer[]>([])
+
   // PERF FIX: Cleanup effect to prevent memory leaks from rapid navigation
   useEffect(() => {
     return () => {
       isMountedRef.current = false // Mark component as unmounted
+      // CRITICAL: Clear ALL pending timeouts and intervals immediately
+      pendingTimeoutsRef.current.forEach((timeout) => clearTimeout(timeout))
+      pendingIntervalsRef.current.forEach((interval) => clearInterval(interval))
+      pendingTimeoutsRef.current = []
+      pendingIntervalsRef.current = []
     }
   }, [])
 
@@ -154,7 +163,11 @@ const GamePage = () => {
       }
     }, 1000)
 
-    return () => clearInterval(timer)
+    pendingIntervalsRef.current.push(timer)
+    return () => {
+      clearInterval(timer)
+      pendingIntervalsRef.current = pendingIntervalsRef.current.filter((t) => t !== timer)
+    }
   }, [mixedQuestions, allCompleted, levelTimedOut])
 
   // Handle level timeout - show timeout screen then end exercise
@@ -168,7 +181,11 @@ const GamePage = () => {
       }
     }, 3500)
 
-    return () => clearTimeout(timeout)
+    pendingTimeoutsRef.current.push(timeout)
+    return () => {
+      clearTimeout(timeout)
+      pendingTimeoutsRef.current = pendingTimeoutsRef.current.filter((t) => t !== timeout)
+    }
   }, [showTimeoutScreen, levelTimedOut])
 
   const handleQuestionComplete = useCallback((stars: number) => {
@@ -215,14 +232,16 @@ const GamePage = () => {
     }
 
     if (currentQuestionIndex < mixedQuestions.length - 1) {
-      setTimeout(
+      const timeout = setTimeout(
         () => {
+          if (!isMountedRef.current) return
           setShowStreakMilestone(null) // Clear streak popup before moving to next question
           setCurrentQuestionIndex((prev) => prev + 1)
           isAdvancingRef.current = false // Unlock for next question
         },
         stars === 0 ? 1000 : 1500, // Shorter pause after timeout, longer after a correct answer
       )
+      pendingTimeoutsRef.current.push(timeout)
     } else {
       // Level complete - trigger celebration
       setShowLevelCompleteConfetti(true)
@@ -282,23 +301,15 @@ const GamePage = () => {
   }, [allCompleted])
 
   const TimeoutScreen = () => (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
       <Card className="border-4 border-red-500 bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50 p-12 text-center max-w-md">
-        {/* Animated lightning and explosion effects */}
+        {/* Lightning icon */}
         <div className="relative mb-8 h-24 flex items-center justify-center">
-          <div className="absolute inset-0 animate-ping opacity-75">
-            <Zap className="mx-auto h-20 w-20 text-red-500" />
-          </div>
-          <div className="relative animate-spin-slow">
-            <Zap className="mx-auto h-20 w-20 text-red-600" />
-          </div>
-          <div className="absolute inset-0 flex items-center justify-center animate-pulse">
-            <div className="h-16 w-16 rounded-full bg-red-300 opacity-30" />
-          </div>
+          <Zap className="h-20 w-20 text-red-600" />
         </div>
 
-        {/* Time's Up message with staggered animation */}
-        <h2 className="mb-2 text-5xl font-black text-red-600 animate-bounce-in">⏰ Time's Up!</h2>
+        {/* Time's Up message */}
+        <h2 className="mb-2 text-5xl font-black text-red-600">⏰ Time's Up!</h2>
 
         {/* Encouraging message for level timeout */}
         <div className="space-y-3 mb-6">
@@ -312,13 +323,12 @@ const GamePage = () => {
           <p className="text-sm text-gray-600">Recording your score...</p>
         </div>
 
-        {/* Progress indicator */}
+        {/* Progress indicator - static dots */}
         <div className="flex justify-center gap-2 mb-4">
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="h-3 w-3 rounded-full bg-red-400 animate-pulse"
-              style={{ animationDelay: `${i * 0.2}s` }}
+              className="h-3 w-3 rounded-full bg-red-400"
             />
           ))}
         </div>
@@ -589,14 +599,14 @@ const CountdownTimer = ({
 
         {/* Timer text in center */}
         <div
-          className={`absolute inset-0 flex flex-col items-center justify-center ${isCritical ? "animate-pulse-scale" : ""}`}
+          className={`absolute inset-0 flex flex-col items-center justify-center`}
         >
           <Clock
-            className={`h-5 w-5 mb-1 ${isCritical ? "text-red-500 animate-wiggle" : isWarning ? "text-amber-500" : "text-blue-500"}`}
+            className={`h-5 w-5 mb-1 ${isCritical ? "text-red-500" : isWarning ? "text-amber-500" : "text-blue-500"}`}
           />
           <span
             className={`text-xl font-bold ${
-              isCritical ? "text-red-500 animate-pulse" : isWarning ? "text-amber-500" : "text-blue-600"
+              isCritical ? "text-red-500" : isWarning ? "text-amber-500" : "text-blue-600"
             }`}
           >
             {formatTime(timeLeft)}
