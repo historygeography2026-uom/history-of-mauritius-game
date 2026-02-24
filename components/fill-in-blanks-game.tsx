@@ -168,7 +168,7 @@ export default function FillInBlanksGame({
   return (
     <>
       <GameConfetti trigger={showConfetti} type="correct" />
-      <Card className="border-4 border-primary/30 bg-card p-3 md:p-4 animate-pop-in relative overflow-visible">
+      <Card className="border-4 border-primary/30 bg-card p-3 md:p-4 relative overflow-visible">
         <div className="mb-2 flex items-center justify-between">
           <span className="text-lg font-bold text-muted-foreground">
             {isSingleMode ? "Question" : `Question ${currentQuestionIndex + 1} of ${builtInQuestions.length}`}
@@ -194,7 +194,7 @@ export default function FillInBlanksGame({
 
       {/* Show image for DB questions (single mode) or built-in questions */}
       {isSingleMode && singleQuestion?.image && (
-        <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 animate-pop-in bg-white flex items-center justify-center">
+        <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 bg-white flex items-center justify-center">
           <Image
             src={singleQuestion.image}
             alt="Question image"
@@ -208,7 +208,7 @@ export default function FillInBlanksGame({
         </div>
       )}
       {!isSingleMode && builtInQuestions[currentQuestionIndex].image && (
-        <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 animate-pop-in bg-white flex items-center justify-center">
+        <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 bg-white flex items-center justify-center">
           <Image
             src={builtInQuestions[currentQuestionIndex].image || "/placeholder.svg"}
             alt={builtInQuestions[currentQuestionIndex].imageAlt || "Question image"}
@@ -276,9 +276,9 @@ export default function FillInBlanksGame({
       {showResult && (
         <div className="space-y-3">
           <div
-            className={`rounded-2xl p-4 text-center ${isCorrect ? "bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-400 animate-correct-glow" : "bg-gradient-to-br from-orange-100 to-orange-200 border-2 border-orange-400"}`}
+            className={`rounded-2xl p-4 text-center ${isCorrect ? "bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-400" : "bg-gradient-to-br from-orange-100 to-orange-200 border-2 border-orange-400"}`}
           >
-            <p className="text-2xl md:text-3xl font-bold text-card-foreground animate-bounce-in mb-1">
+            <p className="text-2xl md:text-3xl font-bold text-card-foreground mb-1">
               {isCorrect ? "🎉 Correct!" : "💪 Nice try!"}
             </p>
             <p className="text-base text-card-foreground">

@@ -65,7 +65,7 @@ export function DodoMascot({
     <div className={`relative ${className}`}>
       {/* Speech Bubble */}
       {showSpeechBubble && speechText && (
-        <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-white rounded-2xl px-4 py-2 shadow-lg border-2 border-primary/30 animate-pop-in z-10 min-w-max">
+        <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-white rounded-2xl px-4 py-2 shadow-lg border-2 border-primary/30 z-10 min-w-max">
           <p className="text-sm font-bold text-primary">{speechText}</p>
           <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-r-2 border-b-2 border-primary/30 rotate-45" />
         </div>
@@ -198,7 +198,7 @@ export function DodoMascot({
 
         {/* Mood indicator */}
         {getMoodEmoji() && (
-          <div className="absolute -top-2 -right-2 text-2xl animate-bounce">
+          <div className="absolute -top-2 -right-2 text-2xl">
             {getMoodEmoji()}
           </div>
         )}
@@ -209,7 +209,7 @@ export function DodoMascot({
             {[...Array(6)].map((_, i) => (
               <div
                 key={i}
-                className="absolute w-2 h-2 rounded-full animate-confetti-particle"
+                className="absolute w-2 h-2 rounded-full"
                 style={{
                   backgroundColor: ["#FFD700", "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7"][i],
                   left: `${20 + i * 15}%`,

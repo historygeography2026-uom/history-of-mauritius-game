@@ -126,7 +126,7 @@ export default function ReorderGame({
   return (
     <>
       <GameConfetti trigger={showConfetti} type="levelComplete" />
-      <Card className="border-4 border-primary/30 bg-card p-3 md:p-4 animate-pop-in relative overflow-visible">
+      <Card className="border-4 border-primary/30 bg-card p-3 md:p-4 relative overflow-visible">
         <div className="mb-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-bold text-card-foreground md:text-2xl">
@@ -162,7 +162,7 @@ export default function ReorderGame({
 
       {/* Show question image if provided from DB */}
       {question?.image && (
-        <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 animate-pop-in bg-white flex items-center justify-center">
+        <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 bg-white flex items-center justify-center">
           <Image
             src={question.image}
             alt="Question image"
@@ -185,7 +185,7 @@ export default function ReorderGame({
             onDragOver={(e) => handleDragOver(e, index)}
             className={`flex cursor-move items-center gap-3 rounded-xl border-2 p-2.5 md:p-3 transition-all ${
               showResult && isCorrect
-                ? "border-green-400 bg-gradient-to-r from-green-100 to-green-200 animate-correct-glow"
+                ? "border-green-400 bg-gradient-to-r from-green-100 to-green-200"
                 : showResult && !isCorrect
                   ? "border-orange-300 bg-gradient-to-r from-orange-50 to-yellow-50"
                   : "border-primary/30 bg-gradient-to-r from-blue-50 to-purple-50 hover:border-primary hover:scale-[1.02] hover:shadow-lg"
@@ -211,7 +211,7 @@ export default function ReorderGame({
       ) : (
         <div className="space-y-3">
           <div className={`rounded-2xl p-3 text-center ${isCorrect ? "bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-400" : "bg-gradient-to-br from-orange-100 to-orange-200 border-2 border-orange-400"}`}>
-            <p className="text-2xl md:text-3xl font-bold text-card-foreground animate-bounce-in">
+            <p className="text-2xl md:text-3xl font-bold text-card-foreground">
               {isCorrect ? "🎉 Perfect Timeline!" : "💪 Try again!"}
             </p>
             {!isCorrect && (

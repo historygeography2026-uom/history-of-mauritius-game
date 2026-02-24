@@ -144,7 +144,7 @@ export default function MultipleChoiceGame({
   return (
     <>
       <GameConfetti trigger={showConfetti} type="correct" />
-      <Card className="border-4 border-primary/30 bg-card p-3 md:p-4 animate-pop-in relative overflow-visible">
+      <Card className="border-4 border-primary/30 bg-card p-3 md:p-4 relative overflow-visible">
         <div className="mb-2 flex items-center justify-between">
           <span className="text-lg font-bold text-muted-foreground">
             {isSingleMode ? "Question" : `Question ${currentQuestionIndex + 1} of ${builtInQuestions.length}`}
@@ -165,7 +165,7 @@ export default function MultipleChoiceGame({
         </div>
 
       {question.image && (
-        <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 animate-pop-in bg-white flex items-center justify-center">
+        <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 bg-white flex items-center justify-center">
           <Image
             src={question.image || "/placeholder.svg"}
             alt={question.imageAlt || "Question image"}
@@ -203,12 +203,12 @@ export default function MultipleChoiceGame({
             className={`h-auto w-full justify-start p-2.5 md:p-3 text-left text-sm md:text-base transition-all rounded-xl ${
               showResult
                 ? index === question.correctAnswer
-                  ? "bg-gradient-to-r from-green-400 to-green-500 text-white border-4 border-green-300 animate-correct-glow shadow-lg"
+                  ? "bg-gradient-to-r from-green-400 to-green-500 text-white border-4 border-green-300 shadow-lg"
                   : selectedAnswer === index
-                    ? "bg-gradient-to-r from-red-400 to-red-500 text-white border-4 border-red-300 animate-screen-shake"
+                    ? "bg-gradient-to-r from-red-400 to-red-500 text-white border-4 border-red-300"
                     : "bg-muted text-muted-foreground opacity-50"
                 : "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:from-primary/90 hover:to-primary/70 hover:scale-[1.02] shadow-md hover:shadow-lg"
-            } ${shakeWrong && selectedAnswer === index ? "animate-shake" : ""}`}
+            }`}
           >
             <span className="mr-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/20 text-lg font-bold">
               {String.fromCharCode(65 + index)}
@@ -219,11 +219,11 @@ export default function MultipleChoiceGame({
       </div>
 
       {showResult && (
-        <div className="mt-2 space-y-2 animate-pop-in">
+        <div className="mt-2 space-y-2">
           <div
             className={`rounded-2xl p-3 text-center ${isCorrect ? "bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-400" : "bg-gradient-to-br from-orange-100 to-orange-200 border-2 border-orange-400"}`}
           >
-            <p className="mb-1 text-xl md:text-2xl font-bold animate-bounce-in">{isCorrect ? "🎉 Awesome!" : "💪 Good try!"}</p>
+            <p className="mb-1 text-xl md:text-2xl font-bold">{isCorrect ? "🎉 Awesome!" : "💪 Good try!"}</p>
             <p className="text-sm text-card-foreground">{question.funFact}</p>
           </div>
 

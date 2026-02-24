@@ -140,7 +140,7 @@ export default function TrueFalseGame({
   return (
     <>
       <GameConfetti trigger={showConfetti} type="correct" />
-      <Card className="border-4 border-primary/30 bg-card p-3 md:p-4 animate-pop-in relative overflow-visible">
+      <Card className="border-4 border-primary/30 bg-card p-3 md:p-4 relative overflow-visible">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-lg font-bold text-muted-foreground">
           {isSingleMode ? "Question" : `Question ${currentQuestionIndex + 1} of ${builtInQuestions.length}`}
@@ -165,7 +165,7 @@ export default function TrueFalseGame({
       </h2>
 
       {question.image && (
-        <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 animate-pop-in bg-white flex items-center justify-center">
+        <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 bg-white flex items-center justify-center">
           <Image
             src={question.image || "/placeholder.svg"}
             alt={question.imageAlt || "Question image"}
@@ -214,9 +214,9 @@ export default function TrueFalseGame({
       ) : (
         <div className="space-y-3">
           <div
-            className={`rounded-2xl p-4 text-center ${isCorrect ? "bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-400 animate-correct-glow" : "bg-gradient-to-br from-orange-100 to-orange-200 border-2 border-orange-400 animate-screen-shake"}`}
+            className={`rounded-2xl p-4 text-center ${isCorrect ? "bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-400" : "bg-gradient-to-br from-orange-100 to-orange-200 border-2 border-orange-400"}`}
           >
-            <p className="mb-1 text-2xl md:text-3xl font-bold text-card-foreground animate-bounce-in">
+            <p className="mb-1 text-2xl md:text-3xl font-bold text-card-foreground">
               {isCorrect ? "🎉 Correct!" : "💪 Not quite!"}
             </p>
             <p className="text-base text-card-foreground">{question.explanation}</p>

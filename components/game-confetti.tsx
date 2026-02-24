@@ -110,7 +110,7 @@ export function StarBurst({ trigger, x = 50, y = 50 }: { trigger: boolean; x?: n
       {[...Array(8)].map((_, i) => (
         <div
           key={i}
-          className="absolute text-3xl animate-star-burst"
+          className="absolute text-3xl"
           style={{
             transform: `rotate(${i * 45}deg) translateY(-30px)`,
             animationDelay: `${i * 0.05}s`,
