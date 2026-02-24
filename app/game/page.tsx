@@ -69,12 +69,52 @@ const GamePage = () => {
   const pendingTimeoutsRef = useRef<NodeJS.Timeout[]>([])
   const pendingIntervalsRef = useRef<NodeJS.Timer[]>([])
   const timerIntervalRef = useRef<NodeJS.Timer | null>(null) // Store main timer for direct access
+  const abortControllerRef = useRef<AbortController | null>(null) // For canceling fetch requests
+
+  // PERF FIX: Listen for browser back button and immediate cleanup
+  useEffect(() => {
+    // CRITICAL: Handle browser back button / page unload
+    const handleBeforeUnload = () => {
+      isUnmountingRef.current = true
+      isMountedRef.current = false
+      
+      // IMMEDIATELY stop timer
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current)
+        timerIntervalRef.current = null
+      }
+      
+      // IMMEDIATELY abort requests
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+      
+      // IMMEDIATELY cancel speech
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel()
+      }
+    }
+    
+    window.addEventListener("beforeunload", handleBeforeUnload)
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload)
+  }, [])
 
   // PERF FIX: Cleanup effect to prevent memory leaks from rapid navigation
   useEffect(() => {
     return () => {
       isUnmountingRef.current = true // Set unmounting flag FIRST to block all async ops
       isMountedRef.current = false // Mark component as unmounted
+      
+      // CRITICAL: Cancel all network requests
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+      
+      // CRITICAL: Stop all speech
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel()
+      }
+      
       // CRITICAL: Clear ALL pending timeouts and intervals immediately
       pendingTimeoutsRef.current.forEach((timeout) => clearTimeout(timeout))
       pendingIntervalsRef.current.forEach((interval) => clearInterval(interval))
@@ -286,15 +326,21 @@ const GamePage = () => {
     const persistResults = async () => {
       if (isUnmountingRef.current || !isMountedRef.current) return
       try {
+        // CRITICAL: Create fresh AbortController for this fetch
+        const controller = new AbortController()
+        abortControllerRef.current = controller
+        
         // Points model: configurable points per star
         const total_points = totalStars * GAME_CONFIG.POINTS_PER_STAR
         const questionsCompleted = Object.keys(answeredQuestions).length
         const totalQuestions = mixedQuestions.length
         const playerName = session?.user?.name || "Guest"
         const userId = session?.user?.id || null
+        
         await fetch("/api/leaderboard", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
           body: JSON.stringify({
             player_name: playerName,
             user_id: userId,
@@ -308,6 +354,8 @@ const GamePage = () => {
           }),
         })
       } catch (e) {
+        // Ignore AbortError - it's expected during navigation
+        if (e instanceof Error && e.name === "AbortError") return
         if (!isUnmountingRef.current && isMountedRef.current) {
           console.error("[v0] Failed to save leaderboard entry", e)
         }
@@ -402,8 +450,27 @@ const GamePage = () => {
 
           <div className="mx-auto max-w-2xl relative z-10">
             <Button onClick={() => {
-              // CRITICAL: Set unmounting flag BEFORE navigation to block all pending ops
+              // CRITICAL: Force cleanup BEFORE navigation
               isUnmountingRef.current = true
+              isMountedRef.current = false
+              
+              // IMMEDIATELY clear timer
+              if (timerIntervalRef.current) {
+                clearInterval(timerIntervalRef.current)
+                timerIntervalRef.current = null
+              }
+              
+              // IMMEDIATELY abort requests
+              if (abortControllerRef.current) {
+                abortControllerRef.current.abort()
+              }
+              
+              // IMMEDIATELY cancel speech
+              if (typeof window !== "undefined" && "speechSynthesis" in window) {
+                window.speechSynthesis.cancel()
+              }
+              
+              // NOW safe to navigate
               router.push("/")
             }} className="mb-6 bg-secondary hover:bg-secondary/90 text-white">
               {" "}
