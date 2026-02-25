@@ -153,7 +153,7 @@ export default function SubjectSelection() {
             {levels.map((level, index) => (
               <Card
                 key={level.id}
-                className="group cursor-pointer overflow-hidden border-4 border-primary/20 bg-card transition-all hover:scale-105 hover:border-primary hover:shadow-2xl"
+                className="group cursor-pointer overflow-hidden border-4 border-primary/20 bg-card"
                 onClick={() => {
                   const queryParams = new URLSearchParams({
                     subject: selectedSubject,
@@ -164,13 +164,13 @@ export default function SubjectSelection() {
               >
                 <div className="p-6">
                   <div
-                    className={`mb-4 flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br ${subject?.color} text-5xl shadow-lg group-hover:animate-bounce-gentle transition-transform`}
+                    className={`mb-4 flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br ${subject?.color} text-5xl shadow-lg`}
                   >
                     {level.icon}
                   </div>
                   <h3 className="mb-2 text-2xl font-bold text-card-foreground">{level.title}</h3>
                   <p className="mb-4 text-muted-foreground text-lg font-semibold">{level.difficulty}</p>
-                  <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all hover:scale-105">
+                  <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
                     Play Now! 🎮
                   </Button>
                 </div>

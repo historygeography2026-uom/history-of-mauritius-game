@@ -213,13 +213,6 @@ const GamePage = () => {
     levelInitialTimeRef.current = totalTime
     levelTimeLeftRef.current = totalTime
 
-    // TIMER DISABLED FOR DEBUGGING - to test if timer is the root cause of freezing
-    const TIMER_ENABLED = false
-    
-    if (!TIMER_ENABLED) {
-      return
-    }
-
     // Use local variable to drive countdown — avoids putting levelTimeLeft in deps
     let remaining = totalTime
     const timer = setInterval(() => {
