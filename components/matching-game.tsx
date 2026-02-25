@@ -231,7 +231,7 @@ export default function MatchingGame({
                     ? "bg-green-500 text-white border-4 border-green-600 opacity-70 cursor-default"
                     : selectedLeft === index
                       ? "bg-yellow-400 text-gray-900 border-4 border-yellow-500 scale-105 shadow-lg"
-                      : "bg-gradient-to-br from-blue-400 to-blue-500 text-white hover:from-blue-500 hover:to-blue-600 hover:scale-105 hover:shadow-lg"
+                      : "bg-gradient-to-br from-blue-400 to-blue-500 text-white hover:from-blue-500 hover:to-blue-600 hover:shadow-lg"
                 } ${wrongMatch && selectedLeft === index ? "animate-shake" : ""}`}
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
@@ -273,7 +273,7 @@ export default function MatchingGame({
                     : selectedRight === index
                       ? "bg-yellow-400 text-gray-900 border-4 border-yellow-500 scale-105 shadow-lg"
                       : selectedLeft !== null
-                        ? "bg-gradient-to-br from-orange-400 to-orange-500 text-white hover:from-orange-500 hover:to-orange-600 hover:scale-105 hover:shadow-lg cursor-pointer"
+                        ? "bg-gradient-to-br from-orange-400 to-orange-500 text-white hover:from-orange-500 hover:to-orange-600 hover:shadow-lg cursor-pointer"
                         : "bg-gray-300 text-gray-600 cursor-not-allowed"
                 }`}
                 style={{ animationDelay: `${index * 0.1 + 0.2}s` }}
@@ -315,7 +315,7 @@ export default function MatchingGame({
           </div>
           <Button
             onClick={() => onComplete(1)}
-            className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-3 hover:scale-105 transition-all rounded-xl shadow-lg font-bold"
+            className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-3 rounded-xl shadow-lg font-bold"
           >
             Continue →
           </Button>

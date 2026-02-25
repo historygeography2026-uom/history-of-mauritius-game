@@ -226,7 +226,7 @@ export default function MultipleChoiceGame({
                   : selectedAnswer === index
                     ? "bg-gradient-to-r from-red-400 to-red-500 text-white border-4 border-red-300"
                     : "bg-muted text-muted-foreground opacity-50"
-                : "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:from-primary/90 hover:to-primary/70 hover:scale-[1.02] shadow-md hover:shadow-lg"
+                : "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:from-primary/90 hover:to-primary/70 shadow-md"
             }`}
           >
             <span className="mr-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/20 text-lg font-bold">
@@ -248,7 +248,7 @@ export default function MultipleChoiceGame({
 
           <Button
             onClick={handleNext}
-            className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-3 hover:scale-105 transition-all rounded-xl shadow-lg font-bold"
+            className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-3 rounded-xl shadow-lg font-bold"
           >
             {isSingleMode ? "Continue →" : currentQuestionIndex < builtInQuestions.length - 1 ? "Next Question →" : "Finish! 🎊"}
           </Button>

@@ -282,7 +282,7 @@ export default function FillInBlanksGame({
           <Button
             onClick={handleSubmit}
             disabled={!answer}
-            className="w-full bg-gradient-to-r from-primary to-secondary text-white hover:opacity-90 text-lg py-3 hover:scale-105 transition-all rounded-xl shadow-lg font-bold"
+            className="w-full bg-gradient-to-r from-primary to-secondary text-white hover:opacity-90 text-lg py-3 rounded-xl shadow-lg font-bold"
           >
             Check Answer ✓
           </Button>
@@ -304,7 +304,7 @@ export default function FillInBlanksGame({
 
           <Button
             onClick={handleNext}
-            className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-3 hover:scale-105 transition-all rounded-xl shadow-lg font-bold"
+            className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-3 rounded-xl shadow-lg font-bold"
           >
             {isSingleMode ? "Continue →" : currentQuestionIndex < builtInQuestions.length - 1 ? "Next Question →" : "Finish! 🎊"}
           </Button>

@@ -239,14 +239,14 @@ export default function ReorderGame({
           {isCorrect ? (
             <Button
               onClick={() => onComplete(1)}
-              className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-3 hover:scale-105 transition-all rounded-xl shadow-lg font-bold"
+              className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-3 rounded-xl shadow-lg font-bold"
             >
               Continue →
             </Button>
           ) : (
             <Button
               onClick={handleTryAgain}
-              className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-3 hover:scale-105 transition-all rounded-xl shadow-lg font-bold"
+              className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-3 rounded-xl shadow-lg font-bold"
             >
               Try Again! 🔄
             </Button>
