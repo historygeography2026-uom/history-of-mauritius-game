@@ -177,6 +177,24 @@ export default function ReorderGame({
           👆 {question?.instruction || "Drag and drop to put these events in the correct order!"}
         </p>
 
+        {/* Show question title if provided from DB */}
+        {question?.question && (
+          <div className="mb-3 flex items-start gap-2">
+            <h3 className="text-lg font-bold leading-snug text-card-foreground md:text-xl flex-1">
+              {question.question}
+            </h3>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => speakText(question.question)}
+              className="shrink-0 h-10 w-10 rounded-full bg-primary/10 hover:bg-primary/20 text-primary"
+              title="Listen to question"
+            >
+              <Volume2 className="h-5 w-5" />
+            </Button>
+          </div>
+        )}
+
       {/* Show question image if provided from DB */}
       {question?.image && (
         <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 bg-white flex items-center justify-center">
