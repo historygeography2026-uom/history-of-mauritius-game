@@ -153,7 +153,7 @@ export default function SubjectSelection() {
             {levels.map((level, index) => (
               <Card
                 key={level.id}
-                className="group cursor-pointer overflow-hidden border-4 border-primary/20 bg-card transition-all hover:scale-105 hover:shadow-2xl"
+                className="group cursor-pointer overflow-hidden border-4 border-primary/20 bg-card transition-all hover:shadow-2xl"
                 onClick={() => {
                   const queryParams = new URLSearchParams({
                     subject: selectedSubject,
