@@ -229,10 +229,10 @@ export default function ReorderGame({
         <div className="space-y-3">
           <div className={`rounded-2xl p-3 text-center ${isCorrect ? "bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-400" : "bg-gradient-to-br from-orange-100 to-orange-200 border-2 border-orange-400"}`}>
             <p className="text-2xl md:text-3xl font-bold text-card-foreground">
-              {isCorrect ? "🎉 Perfect Timeline!" : "💪 Try again!"}
+              {isCorrect ? "🎉 Perfect Timeline!" : "💪 Not quite right!"}
             </p>
             {!isCorrect && (
-              <p className="mt-1 text-base text-card-foreground">Look at the order carefully and try reordering!</p>
+              <p className="mt-1 text-base text-card-foreground">Rearrange and check again!</p>
             )}
           </div>
 
@@ -245,10 +245,10 @@ export default function ReorderGame({
             </Button>
           ) : (
             <Button
-              onClick={handleTryAgain}
-              className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-3 rounded-xl shadow-lg font-bold"
+              onClick={() => setShowResult(false)}
+              className="w-full bg-gradient-to-r from-primary to-secondary text-white hover:opacity-90 text-lg py-3 rounded-xl shadow-lg font-bold"
             >
-              Try Again! 🔄
+              Check My Order! ✓
             </Button>
           )}
         </div>
