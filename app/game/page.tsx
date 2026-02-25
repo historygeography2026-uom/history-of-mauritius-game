@@ -17,7 +17,6 @@ import { DodoMascot, getRandomMessage } from "@/components/dodo-mascot"
 import { SoundToggle } from "@/components/sound-toggle"
 import { useGameSounds, stopAllSounds } from "@/hooks/use-game-sounds"
 import { clearAllToastsTimeouts } from "@/hooks/use-toast"
-import { StreakCounter, StreakMilestone } from "@/components/streak-counter"
 import { DodoTimer } from "@/components/dodo-timer"
 import { useAchievements } from "@/hooks/use-achievements"
 import { saveProgress } from "@/components/progress-map"
@@ -57,8 +56,6 @@ const GamePage = () => {
   const [levelTimedOut, setLevelTimedOut] = useState(false) // Track if level timed out
   const [error, setError] = useState<string | null>(null)
   const [showLevelCompleteConfetti, setShowLevelCompleteConfetti] = useState(false)
-  const [currentStreak, setCurrentStreak] = useState(0)
-  const [showStreakMilestone, setShowStreakMilestone] = useState<string | null>(null)
   const { playLevelComplete, playStar, setMuted } = useGameSounds()
   const { recordQuestionAnswered, recordLevelCompleted, recordGameStarted } = useAchievements()
 
@@ -283,19 +280,6 @@ const GamePage = () => {
       recordQuestionAnswered(isCorrect, currentQuestion.type)
     }
     
-    // Update streak
-    if (isCorrect) {
-      const newStreak = currentStreak + 1
-      setCurrentStreak(newStreak)
-      
-      // Check for streak milestones (3, 5, 7, 10)
-      if ([3, 5, 7, 10].includes(newStreak)) {
-        setShowStreakMilestone(null) // Don't show during unmount
-      }
-    } else {
-      setCurrentStreak(0)
-    }
-    
     setAnsweredQuestions((prev: Record<number, { stars: number; title: string; type: string }>) => ({
       ...prev,
       [currentQuestionIndex]: {
@@ -315,7 +299,6 @@ const GamePage = () => {
       const timeout = setTimeout(
         () => {
           if (isUnmountingRef.current || !isMountedRef.current) return
-          setShowStreakMilestone(null) // Clear streak popup before moving to next question
           setCurrentQuestionIndex((prev) => prev + 1)
           isAdvancingRef.current = false // Unlock for next question
         },
@@ -338,7 +321,7 @@ const GamePage = () => {
       isAdvancingRef.current = false
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentQuestionIndex, mixedQuestions, allCompleted, answeredQuestions, currentStreak, totalStars, subject])
+  }, [currentQuestionIndex, mixedQuestions, allCompleted, answeredQuestions, totalStars, subject])
 
   // Persist results to leaderboard when all questions are completed or level times out
   // PERF FIX: Only trigger on allCompleted to avoid running on every answered question
@@ -428,7 +411,6 @@ const GamePage = () => {
 
   // PERF FIX: Stable callback refs to prevent child re-renders
   const noopCallback = useCallback(() => {}, [])
-  const handleStreakClose = useCallback(() => setShowStreakMilestone(null), [])
 
   // PERF FIX: Memoize progress percentage to avoid recalculation
   const progressPercent = useMemo(
@@ -629,8 +611,6 @@ const GamePage = () => {
                 </p>
                 {/* Sound Toggle */}
                 <SoundToggle onToggle={setMuted} />
-                {/* Streak Counter */}
-                <StreakCounter currentStreak={currentStreak} />
               </div>
               <div className="flex items-center gap-6">
                 <DodoTimer
@@ -653,11 +633,6 @@ const GamePage = () => {
             </div>
           </div>
         </div>
-
-        {/* Streak Milestone Popup */}
-        {showStreakMilestone && (
-          <StreakMilestone streak={showStreakMilestone} onClose={handleStreakClose} />
-        )}
 
         {/* Game container - compact, no-scroll on desktop */}
         <div className="p-2 md:p-4 flex items-start justify-center">

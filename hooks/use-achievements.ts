@@ -132,34 +132,6 @@ const ACHIEVEMENT_DEFINITIONS: Omit<Achievement, "currentProgress" | "isUnlocked
     requirement: 50,
     rarity: "epic",
   },
-  // Streak achievements
-  {
-    id: "streak_3",
-    title: "On Fire!",
-    description: "Get 3 correct answers in a row",
-    icon: "🔥",
-    category: "streak",
-    requirement: 3,
-    rarity: "common",
-  },
-  {
-    id: "streak_5",
-    title: "Unstoppable",
-    description: "Get 5 correct answers in a row",
-    icon: "💪",
-    category: "streak",
-    requirement: 5,
-    rarity: "rare",
-  },
-  {
-    id: "streak_10",
-    title: "Perfect Run",
-    description: "Get 10 correct answers in a row",
-    icon: "🎯",
-    category: "streak",
-    requirement: 10,
-    rarity: "epic",
-  },
   // Special achievements
   {
     id: "dodo_friend",
@@ -210,8 +182,6 @@ interface GameStats {
   speedLevels: number
   gamesPlayed: number
   questionTypesPlayed: string[]
-  currentStreak: number
-  bestStreak: number
   lastPlayDate: string
   consecutiveDays: number
   historyLevelsCompleted: number
@@ -226,8 +196,6 @@ const DEFAULT_STATS: GameStats = {
   speedLevels: 0,
   gamesPlayed: 0,
   questionTypesPlayed: [],
-  currentStreak: 0,
-  bestStreak: 0,
   lastPlayDate: "",
   consecutiveDays: 0,
   historyLevelsCompleted: 0,
@@ -287,10 +255,6 @@ export function useAchievements() {
       case "ten_stars":
       case "fifty_stars":
         return currentStats.totalStars
-      case "streak_3":
-      case "streak_5":
-      case "streak_10":
-        return currentStats.bestStreak
       case "dodo_friend":
         return currentStats.gamesPlayed
       case "island_explorer":
@@ -364,10 +328,6 @@ export function useAchievements() {
         const newStats = {
           ...prev,
           questionsAnswered: prev.questionsAnswered + 1,
-          currentStreak: isCorrect ? prev.currentStreak + 1 : 0,
-          bestStreak: isCorrect
-            ? Math.max(prev.bestStreak, prev.currentStreak + 1)
-            : prev.bestStreak,
           questionTypesPlayed: prev.questionTypesPlayed.includes(questionType)
             ? prev.questionTypesPlayed
             : [...prev.questionTypesPlayed, questionType],
