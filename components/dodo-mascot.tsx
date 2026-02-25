@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 
 type MascotMood = "idle" | "happy" | "sad" | "thinking" | "celebrating" | "encouraging"
 
@@ -20,12 +20,21 @@ export function DodoMascot({
   speechText = "",
 }: DodoMascotProps) {
   const [isAnimating, setIsAnimating] = useState(false)
+  const pendingTimeoutsRef = useRef<number[]>([])
 
   useEffect(() => {
     if (mood === "happy" || mood === "celebrating") {
       setIsAnimating(true)
-      const timer = setTimeout(() => setIsAnimating(false), 2000)
-      return () => clearTimeout(timer)
+      const timer = window.setTimeout(() => setIsAnimating(false), 2000)
+      pendingTimeoutsRef.current.push(timer)
+      return () => {
+        try {
+          pendingTimeoutsRef.current.forEach((t) => clearTimeout(t))
+        } catch (e) {
+          // ignore
+        }
+        pendingTimeoutsRef.current = []
+      }
     }
   }, [mood])
 

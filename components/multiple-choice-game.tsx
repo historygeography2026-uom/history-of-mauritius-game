@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Star, Volume2 } from "lucide-react"
@@ -78,6 +78,8 @@ export default function MultipleChoiceGame({
   const [showConfetti, setShowConfetti] = useState(false)
   const { playCorrect, playWrong, playClick } = useGameSounds()
 
+  const pendingTimeoutsRef = useRef<number[]>([])
+
   const isSingleMode = !!singleQuestion
 
   // Reset state when single question changes
@@ -112,13 +114,15 @@ export default function MultipleChoiceGame({
       setMascotMessage(getRandomMessage("correct"))
       setShowConfetti(true)
       playCorrect()
-      setTimeout(() => setShowConfetti(false), 3000)
+      const confettiTimer = window.setTimeout(() => setShowConfetti(false), 3000)
+      pendingTimeoutsRef.current.push(confettiTimer)
     } else {
       setShakeWrong(true)
       setMascotMood("encouraging")
       setMascotMessage(getRandomMessage("wrong"))
       playWrong()
-      setTimeout(() => setShakeWrong(false), 500)
+      const shakeTimer = window.setTimeout(() => setShakeWrong(false), 500)
+      pendingTimeoutsRef.current.push(shakeTimer)
     }
   }
 
@@ -138,6 +142,21 @@ export default function MultipleChoiceGame({
       }
     }
   }
+
+  // Clear any pending timeouts and cancel speech on unmount
+  useEffect(() => {
+    return () => {
+      try {
+        pendingTimeoutsRef.current.forEach((t) => clearTimeout(t))
+      } catch (e) {
+        // ignore
+      }
+      pendingTimeoutsRef.current = []
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel()
+      }
+    }
+  }, [])
 
   const isCorrect = selectedAnswer === question.correctAnswer
 

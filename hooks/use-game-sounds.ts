@@ -84,3 +84,20 @@ export function useGameSounds() {
     setMuted,
   }
 }
+
+// Stop and reset all shared audio elements immediately.
+export function stopAllSounds() {
+  if (typeof window === "undefined") return
+  try {
+    sharedAudioElements.forEach((audio) => {
+      try {
+        audio.pause()
+        audio.currentTime = 0
+      } catch (e) {
+        // ignore individual audio errors
+      }
+    })
+  } catch (e) {
+    // ignore
+  }
+}

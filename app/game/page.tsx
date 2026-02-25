@@ -15,7 +15,8 @@ import { GAME_CONFIG } from "@/lib/game-config"
 import { GameConfetti } from "@/components/game-confetti"
 import { DodoMascot, getRandomMessage } from "@/components/dodo-mascot"
 import { SoundToggle } from "@/components/sound-toggle"
-import { useGameSounds } from "@/hooks/use-game-sounds"
+import { useGameSounds, stopAllSounds } from "@/hooks/use-game-sounds"
+import { clearAllToastsTimeouts } from "@/hooks/use-toast"
 import { StreakCounter, StreakMilestone } from "@/components/streak-counter"
 import { DodoTimer } from "@/components/dodo-timer"
 import { useAchievements } from "@/hooks/use-achievements"
@@ -93,6 +94,18 @@ const GamePage = () => {
       if (typeof window !== "undefined" && "speechSynthesis" in window) {
         window.speechSynthesis.cancel()
       }
+      // IMMEDIATELY stop any playing audio
+      try {
+        stopAllSounds()
+      } catch (e) {
+        // ignore
+      }
+      // IMMEDIATELY clear toast timers
+      try {
+        clearAllToastsTimeouts()
+      } catch (e) {
+        // ignore
+      }
     }
     
     window.addEventListener("beforeunload", handleBeforeUnload)
@@ -113,6 +126,18 @@ const GamePage = () => {
       // CRITICAL: Stop all speech
       if (typeof window !== "undefined" && "speechSynthesis" in window) {
         window.speechSynthesis.cancel()
+      }
+      // CRITICAL: Stop all audio immediately
+      try {
+        stopAllSounds()
+      } catch (e) {
+        // ignore
+      }
+      // CRITICAL: Clear toast timers
+      try {
+        clearAllToastsTimeouts()
+      } catch (e) {
+        // ignore
       }
       
       // CRITICAL: Clear ALL pending timeouts and intervals immediately
@@ -187,6 +212,13 @@ const GamePage = () => {
     }
     levelInitialTimeRef.current = totalTime
     levelTimeLeftRef.current = totalTime
+
+    // TIMER DISABLED FOR DEBUGGING - to test if timer is the root cause of freezing
+    const TIMER_ENABLED = false
+    
+    if (!TIMER_ENABLED) {
+      return
+    }
 
     // Use local variable to drive countdown — avoids putting levelTimeLeft in deps
     let remaining = totalTime

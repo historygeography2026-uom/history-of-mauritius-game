@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Download, Upload, AlertCircle, AlertTriangle, CheckCircle, X } from "lucide-react"
@@ -20,11 +20,33 @@ export default function ExcelImportSection({ onImport, isLoading }: ExcelImportS
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null)
   const [showValidationDetails, setShowValidationDetails] = useState(false)
   const [progressPercent, setProgressPercent] = useState(0)
+  const progressIntervalRef = useRef<number | null>(null)
+  const pendingMessageTimeoutsRef = useRef<number[]>([])
+
+  useEffect(() => {
+    return () => {
+      try {
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current as any)
+          progressIntervalRef.current = null
+        }
+      } catch (e) {
+        // ignore
+      }
+      try {
+        pendingMessageTimeoutsRef.current.forEach((t) => clearTimeout(t))
+      } catch (e) {
+        // ignore
+      }
+      pendingMessageTimeoutsRef.current = []
+    }
+  }, [])
 
   const handleDownloadTemplate = () => {
     generateExcelTemplate()
     setImportMessage("Template downloaded! Edit and upload back.")
-    setTimeout(() => setImportMessage(""), 3000)
+    const t = window.setTimeout(() => setImportMessage(""), 3000)
+    pendingMessageTimeoutsRef.current.push(t)
   }
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,22 +89,30 @@ export default function ExcelImportSection({ onImport, isLoading }: ExcelImportS
       setProgressPercent(0)
       
       // Simulate progress during upload
-      const progressInterval = setInterval(() => {
-        setProgressPercent(prev => Math.min(prev + Math.random() * 30, 90))
-      }, 300)
+      progressIntervalRef.current = window.setInterval(() => {
+        setProgressPercent((prev) => Math.min(prev + Math.random() * 30, 90))
+      }, 300) as unknown as number
       
       await onImport(validation.validQuestions)
       
-      clearInterval(progressInterval)
+      try {
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current as any)
+          progressIntervalRef.current = null
+        }
+      } catch (e) {
+        // ignore
+      }
       setProgressPercent(100)
 
       setImportMessage(`✓ ${validation.validQuestions.length} questions imported successfully!${validation.skippedCount > 0 ? ` (${validation.skippedCount} skipped)` : ''}`)
-      setTimeout(() => {
+      const clearTimer = window.setTimeout(() => {
         setImportMessage("")
         setValidationResult(null)
         setShowValidationDetails(false)
         setProgressPercent(0)
       }, 5000)
+      pendingMessageTimeoutsRef.current.push(clearTimer)
     } catch (error: any) {
       console.error("[v0] Error importing questions:", error)
       const errorMessage = error?.message || String(error) || "Unknown error"

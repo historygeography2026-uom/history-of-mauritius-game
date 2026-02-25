@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Star, Volume2 } from "lucide-react"
@@ -76,6 +76,7 @@ export default function MatchingGame({
   const [showConfetti, setShowConfetti] = useState(false)
   const [showComplete, setShowComplete] = useState(false)
   const { playCorrect, playWrong, playClick } = useGameSounds()
+  const pendingTimeoutsRef = useRef<number[]>([])
 
   useEffect(() => {
     const pairsToUse = question?.pairs && Array.isArray(question.pairs) ? question.pairs : builtInPairs
@@ -118,7 +119,8 @@ export default function MatchingGame({
       setMascotMessage(getRandomMessage("correct"))
       setShowConfetti(true)
       playCorrect()
-      setTimeout(() => setShowConfetti(false), 2000)
+      const confettiTimer = window.setTimeout(() => setShowConfetti(false), 2000)
+      pendingTimeoutsRef.current.push(confettiTimer)
 
       if (newMatched.size === matchPairs.length) {
         setMascotMood("celebrating")
@@ -131,10 +133,11 @@ export default function MatchingGame({
       setMascotMood("encouraging")
       setMascotMessage(getRandomMessage("wrong"))
       playWrong()
-      setTimeout(() => setWrongMatch(false), 600)
+      const wrongTimer = window.setTimeout(() => setWrongMatch(false), 600)
+      pendingTimeoutsRef.current.push(wrongTimer)
     }
 
-    setTimeout(() => {
+    const resetTimer = window.setTimeout(() => {
       setSelectedLeft(null)
       setSelectedRight(null)
       setFeedback({ show: false, correct: false })
@@ -143,7 +146,22 @@ export default function MatchingGame({
         setMascotMessage("")
       }
     }, 1200)
+    pendingTimeoutsRef.current.push(resetTimer)
   }
+
+  useEffect(() => {
+    return () => {
+      try {
+        pendingTimeoutsRef.current.forEach((t) => clearTimeout(t))
+      } catch (e) {
+        // ignore
+      }
+      pendingTimeoutsRef.current = []
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel()
+      }
+    }
+  }, [])
 
   return (
     <>

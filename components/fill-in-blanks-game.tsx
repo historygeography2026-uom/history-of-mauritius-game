@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -74,6 +74,7 @@ export default function FillInBlanksGame({
   const [showConfetti, setShowConfetti] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { playCorrect, playWrong, playClick } = useGameSounds()
+  const pendingTimeoutsRef = useRef<number[]>([])
 
   const isSingleMode = !!singleQuestion
 
@@ -137,13 +138,28 @@ export default function FillInBlanksGame({
       setMascotMessage(getRandomMessage("correct"))
       setShowConfetti(true)
       playCorrect()
-      setTimeout(() => setShowConfetti(false), 3000)
+      const confettiTimer = window.setTimeout(() => setShowConfetti(false), 3000)
+      pendingTimeoutsRef.current.push(confettiTimer)
     } else {
       setMascotMood("encouraging")
       setMascotMessage(getRandomMessage("wrong"))
       playWrong()
     }
   }
+
+  useEffect(() => {
+    return () => {
+      try {
+        pendingTimeoutsRef.current.forEach((t) => clearTimeout(t))
+      } catch (e) {
+        // ignore
+      }
+      pendingTimeoutsRef.current = []
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel()
+      }
+    }
+  }, [])
 
   const handleNext = () => {
     playClick()

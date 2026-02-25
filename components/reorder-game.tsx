@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Star, GripVertical, Volume2 } from "lucide-react"
@@ -53,6 +53,7 @@ export default function ReorderGame({
   const [mascotMessage, setMascotMessage] = useState("")
   const [showConfetti, setShowConfetti] = useState(false)
   const { playCorrect, playWrong, playClick } = useGameSounds()
+  const pendingTimeoutsRef = useRef<number[]>([])
 
   const isSingleMode = !!question
 
@@ -106,6 +107,8 @@ export default function ReorderGame({
       setMascotMessage(getRandomMessage("levelComplete"))
       setShowConfetti(true)
       playCorrect()
+      const confettiTimer = window.setTimeout(() => setShowConfetti(false), 3000)
+      pendingTimeoutsRef.current.push(confettiTimer)
       // Don't auto-advance — let the user click Continue
     } else {
       setMascotMood("encouraging")
@@ -120,6 +123,20 @@ export default function ReorderGame({
     setMascotMood("idle")
     setMascotMessage("")
   }
+
+  useEffect(() => {
+    return () => {
+      try {
+        pendingTimeoutsRef.current.forEach((t) => clearTimeout(t))
+      } catch (e) {
+        // ignore
+      }
+      pendingTimeoutsRef.current = []
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel()
+      }
+    }
+  }, [])
 
   const isCorrect = items.every((item, index) => item.event === correctOrder[index]?.event)
 

@@ -189,3 +189,13 @@ function useToast() {
 }
 
 export { useToast, toast }
+
+// Clear any pending toast removal timeouts (used during navigation/unmount)
+export function clearAllToastsTimeouts() {
+  try {
+    toastTimeouts.forEach((t) => clearTimeout(t))
+    toastTimeouts.clear()
+  } catch (e) {
+    // ignore
+  }
+}

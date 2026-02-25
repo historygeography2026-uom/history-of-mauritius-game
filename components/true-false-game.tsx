@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Star, Volume2 } from "lucide-react"
@@ -73,6 +73,7 @@ export default function TrueFalseGame({
   const [showConfetti, setShowConfetti] = useState(false)
   const [buttonPressed, setButtonPressed] = useState<"true" | "false" | null>(null)
   const { playCorrect, playWrong, playClick } = useGameSounds()
+  const pendingTimeoutsRef = useRef<number[]>([])
 
   const isSingleMode = !!singleQuestion
 
@@ -108,14 +109,16 @@ export default function TrueFalseGame({
       setMascotMessage(getRandomMessage("correct"))
       setShowConfetti(true)
       playCorrect()
-      setTimeout(() => setShowConfetti(false), 3000)
+      const confettiTimer = window.setTimeout(() => setShowConfetti(false), 3000)
+      pendingTimeoutsRef.current.push(confettiTimer)
     } else {
       setMascotMood("encouraging")
       setMascotMessage(getRandomMessage("wrong"))
       playWrong()
     }
     
-    setTimeout(() => setButtonPressed(null), 300)
+    const btnTimer = window.setTimeout(() => setButtonPressed(null), 300)
+    pendingTimeoutsRef.current.push(btnTimer)
   }
 
   const handleNext = () => {
@@ -134,6 +137,20 @@ export default function TrueFalseGame({
       }
     }
   }
+
+  useEffect(() => {
+    return () => {
+      try {
+        pendingTimeoutsRef.current.forEach((t) => clearTimeout(t))
+      } catch (e) {
+        // ignore
+      }
+      pendingTimeoutsRef.current = []
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel()
+      }
+    }
+  }, [])
 
   const isCorrect = selectedAnswer === question.isTrue
 
