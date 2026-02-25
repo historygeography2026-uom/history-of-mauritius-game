@@ -17,6 +17,7 @@ export default function SubjectSelection() {
   const [showProgressMap, setShowProgressMap] = useState(false)
   const [profile, setProfile] = useState<any>(null)
   const [welcomeMessage, setWelcomeMessage] = useState("Let's learn about Mauritian History & Geography! 🌴")
+  const [isNavigating, setIsNavigating] = useState(false)
   const router = useRouter()
   const { data: session } = useSession()
 
@@ -40,6 +41,16 @@ export default function SubjectSelection() {
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: "/" })
+  }
+
+  const handleNavigateToGame = (subject: string, level: number) => {
+    if (isNavigating) return // Prevent rapid clicks
+    setIsNavigating(true)
+    const queryParams = new URLSearchParams({
+      subject,
+      level: level.toString(),
+    })
+    router.push(`/game?${queryParams.toString()}`)
   }
 
   const subjects = [
@@ -102,11 +113,7 @@ export default function SubjectSelection() {
               subjectIcon={subject?.icon || "📚"}
               onBack={() => setShowProgressMap(false)}
               onSelectLevel={(levelId) => {
-                const queryParams = new URLSearchParams({
-                  subject: selectedSubject,
-                  level: levelId.toString(),
-                })
-                window.location.href = `/game?${queryParams.toString()}`
+                handleNavigateToGame(selectedSubject, levelId)
               }}
             />
           </div>
@@ -153,14 +160,8 @@ export default function SubjectSelection() {
             {levels.map((level, index) => (
               <Card
                 key={level.id}
-                className="group cursor-pointer overflow-hidden border-4 border-primary/20 bg-card hover:opacity-90"
-                onClick={() => {
-                  const queryParams = new URLSearchParams({
-                    subject: selectedSubject,
-                    level: level.id.toString(),
-                  })
-                  window.location.href = `/game?${queryParams.toString()}`
-                }}
+                className="group cursor-pointer overflow-hidden border-4 border-primary/20 bg-card transition-all hover:scale-105 hover:shadow-2xl"
+                onClick={() => handleNavigateToGame(selectedSubject, level.id)}
               >
                 <div className="p-6">
                   <div
