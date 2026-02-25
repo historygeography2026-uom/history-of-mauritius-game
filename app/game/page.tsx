@@ -564,13 +564,13 @@ const GamePage = () => {
 
             <Button
               onClick={() => router.push("/")} // Changed window.history.back to router.push("/")
-              className="w-full bg-gradient-to-r from-primary to-secondary text-white hover:opacity-90 py-8 text-2xl font-bold rounded-2xl shadow-lg hover:scale-105 transition-all"
+              className="w-full bg-gradient-to-r from-primary to-secondary text-white hover:opacity-90 py-8 text-2xl font-bold rounded-2xl shadow-lg"
             >
               🏠 Back to Home
             </Button>
             <Button
               onClick={() => router.push("/history")}
-              className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:opacity-90 py-4 text-lg font-bold rounded-2xl shadow-lg hover:scale-105 transition-all mt-3"
+              className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:opacity-90 py-4 text-lg font-bold rounded-2xl shadow-lg mt-3"
             >
               📊 View My Progress
             </Button>

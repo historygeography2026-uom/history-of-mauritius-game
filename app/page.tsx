@@ -251,7 +251,7 @@ export default function SubjectSelection() {
           {subjects.map((subject, index) => (
             <Card
               key={subject.id}
-              className={`group cursor-pointer overflow-hidden border-4 ${subject.borderColor} bg-card transition-all hover:scale-105 hover:shadow-2xl`}
+              className={`group cursor-pointer overflow-hidden border-4 ${subject.borderColor} bg-card`}
               onClick={() => setSelectedSubject(subject.id)}
             >
               <div className="p-8">
@@ -262,7 +262,7 @@ export default function SubjectSelection() {
                 </div>
                 <h3 className="mb-2 text-3xl font-bold text-card-foreground text-center">{subject.title}</h3>
                 <p className="mb-6 text-muted-foreground text-center">{subject.description}</p>
-                <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all hover:scale-105 text-lg py-6">
+                <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 text-lg py-6">
                   Start Exploring! →
                 </Button>
               </div>

@@ -215,14 +215,14 @@ export default function TrueFalseGame({
         <div className="grid gap-3 md:grid-cols-2">
           <Button
             onClick={() => handleAnswer(true)}
-            className={`h-16 md:h-20 bg-gradient-to-br from-green-400 to-green-600 text-white hover:from-green-500 hover:to-green-700 text-xl md:text-2xl font-bold hover:scale-105 transition-all shadow-lg hover:shadow-xl border-4 border-green-300 rounded-2xl flex flex-col items-center justify-center gap-1 ${buttonPressed === "true" ? "animate-button-press scale-95" : ""}`}
+            className={`h-16 md:h-20 bg-gradient-to-br from-green-400 to-green-600 text-white hover:from-green-500 hover:to-green-700 text-xl md:text-2xl font-bold shadow-lg border-4 border-green-300 rounded-2xl flex flex-col items-center justify-center gap-1 ${buttonPressed === "true" ? "animate-button-press scale-95" : ""}`}
           >
             <span className="text-3xl md:text-4xl" role="img" aria-label="thumbs up">👍</span>
             <span>TRUE</span>
           </Button>
           <Button
             onClick={() => handleAnswer(false)}
-            className={`h-16 md:h-20 bg-gradient-to-br from-red-400 to-red-600 text-white hover:from-red-500 hover:to-red-700 text-xl md:text-2xl font-bold hover:scale-105 transition-all shadow-lg hover:shadow-xl border-4 border-red-300 rounded-2xl flex flex-col items-center justify-center gap-1 ${buttonPressed === "false" ? "animate-button-press scale-95" : ""}`}
+            className={`h-16 md:h-20 bg-gradient-to-br from-red-400 to-red-600 text-white hover:from-red-500 hover:to-red-700 text-xl md:text-2xl font-bold shadow-lg border-4 border-red-300 rounded-2xl flex flex-col items-center justify-center gap-1 ${buttonPressed === "false" ? "animate-button-press scale-95" : ""}`}
           >
             <span className="text-3xl md:text-4xl" role="img" aria-label="thumbs down">👎</span>
             <span>FALSE</span>
@@ -241,7 +241,7 @@ export default function TrueFalseGame({
 
           <Button
             onClick={handleNext}
-            className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-3 hover:scale-105 transition-all rounded-xl shadow-lg font-bold"
+            className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-3 rounded-xl shadow-lg font-bold"
           >
             {isSingleMode ? "Continue →" : currentQuestionIndex < builtInQuestions.length - 1 ? "Next Question →" : "Finish! 🎊"}
           </Button>

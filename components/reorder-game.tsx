@@ -205,7 +205,7 @@ export default function ReorderGame({
                 ? "border-green-400 bg-gradient-to-r from-green-100 to-green-200"
                 : showResult && !isCorrect
                   ? "border-orange-300 bg-gradient-to-r from-orange-50 to-yellow-50"
-                  : "border-primary/30 bg-gradient-to-r from-blue-50 to-purple-50 hover:border-primary hover:scale-[1.02] hover:shadow-lg"
+                  : "border-primary/30 bg-gradient-to-r from-blue-50 to-purple-50 hover:border-primary"
             }`}
           >
             {!showResult && <GripVertical className="h-6 w-6 text-muted-foreground" />}
@@ -221,7 +221,7 @@ export default function ReorderGame({
       {!showResult ? (
         <Button
           onClick={handleCheckOrder}
-          className="w-full bg-gradient-to-r from-primary to-secondary text-white hover:opacity-90 text-lg py-3 hover:scale-105 transition-all rounded-xl shadow-lg font-bold"
+          className="w-full bg-gradient-to-r from-primary to-secondary text-white hover:opacity-90 text-lg py-3 rounded-xl shadow-lg font-bold"
         >
           Check My Order! ✓
         </Button>
