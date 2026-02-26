@@ -26,9 +26,42 @@ const sharedAudioElements = new Map<SoundType, HTMLAudioElement>()
 // so toggling mute on the game page didn't affect child component sounds.
 let globalIsMuted = false
 
+// Mute state change listeners
+const muteListeners = new Set<(isMuted: boolean) => void>()
+
+// Initialize mute state from localStorage
+function initializeMuteState() {
+  if (typeof window === 'undefined') return
+  try {
+    const saved = localStorage.getItem('gameAudioMuted')
+    if (saved !== null) {
+      globalIsMuted = JSON.parse(saved)
+    }
+  } catch (e) {
+    // Ignore localStorage errors
+  }
+}
+
 // Export getter so other modules (e.g. speakText) can check mute state
 export function isGameMuted(): boolean {
   return globalIsMuted
+}
+
+// Export function to get and sync mute state
+export function getIsMuted(): boolean {
+  return globalIsMuted
+}
+
+// Subscribe to mute state changes
+export function subscribeMuteChange(listener: (isMuted: boolean) => void): () => void {
+  muteListeners.add(listener)
+  // Return unsubscribe function
+  return () => muteListeners.delete(listener)
+}
+
+// Notify all listeners of mute state change
+function notifyMuteChange() {
+  muteListeners.forEach(listener => listener(globalIsMuted))
 }
 
 function ensureAudioInitialized() {
@@ -44,9 +77,10 @@ function ensureAudioInitialized() {
 }
 
 export function useGameSounds() {
-  // Initialize shared audio elements once globally
+  // Initialize shared audio elements and mute state once globally
   useEffect(() => {
     ensureAudioInitialized()
+    initializeMuteState()
   }, [])
 
   const playSound = useCallback((sound: SoundType, volume = 0.5) => {
@@ -64,11 +98,19 @@ export function useGameSounds() {
 
   const toggleMute = useCallback(() => {
     globalIsMuted = !globalIsMuted
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('gameAudioMuted', JSON.stringify(globalIsMuted))
+    }
+    notifyMuteChange()
     return globalIsMuted
   }, [])
 
   const setMuted = useCallback((muted: boolean) => {
     globalIsMuted = muted
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('gameAudioMuted', JSON.stringify(globalIsMuted))
+    }
+    notifyMuteChange()
   }, [])
 
   return {
