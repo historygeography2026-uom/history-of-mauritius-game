@@ -238,10 +238,10 @@ export default function SubjectSelection() {
           
           <div className="mb-4 flex items-center justify-center gap-2">
             <Sparkles className="h-10 w-10 text-secondary" />
-            <h1 className="text-5xl font-bold text-primary md:text-6xl">History & Geography Game</h1>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-primary">History & Geography Game</h1>
             <Sparkles className="h-10 w-10 text-secondary" />
           </div>
-          <p className="text-xl text-muted-foreground md:text-2xl mt-4">
+          <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground mt-4">
             Choose your subject and start learning! 🎓
           </p>
         </div>
@@ -254,13 +254,13 @@ export default function SubjectSelection() {
               className={`group cursor-pointer overflow-hidden border-4 ${subject.borderColor} bg-card transition-all hover:scale-105 hover:shadow-2xl`}
               onClick={() => setSelectedSubject(subject.id)}
             >
-              <div className="p-8">
+              <div className="p-4 sm:p-6 md:p-8">
                 <div
-                  className={`mb-6 flex h-28 w-28 items-center justify-center rounded-3xl bg-gradient-to-br ${subject.color} text-7xl shadow-lg transition-transform mx-auto`}
+                  className={`mb-6 flex h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 items-center justify-center rounded-3xl bg-gradient-to-br ${subject.color} text-4xl sm:text-5xl md:text-7xl shadow-lg transition-transform mx-auto`}
                 >
                   {subject.icon}
                 </div>
-                <h3 className="mb-2 text-3xl font-bold text-card-foreground text-center">{subject.title}</h3>
+                <h3 className="mb-2 text-xl sm:text-2xl md:text-3xl font-bold text-card-foreground text-center">{subject.title}</h3>
                 <p className="mb-6 text-muted-foreground text-center">{subject.description}</p>
                 <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 text-lg py-6">
                   Start Exploring! →

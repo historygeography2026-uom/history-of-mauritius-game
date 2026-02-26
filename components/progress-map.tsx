@@ -81,12 +81,12 @@ export function ProgressMap({ subject, subjectColor, subjectIcon, onSelectLevel,
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-200 via-sky-100 to-green-200 p-4 md:p-8 relative overflow-hidden">
-      {/* Decorative elements */}
+      {/* Decorative elements - hidden on mobile to prevent overlap */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-green-400 to-transparent"></div>
-      <div className="absolute bottom-10 left-10 text-4xl">🌴</div>
-      <div className="absolute bottom-10 right-10 text-4xl">🌴</div>
-      <div className="absolute bottom-5 left-1/4 text-3xl">🌺</div>
-      <div className="absolute bottom-5 right-1/4 text-3xl">🌺</div>
+      <div className="hidden md:block absolute bottom-10 left-10 text-4xl">🌴</div>
+      <div className="hidden md:block absolute bottom-10 right-10 text-4xl">🌴</div>
+      <div className="hidden md:block absolute bottom-5 left-1/4 text-3xl">🌺</div>
+      <div className="hidden md:block absolute bottom-5 right-1/4 text-3xl">🌺</div>
 
       <div className="max-w-4xl mx-auto relative z-10">
         {/* Header */}
@@ -110,7 +110,7 @@ export function ProgressMap({ subject, subjectColor, subjectIcon, onSelectLevel,
         </div>
 
         {/* Progress Map */}
-        <div className="relative h-[400px] md:h-[500px]">
+        <div className="relative h-[300px] sm:h-[350px] md:h-[400px] lg:h-[500px]">
           {/* Path connecting levels */}
           <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
             {/* Dotted path */}
@@ -165,7 +165,7 @@ export function ProgressMap({ subject, subjectColor, subjectIcon, onSelectLevel,
                 >
                   {/* Node Circle */}
                   <div
-                    className={`w-24 h-24 md:w-28 md:h-28 rounded-full flex flex-col items-center justify-center shadow-xl border-4 transition-all ${
+                    className={`w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full flex flex-col items-center justify-center shadow-xl border-4 transition-all ${
                       level.isCompleted
                         ? "bg-gradient-to-br from-green-400 to-green-600 border-green-300"
                         : level.isUnlocked
@@ -174,13 +174,13 @@ export function ProgressMap({ subject, subjectColor, subjectIcon, onSelectLevel,
                     }`}
                   >
                     {level.isCompleted ? (
-                      <CheckCircle className="h-10 w-10 text-white mb-1" />
+                      <CheckCircle className="h-7 w-7 sm:h-10 sm:w-10 text-white mb-1" />
                     ) : level.isUnlocked ? (
-                      <span className="text-4xl">{level.icon}</span>
+                      <span className="text-2xl sm:text-3xl md:text-4xl">{level.icon}</span>
                     ) : (
-                      <Lock className="h-10 w-10 text-white/70" />
+                      <Lock className="h-7 w-7 sm:h-10 sm:w-10 text-white/70" />
                     )}
-                    <span className="text-white font-bold text-sm">{level.title}</span>
+                    <span className="text-white font-bold text-xs sm:text-sm">{level.title}</span>
                   </div>
 
                   {/* Unlock requirement for locked levels */}

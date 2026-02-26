@@ -227,7 +227,7 @@ export default function MatchingGame({
             alt="Question image"
             width={1200}
             height={800}
-            className="w-full h-auto object-contain max-h-[400px]"
+            className="w-full h-auto object-contain max-h-[250px] sm:max-h-[300px] md:max-h-[400px]"
             quality={100}
             unoptimized
             priority
