@@ -136,10 +136,10 @@ export default function Leaderboard() {
             <Button
               key={category.id}
               onClick={() => setSelectedCategory(category.id)}
-              className={`py-6 font-semibold transition-all ${
+              className={`py-6 font-semibold transition-all rounded-lg ${
                 selectedCategory === category.id
-                  ? "bg-primary text-primary-foreground shadow-lg scale-105"
-                  : "bg-secondary/20 text-secondary hover:bg-secondary/30"
+                  ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg hover:shadow-xl hover:shadow-amber-500/50 scale-105"
+                  : "bg-gradient-to-r from-gray-300 to-gray-400 text-gray-700 hover:from-gray-400 hover:to-gray-500"
               }`}
             >
               {category.icon} {category.label}

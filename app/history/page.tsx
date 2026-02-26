@@ -110,7 +110,7 @@ export default function AttemptHistoryPage() {
           <Card className="p-8 text-center">
             <p className="text-lg text-muted-foreground">Please log in to see your attempt history.</p>
             <Link href="/auth/login">
-              <Button className="mt-4 bg-primary text-white">Log In</Button>
+              <Button className="mt-4 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white font-bold shadow-lg hover:shadow-xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-6 py-2">Log In</Button>
             </Link>
           </Card>
         </div>
@@ -180,10 +180,10 @@ export default function AttemptHistoryPage() {
             <Button
               key={c.id}
               onClick={() => setSelectedSubject(c.id)}
-              className={`font-semibold transition-all ${
+              className={`font-semibold transition-all rounded-lg px-4 py-2 ${
                 selectedSubject === c.id
-                  ? "bg-primary text-primary-foreground shadow-lg scale-105"
-                  : "bg-secondary/20 text-secondary hover:bg-secondary/30"
+                  ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg hover:shadow-xl hover:shadow-blue-500/50 scale-105"
+                  : "bg-gradient-to-r from-gray-300 to-gray-400 text-gray-700 hover:from-gray-400 hover:to-gray-500"
               }`}
             >
               {c.icon} {c.label}
@@ -220,7 +220,7 @@ export default function AttemptHistoryPage() {
             <Card className="p-6 text-center">
               <p className="text-muted-foreground text-lg">No attempts yet. Start playing to track your progress!</p>
               <Link href="/">
-                <Button className="mt-3 bg-primary text-white">Start Playing 🎮</Button>
+              <Button className="mt-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold shadow-lg hover:shadow-xl hover:shadow-green-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-6 py-2">Start Playing 🎮</Button>
               </Link>
             </Card>
           )}

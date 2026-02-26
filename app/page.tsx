@@ -170,7 +170,7 @@ export default function SubjectSelection() {
                   </div>
                   <h3 className="mb-2 text-2xl font-bold text-card-foreground">{level.title}</h3>
                   <p className="mb-4 text-muted-foreground text-lg font-semibold">{level.difficulty}</p>
-                  <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+                  <Button className="w-full bg-gradient-to-r from-blue-500 via-blue-600 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold text-lg py-3 shadow-lg hover:shadow-xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105 rounded-xl">
                     Play Now! 🎮
                   </Button>
                 </div>
@@ -188,19 +188,19 @@ export default function SubjectSelection() {
         <div className="flex justify-between items-center mb-8">
           <div className="flex gap-2">
             <Link href="/leaderboard">
-              <Button className="bg-accent hover:bg-accent/90 text-white flex items-center gap-2">
+              <Button className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white flex items-center gap-2 font-bold shadow-lg hover:shadow-xl hover:shadow-amber-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-4 py-2">
                 <Trophy className="h-5 w-5" />
                 Leaderboard
               </Button>
             </Link>
             <Link href="/history">
-              <Button className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2">
+              <Button className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white flex items-center gap-2 font-bold shadow-lg hover:shadow-xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-4 py-2">
                 <Clock className="h-5 w-5" />
                 My Progress
               </Button>
             </Link>
             <Link href="/admin">
-              <Button className="bg-secondary hover:bg-secondary/90 text-white flex items-center gap-2">
+              <Button className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white flex items-center gap-2 font-bold shadow-lg hover:shadow-xl hover:shadow-purple-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-4 py-2">
                 <Settings className="h-5 w-5" />
                 Admin Panel
               </Button>
@@ -211,7 +211,7 @@ export default function SubjectSelection() {
             {session ? (
               <>
                 <div className="text-sm text-muted-foreground mr-2">Welcome, {profile?.name || session?.user?.name || session?.user?.email || "Student"}!</div>
-                <Button onClick={handleLogout} variant="outline" className="flex items-center gap-2 bg-transparent">
+                <Button onClick={handleLogout} className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white flex items-center gap-2 font-bold shadow-lg hover:shadow-xl hover:shadow-red-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-4 py-2">
                   <LogOut className="h-4 w-4" />
                   Logout
                 </Button>
@@ -219,10 +219,10 @@ export default function SubjectSelection() {
             ) : (
               <>
                 <Link href="/auth/login">
-                  <Button variant="outline" className="bg-transparent">Login</Button>
+                  <Button className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white font-bold shadow-lg hover:shadow-xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-4 py-2">Login</Button>
                 </Link>
                 <Link href="/auth/sign-up">
-                  <Button className="bg-primary text-primary-foreground">Sign Up</Button>
+                  <Button className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold shadow-lg hover:shadow-xl hover:shadow-green-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-4 py-2">Sign Up</Button>
                 </Link>
               </>
             )}
@@ -262,7 +262,7 @@ export default function SubjectSelection() {
                 </div>
                 <h3 className="mb-2 text-xl sm:text-2xl md:text-3xl font-bold text-card-foreground text-center">{subject.title}</h3>
                 <p className="mb-6 text-muted-foreground text-center">{subject.description}</p>
-                <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 text-lg py-6">
+                <Button className="w-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-600 hover:to-pink-600 text-white font-bold text-lg py-4 shadow-lg hover:shadow-xl hover:shadow-purple-500/50 transition-all duration-300 hover:scale-105 rounded-xl">
                   Start Exploring! →
                 </Button>
               </div>
