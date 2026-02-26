@@ -91,7 +91,7 @@ export function ProgressMap({ subject, subjectColor, subjectIcon, onSelectLevel,
       <div className="max-w-4xl mx-auto relative z-10">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <Button onClick={onBack} className="bg-white/80 hover:bg-white text-primary shadow-lg">
+          <Button onClick={onBack} className="bg-gradient-to-r from-white to-white/80 hover:from-white hover:to-white text-primary font-bold shadow-lg hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 hover:scale-105 rounded-xl px-6 py-3">
             ← Back
           </Button>
           <div className="flex items-center gap-4 bg-white/90 rounded-full px-6 py-3 shadow-lg">

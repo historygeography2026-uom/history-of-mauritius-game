@@ -479,11 +479,10 @@ const GamePage = () => {
               
               // NOW safe to navigate
               router.push("/")
-            }} className="mb-6 bg-secondary hover:bg-secondary/90 text-white">
-              {" "}
+            }} className="mb-6 bg-gradient-to-r from-secondary via-secondary/80 to-secondary hover:shadow-lg hover:shadow-secondary/50 text-white font-bold transition-all duration-300 hover:scale-105 rounded-xl px-6 py-3">
               {/* Changed window.history.back to router.push("/") */}
-              <ArrowLeft className="mr-2 h-5 w-5" />
-              Back to Home
+              <ArrowLeft className="mr-2 h-5 w-5 transition-transform hover:translate-x-1" />
+              🏠 Back to Home
             </Button>
 
             <Card className="border-4 border-secondary/50 bg-gradient-to-br from-secondary/20 to-accent/20 p-8 text-center animate-pop-in relative overflow-visible">

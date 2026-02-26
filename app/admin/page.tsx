@@ -992,9 +992,9 @@ export default function AdminPage() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
             <Link href="/">
-              <Button variant="outline" className="gap-2 bg-transparent">
-                <ArrowLeft className="h-4 w-4" />
-                Back to Home
+              <Button className="gap-2 bg-gradient-to-r from-secondary via-secondary/80 to-secondary hover:shadow-lg hover:shadow-secondary/50 text-white font-bold transition-all duration-300 hover:scale-105 rounded-xl px-6 py-3">
+                <ArrowLeft className="h-4 w-4 transition-transform hover:translate-x-1" />
+                🏠 Back to Home
               </Button>
             </Link>
             <div>

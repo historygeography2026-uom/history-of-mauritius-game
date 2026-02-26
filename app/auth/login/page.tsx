@@ -107,9 +107,9 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <Link href="/">
-          <Button className="mb-4 bg-secondary hover:bg-secondary/90">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back Home
+          <Button className="mb-4 bg-gradient-to-r from-secondary via-secondary/80 to-secondary hover:shadow-lg hover:shadow-secondary/50 text-white font-bold transition-all duration-300 hover:scale-105 rounded-xl px-6 py-3">
+            <ArrowLeft className="mr-2 h-4 w-4 transition-transform hover:translate-x-1" />
+            🏠 Back Home
           </Button>
         </Link>
 

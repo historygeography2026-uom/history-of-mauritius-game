@@ -121,10 +121,10 @@ export default function SubjectSelection() {
           <div className="flex justify-between items-center mb-6">
             <Button
               onClick={() => setSelectedSubject(null)}
-              className="bg-secondary hover:bg-secondary/90 text-white"
+              className="bg-gradient-to-r from-secondary via-secondary/80 to-secondary hover:shadow-lg hover:shadow-secondary/50 text-white font-bold transition-all duration-300 hover:scale-105 rounded-xl px-6 py-3"
             >
-              <ArrowLeft className="mr-2 h-5 w-5" />
-              Back
+              <ArrowLeft className="mr-2 h-5 w-5 transition-transform group hover:translate-x-1" />
+              ← Back
             </Button>
             
             <Button
