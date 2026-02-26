@@ -59,7 +59,7 @@ export default function AdminPage() {
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [questionToEdit, setQuestionToEdit] = useState<Question | null>(null)
 
-  const subjects = ["history", "geography", "combined"]
+  const subjects = ["history", "geography"]
   const levels = [1, 2, 3]
   const questionTypes: QuestionType[] = ["mcq", "matching", "fill", "reorder", "truefalse"]
 
@@ -1082,7 +1082,6 @@ export default function AdminPage() {
                       <SelectItem value="all">All Subjects</SelectItem>
                       <SelectItem value="history">History</SelectItem>
                       <SelectItem value="geography">Geography</SelectItem>
-                      <SelectItem value="combined">Combined</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
