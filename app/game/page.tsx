@@ -48,9 +48,11 @@ const GamePage = () => {
   const [answeredQuestions, setAnsweredQuestions] = useState<any>({})
   const [levelTimeLeft, setLevelTimeLeft] = useState(0) // Level-wide timer
   const [levelInitialTime, setLevelInitialTime] = useState(0) // Total time for level
+  const [timerPaused, setTimerPaused] = useState(false) // Pause timer when showing results
   // PERF FIX: Refs for timer values so handleQuestionComplete doesn't recreate every second
   const levelTimeLeftRef = useRef(0)
   const levelInitialTimeRef = useRef(0)
+  const timerPausedRef = useRef(false) // Ref for timer pause state to avoid closure issues
   const isAdvancingRef = useRef(false) // Guard against rapid-click Continue skipping questions
   const [showTimeoutScreen, setShowTimeoutScreen] = useState(false) // Added state for timeout screen
   const [levelTimedOut, setLevelTimedOut] = useState(false) // Track if level timed out
@@ -147,6 +149,10 @@ const GamePage = () => {
     }
   }, [])
 
+  // Sync timerPausedRef with timerPaused state to avoid closure issues
+  useEffect(() => {
+    timerPausedRef.current = timerPaused
+  }, [timerPaused])
 
   useEffect(() => {
     try {
@@ -218,6 +224,12 @@ const GamePage = () => {
         clearInterval(timer)
         return
       }
+      
+      // Skip decrementing if timer is paused (waiting to show result)
+      if (timerPausedRef.current) {
+        return
+      }
+      
       remaining -= 1
       if (remaining <= 0) {
         clearInterval(timer)
@@ -270,6 +282,10 @@ const GamePage = () => {
     if (allCompleted) return
     if (isAdvancingRef.current) return // Block rapid clicks during advancement
 
+    // PAUSE TIMER immediately when question is answered to show result
+    timerPausedRef.current = true
+    setTimerPaused(true)
+
     isAdvancingRef.current = true // Lock advancement
 
     const currentQuestion = mixedQuestions[currentQuestionIndex]
@@ -296,13 +312,19 @@ const GamePage = () => {
     }
 
     if (currentQuestionIndex < mixedQuestions.length - 1) {
+      // Auto-advance to next question after showing result (2 seconds)
       const timeout = setTimeout(
         () => {
           if (isUnmountingRef.current || !isMountedRef.current) return
+          
+          // RESUME TIMER before moving to next question
+          timerPausedRef.current = false
+          setTimerPaused(false)
+          
           setCurrentQuestionIndex((prev) => prev + 1)
           isAdvancingRef.current = false // Unlock for next question
         },
-        stars === 0 ? 1000 : 1500, // Shorter pause after timeout, longer after a correct answer
+        2000, // Show result for 2 seconds then auto-advance
       )
       pendingTimeoutsRef.current.push(timeout)
     } else {
