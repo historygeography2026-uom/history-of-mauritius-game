@@ -82,9 +82,21 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { subject, level, stars, completed } = body
 
-    if (!subject || !level || stars === undefined) {
+    if (!subject || level === undefined || level === null || stars === undefined) {
       return NextResponse.json(
         { error: "subject, level, and stars are required" },
+        { status: 400 }
+      )
+    }
+
+    // Validate data types
+    const levelNum = parseInt(level)
+    const starsNum = parseInt(stars)
+    const isCompleted = Boolean(completed)
+
+    if (isNaN(levelNum) || isNaN(starsNum) || levelNum < 1 || starsNum < 0) {
+      return NextResponse.json(
+        { error: "Invalid level or stars value" },
         { status: 400 }
       )
     }
@@ -108,7 +120,7 @@ export async function POST(request: Request) {
       RETURNING *
     `
 
-    const result = await pool.query(query, [userId, subject, level, stars, completed])
+    const result = await pool.query(query, [userId, subject, levelNum, starsNum, isCompleted])
     const row = result.rows[0]
 
     return NextResponse.json({

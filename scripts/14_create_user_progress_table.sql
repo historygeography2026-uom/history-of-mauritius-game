@@ -12,10 +12,12 @@ CREATE TABLE IF NOT EXISTS public.user_progress (
   last_attempted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  CONSTRAINT unique_user_subject_level UNIQUE(user_id, subject_name, level_number),
-  INDEX idx_user_progress_user_id (user_id),
-  INDEX idx_user_progress_subject_level (subject_name, level_number)
+  CONSTRAINT unique_user_subject_level UNIQUE(user_id, subject_name, level_number)
 );
+
+-- Create indices for better query performance
+CREATE INDEX IF NOT EXISTS idx_user_progress_user_id ON public.user_progress(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_progress_subject_level ON public.user_progress(subject_name, level_number);
 
 -- Enable RLS on user_progress
 ALTER TABLE public.user_progress ENABLE ROW LEVEL SECURITY;

@@ -56,7 +56,7 @@ function ScoreProgressChart({ attempts }: { attempts: Attempt[] }) {
       <h3 className="font-bold text-primary mb-3 text-lg flex items-center gap-2">
         <LineChartIcon className="h-5 w-5" /> Score Progression (Last 15 Attempts)
       </h3>
-      <svg width={width} height={height} className="w-full border border-blue-200 rounded-lg bg-white">
+      <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="w-full border border-blue-200 rounded-lg bg-white" style={{ maxWidth: '100%', height: 'auto' }}>
         {/* Grid lines */}
         {[0, 0.25, 0.5, 0.75, 1].map((frac, i) => (
           <line
@@ -152,7 +152,7 @@ function LevelStarsChart({ attempts }: { attempts: Attempt[] }) {
       <h3 className="font-bold text-primary mb-3 text-lg flex items-center gap-2">
         <BarChart3 className="h-5 w-5" /> Best Stars Per Level
       </h3>
-      <svg width={width} height={height} className="w-full border border-yellow-200 rounded-lg bg-white">
+      <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="w-full border border-yellow-200 rounded-lg bg-white" style={{ maxWidth: '100%', height: 'auto' }}>
         {/* Y-axis */}
         <line x1={padding} y1={padding} x2={padding} y2={height - padding} stroke="#333" strokeWidth="2" />
         {/* X-axis */}
