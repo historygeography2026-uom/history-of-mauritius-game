@@ -48,12 +48,14 @@ export default function ReorderGame({
   const [items, setItems] = useState<TimelineEvent[]>([])
   const [correctOrder, setCorrectOrder] = useState<TimelineEvent[]>([])
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [touchStartIndex, setTouchStartIndex] = useState<number | null>(null)
   const [showResult, setShowResult] = useState(false)
   const [mascotMood, setMascotMood] = useState<"idle" | "happy" | "sad" | "thinking" | "celebrating" | "encouraging">("idle")
   const [mascotMessage, setMascotMessage] = useState("")
   const [showConfetti, setShowConfetti] = useState(false)
   const { playCorrect, playWrong, playClick } = useGameSounds()
   const pendingTimeoutsRef = useRef<number[]>([])
+  const touchStartYRef = useRef<number>(0)
 
   const isSingleMode = !!question
 
@@ -98,6 +100,35 @@ export default function ReorderGame({
     setDraggedIndex(index)
   }
 
+  const handleTouchStart = (index: number, e: React.TouchEvent) => {
+    if (showResult) return
+    setTouchStartIndex(index)
+    touchStartYRef.current = e.touches[0].clientY
+  }
+
+  const handleTouchMove = (index: number, e: React.TouchEvent) => {
+    if (showResult || touchStartIndex === null) return
+    
+    e.preventDefault()
+    const currentY = e.touches[0].clientY
+    const deltaY = currentY - touchStartYRef.current
+    
+    // Only swap if moved more than 30px vertically
+    if (Math.abs(deltaY) > 30 && touchStartIndex !== index) {
+      const newItems = [...items]
+      const touchedItem = newItems[touchStartIndex]
+      newItems.splice(touchStartIndex, 1)
+      newItems.splice(index, 0, touchedItem)
+      
+      setItems(newItems)
+      setTouchStartIndex(index)
+      touchStartYRef.current = currentY
+    }
+  }
+
+  const handleTouchEnd = () => {
+    setTouchStartIndex(null)
+  }
   const handleCheckOrder = () => {
     playClick()
     setShowResult(true)
@@ -218,12 +249,17 @@ export default function ReorderGame({
             draggable={!showResult}
             onDragStart={() => handleDragStart(index)}
             onDragOver={(e) => handleDragOver(e, index)}
+            onTouchStart={(e) => handleTouchStart(index, e)}
+            onTouchMove={(e) => handleTouchMove(index, e)}
+            onTouchEnd={handleTouchEnd}
             className={`flex cursor-move items-center gap-3 rounded-xl border-2 p-2.5 md:p-3 transition-all ${
-              showResult && isCorrect
-                ? "border-green-400 bg-gradient-to-r from-green-100 to-green-200"
-                : showResult && !isCorrect
-                  ? "border-orange-300 bg-gradient-to-r from-orange-50 to-yellow-50"
-                  : "border-primary/30 bg-gradient-to-r from-blue-50 to-purple-50 hover:border-primary"
+              touchStartIndex === index && !showResult
+                ? "border-blue-500 bg-gradient-to-r from-blue-200 to-blue-100 scale-102 ring-2 ring-blue-400"
+                : showResult && isCorrect
+                  ? "border-green-400 bg-gradient-to-r from-green-100 to-green-200"
+                  : showResult && !isCorrect
+                    ? "border-orange-300 bg-gradient-to-r from-orange-50 to-yellow-50"
+                    : "border-primary/30 bg-gradient-to-r from-blue-50 to-purple-50 hover:border-primary"
             }`}
           >
             {!showResult && <GripVertical className="h-6 w-6 text-muted-foreground" />}

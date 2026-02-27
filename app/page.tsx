@@ -186,43 +186,43 @@ export default function SubjectSelection() {
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 p-4 md:p-8">
       <div className="mx-auto max-w-6xl relative z-10">
         <div className="flex justify-between items-center mb-8">
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Link href="/leaderboard">
-              <Button className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white flex items-center gap-2 font-bold shadow-lg hover:shadow-xl hover:shadow-amber-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-4 py-2">
-                <Trophy className="h-5 w-5" />
-                Leaderboard
+              <Button className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white flex items-center gap-1 sm:gap-2 font-bold shadow-lg hover:shadow-xl hover:shadow-amber-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm md:text-base">
+                <Trophy className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Leaderboard</span>
               </Button>
             </Link>
             <Link href="/history">
-              <Button className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white flex items-center gap-2 font-bold shadow-lg hover:shadow-xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-4 py-2">
-                <Clock className="h-5 w-5" />
-                My Progress
+              <Button className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white flex items-center gap-1 sm:gap-2 font-bold shadow-lg hover:shadow-xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm md:text-base">
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">My Progress</span>
               </Button>
             </Link>
             <Link href="/admin">
-              <Button className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white flex items-center gap-2 font-bold shadow-lg hover:shadow-xl hover:shadow-purple-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-4 py-2">
-                <Settings className="h-5 w-5" />
-                Admin Panel
+              <Button className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white flex items-center gap-1 sm:gap-2 font-bold shadow-lg hover:shadow-xl hover:shadow-purple-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm md:text-base">
+                <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Admin Panel</span>
               </Button>
             </Link>
           </div>
 
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-1 sm:gap-2 items-center flex-wrap">
             {session ? (
               <>
-                <div className="text-sm text-muted-foreground mr-2">Welcome, {profile?.name || session?.user?.name || session?.user?.email || "Student"}!</div>
-                <Button onClick={handleLogout} className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white flex items-center gap-2 font-bold shadow-lg hover:shadow-xl hover:shadow-red-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-4 py-2">
+                <div className="text-xs sm:text-sm text-muted-foreground mr-1 sm:mr-2">Welcome, {profile?.name || session?.user?.name || session?.user?.email || "Student"}!</div>
+                <Button onClick={handleLogout} className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white flex items-center gap-1 sm:gap-2 font-bold shadow-lg hover:shadow-xl hover:shadow-red-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm md:text-base">
                   <LogOut className="h-4 w-4" />
-                  Logout
+                  <span className="hidden sm:inline">Logout</span>
                 </Button>
               </>
             ) : (
               <>
                 <Link href="/auth/login">
-                  <Button className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white font-bold shadow-lg hover:shadow-xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-4 py-2">Login</Button>
+                  <Button className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white font-bold shadow-lg hover:shadow-xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm md:text-base">Login</Button>
                 </Link>
                 <Link href="/auth/sign-up">
-                  <Button className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold shadow-lg hover:shadow-xl hover:shadow-green-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-4 py-2">Sign Up</Button>
+                  <Button className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold shadow-lg hover:shadow-xl hover:shadow-green-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm md:text-base">Sign Up</Button>
                 </Link>
               </>
             )}
