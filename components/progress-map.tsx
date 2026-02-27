@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Star, Lock, CheckCircle, Trophy } from "lucide-react"
 
@@ -24,50 +25,79 @@ interface ProgressMapProps {
 }
 
 export function ProgressMap({ subject, subjectColor, subjectIcon, onSelectLevel, onBack }: ProgressMapProps) {
+  const { data: session } = useSession()
   const [levels, setLevels] = useState<LevelData[]>([])
   const [totalStars, setTotalStars] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Load progress from localStorage
-    const savedProgress = localStorage.getItem(`progress_${subject}`)
-    const progress = savedProgress ? JSON.parse(savedProgress) : {}
+    const loadProgress = async () => {
+      setIsLoading(true)
+      let progress = {}
 
-    const levelData: LevelData[] = [
-      {
-        id: 1,
-        title: "Level 1",
-        difficulty: "Easy",
-        icon: "🌟",
-        isUnlocked: true,
-        isCompleted: progress[1]?.completed || false,
-        stars: progress[1]?.stars || 0,
-        maxStars: 5,
-      },
-      {
-        id: 2,
-        title: "Level 2",
-        difficulty: "Medium",
-        icon: "⭐⭐",
-        isUnlocked: progress[1]?.completed || false,
-        isCompleted: progress[2]?.completed || false,
-        stars: progress[2]?.stars || 0,
-        maxStars: 5,
-      },
-      {
-        id: 3,
-        title: "Level 3",
-        difficulty: "Hard",
-        icon: "⭐⭐⭐",
-        isUnlocked: progress[2]?.completed || false,
-        isCompleted: progress[3]?.completed || false,
-        stars: progress[3]?.stars || 0,
-        maxStars: 5,
-      },
-    ]
+      // Try to load from database if authenticated
+      if (session?.user?.id) {
+        try {
+          const response = await fetch(`/api/user/progress?subject=${subject}`)
+          if (response.ok) {
+            progress = await response.json()
+          } else {
+            // Fall back to localStorage if API fails
+            const savedProgress = localStorage.getItem(`progress_${subject}`)
+            progress = savedProgress ? JSON.parse(savedProgress) : {}
+          }
+        } catch (error) {
+          console.warn("Failed to load progress from database, using localStorage:", error)
+          // Fall back to localStorage
+          const savedProgress = localStorage.getItem(`progress_${subject}`)
+          progress = savedProgress ? JSON.parse(savedProgress) : {}
+        }
+      } else {
+        // Load progress from localStorage for guest users
+        const savedProgress = localStorage.getItem(`progress_${subject}`)
+        progress = savedProgress ? JSON.parse(savedProgress) : {}
+      }
 
-    setLevels(levelData)
-    setTotalStars(levelData.reduce((sum, l) => sum + l.stars, 0))
-  }, [subject])
+      const levelData: LevelData[] = [
+        {
+          id: 1,
+          title: "Level 1",
+          difficulty: "Easy",
+          icon: "🌟",
+          isUnlocked: true,
+          isCompleted: progress[1]?.completed || false,
+          stars: progress[1]?.stars || 0,
+          maxStars: 5,
+        },
+        {
+          id: 2,
+          title: "Level 2",
+          difficulty: "Medium",
+          icon: "⭐⭐",
+          isUnlocked: progress[1]?.completed || false,
+          isCompleted: progress[2]?.completed || false,
+          stars: progress[2]?.stars || 0,
+          maxStars: 5,
+        },
+        {
+          id: 3,
+          title: "Level 3",
+          difficulty: "Hard",
+          icon: "⭐⭐⭐",
+          isUnlocked: progress[2]?.completed || false,
+          isCompleted: progress[3]?.completed || false,
+          stars: progress[3]?.stars || 0,
+          maxStars: 5,
+        },
+      ]
+
+      setLevels(levelData)
+      setTotalStars(levelData.reduce((sum, l) => sum + l.stars, 0))
+      setIsLoading(false)
+    }
+
+    loadProgress()
+  }, [subject, session?.user?.id])
 
   const getNodePosition = (index: number) => {
     // Create a winding path
@@ -275,8 +305,9 @@ export function ProgressMap({ subject, subjectColor, subjectIcon, onSelectLevel,
   )
 }
 
-// Helper function to save progress
-export function saveProgress(subject: string, level: number, stars: number, completed: boolean) {
+// Helper function to save progress (both localStorage and database)
+export async function saveProgress(subject: string, level: number, stars: number, completed: boolean, userId?: string) {
+  // Always save to localStorage for offline access
   const key = `progress_${subject}`
   const existing = localStorage.getItem(key)
   const progress = existing ? JSON.parse(existing) : {}
@@ -287,4 +318,23 @@ export function saveProgress(subject: string, level: number, stars: number, comp
   }
   
   localStorage.setItem(key, JSON.stringify(progress))
+
+  // Also save to database if user is authenticated
+  if (userId) {
+    try {
+      await fetch("/api/user/progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subject,
+          level,
+          stars,
+          completed,
+        }),
+      })
+    } catch (error) {
+      console.warn("Failed to sync progress to database:", error)
+      // Progress is still saved to localStorage, so this is not critical
+    }
+  }
 }

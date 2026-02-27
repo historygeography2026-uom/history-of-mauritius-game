@@ -58,6 +58,8 @@ const GamePage = () => {
   const [levelTimedOut, setLevelTimedOut] = useState(false) // Track if level timed out
   const [error, setError] = useState<string | null>(null)
   const [showLevelCompleteConfetti, setShowLevelCompleteConfetti] = useState(false)
+  const [levelUnlocked, setLevelUnlocked] = useState(true) // Track if level is unlocked
+  const [unlockError, setUnlockError] = useState<string | null>(null) // Error msg if level locked
   const { playLevelComplete, playStar, setMuted } = useGameSounds()
   const { recordQuestionAnswered, recordLevelCompleted, recordGameStarted } = useAchievements()
 
@@ -153,6 +155,59 @@ const GamePage = () => {
   useEffect(() => {
     timerPausedRef.current = timerPaused
   }, [timerPaused])
+
+  // Validate that the requested level is actually unlocked
+  useEffect(() => {
+    const validateLevelUnlock = async () => {
+      const levelNum = parseInt(level)
+      
+      // Level 1 is always unlocked
+      if (levelNum === 1) {
+        setLevelUnlocked(true)
+        setUnlockError(null)
+        return
+      }
+
+      // For levels 2+ check if previous level is completed
+      const previousLevel = levelNum - 1
+      let progress = {}
+
+      // Try to load from database if authenticated
+      if (session?.user?.id) {
+        try {
+          const response = await fetch(`/api/user/progress?subject=${subject}`)
+          if (response.ok) {
+            progress = await response.json()
+          } else {
+            // Fall back to localStorage
+            const savedProgress = localStorage.getItem(`progress_${subject}`)
+            progress = savedProgress ? JSON.parse(savedProgress) : {}
+          }
+        } catch (error) {
+          console.warn("Failed to load progress for validation, using localStorage:", error)
+          const savedProgress = localStorage.getItem(`progress_${subject}`)
+          progress = savedProgress ? JSON.parse(savedProgress) : {}
+        }
+      } else {
+        // Load from localStorage for guest users
+        const savedProgress = localStorage.getItem(`progress_${subject}`)
+        progress = savedProgress ? JSON.parse(savedProgress) : {}
+      }
+
+      // Check if previous level is completed
+      const prevLevelCompleted = progress[previousLevel]?.completed || false
+      
+      if (prevLevelCompleted) {
+        setLevelUnlocked(true)
+        setUnlockError(null)
+      } else {
+        setLevelUnlocked(false)
+        setUnlockError(`Complete Level ${previousLevel} first to unlock Level ${levelNum}`)
+      }
+    }
+
+    validateLevelUnlock()
+  }, [subject, level, session?.user?.id])
 
   useEffect(() => {
     try {
@@ -336,8 +391,8 @@ const GamePage = () => {
         const maxPossibleStars = mixedQuestions.length * 3 // Assuming max 3 stars per question
         const timeRemainingPercent = (levelTimeLeftRef.current / levelInitialTimeRef.current) * 100
         recordLevelCompleted(subject, finalStars, maxPossibleStars, timeRemainingPercent)
-        // Persist progress to localStorage for level unlock & star retention
-        saveProgress(subject, parseInt(level), finalStars, true)
+        // Persist progress to localStorage and database
+        saveProgress(subject, parseInt(level), finalStars, true, session?.user?.id)
         setAllCompleted(true)
       }
       isAdvancingRef.current = false
@@ -349,9 +404,9 @@ const GamePage = () => {
   // PERF FIX: Only trigger on allCompleted to avoid running on every answered question
   useEffect(() => {
     if (isUnmountingRef.current || !isMountedRef.current || !allCompleted) return
-    // Also save progress to localStorage on timeout (partial completion)
+    // Also save progress to localStorage and database on timeout (partial completion)
     if (levelTimedOut) {
-      saveProgress(subject, parseInt(level), totalStars, false)
+      saveProgress(subject, parseInt(level), totalStars, false, session?.user?.id)
     }
     const persistResults = async () => {
       if (isUnmountingRef.current || !isMountedRef.current) return
@@ -445,6 +500,24 @@ const GamePage = () => {
       <div className="flex items-center justify-center min-h-screen">
         <Card className="p-8 text-center">
           <p className="text-lg">Loading questions...</p>
+        </Card>
+      </div>
+    )
+  }
+
+  if (!levelUnlocked && unlockError) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 p-4">
+        <Card className="p-8 text-center border-4 border-orange-500 max-w-md bg-gradient-to-br from-orange-50 to-yellow-50">
+          <div className="text-6xl mb-4">🔒</div>
+          <h2 className="text-3xl font-bold text-orange-600 mb-4">Level Locked!</h2>
+          <p className="text-lg text-gray-700 mb-6">{unlockError}</p>
+          <Button 
+            onClick={() => router.push("/")} 
+            className="w-full bg-gradient-to-r from-primary to-secondary text-white hover:opacity-90 py-4 font-bold rounded-xl"
+          >
+            ← Back to Home
+          </Button>
         </Card>
       </div>
     )

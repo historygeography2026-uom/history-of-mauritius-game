@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { ArrowLeft, Trophy, Star, Clock, TrendingUp, Target, Calendar, AlertTriangle } from "lucide-react"
+import { ArrowLeft, Trophy, Star, Clock, TrendingUp, Target, Calendar, AlertTriangle, BarChart3, LineChart as LineChartIcon } from "lucide-react"
 import { useSession } from "next-auth/react"
 
 export const dynamic = 'force-dynamic'
@@ -30,6 +30,194 @@ type Summary = {
   avgScore: number
   completedWithoutTimeout: number
   subjectStats: Record<string, { attempts: number; bestScore: number; bestStars: number }>
+}
+
+// Simple SVG Line Chart for score progression
+function ScoreProgressChart({ attempts }: { attempts: Attempt[] }) {
+  if (attempts.length < 2) return null
+
+  const sorted = [...attempts].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()).slice(-15)
+  const width = 600
+  const height = 250
+  const padding = 40
+  const maxScore = Math.max(...sorted.map(a => a.total_points), 100)
+  const minScore = 0
+
+  const points = sorted.map((a, i) => {
+    const x = padding + (i / (sorted.length - 1)) * (width - 2 * padding)
+    const y = height - padding - ((a.total_points - minScore) / (maxScore - minScore)) * (height - 2 * padding)
+    return { x, y, ...a }
+  })
+
+  const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ")
+
+  return (
+    <Card className="p-4 mb-6 bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200">
+      <h3 className="font-bold text-primary mb-3 text-lg flex items-center gap-2">
+        <LineChartIcon className="h-5 w-5" /> Score Progression (Last 15 Attempts)
+      </h3>
+      <svg width={width} height={height} className="w-full border border-blue-200 rounded-lg bg-white">
+        {/* Grid lines */}
+        {[0, 0.25, 0.5, 0.75, 1].map((frac, i) => (
+          <line
+            key={i}
+            x1={padding}
+            y1={height - padding - frac * (height - 2 * padding)}
+            x2={width - padding}
+            y2={height - padding - frac * (height - 2 * padding)}
+            stroke="#e0e0e0"
+            strokeDasharray="4"
+          />
+        ))}
+        {/* Y-axis */}
+        <line x1={padding} y1={padding} x2={padding} y2={height - padding} stroke="#333" strokeWidth="2" />
+        {/* X-axis */}
+        <line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke="#333" strokeWidth="2" />
+        
+        {/* Y-axis labels */}
+        {[0, 0.25, 0.5, 0.75, 1].map((frac, i) => (
+          <text
+            key={i}
+            x={padding - 10}
+            y={height - padding - frac * (height - 2 * padding) + 4}
+            fontSize="12"
+            textAnchor="end"
+            fill="#666"
+          >
+            {Math.round(minScore + frac * (maxScore - minScore))}
+          </text>
+        ))}
+
+        {/* Path line */}
+        <path d={pathD} fill="none" stroke="#3b82f6" strokeWidth="2" />
+        
+        {/* Data points */}
+        {points.map((p, i) => (
+          <circle
+            key={i}
+            cx={p.x}
+            cy={p.y}
+            r="4"
+            fill={p.timed_out ? "#f97316" : "#22c55e"}
+            stroke="white"
+            strokeWidth="2"
+          />
+        ))}
+
+        {/* X-axis labels */}
+        {points.map((p, i) => {
+          if (sorted.length > 8 && i % Math.ceil(sorted.length / 8) !== 0) return null
+          return (
+            <text
+              key={i}
+              x={p.x}
+              y={height - 15}
+              fontSize="10"
+              textAnchor="middle"
+              fill="#666"
+            >
+              {new Date(p.created_at).getDate()}/{new Date(p.created_at).getMonth() + 1}
+            </text>
+          )
+        })}
+      </svg>
+    </Card>
+  )
+}
+
+// Simple Bar Chart for per-level best stars
+function LevelStarsChart({ attempts }: { attempts: Attempt[] }) {
+  // Get best stars per level
+  const levelStars: Record<number, { stars: number; points: number }> = {}
+  attempts.forEach(a => {
+    const key = a.level
+    if (!levelStars[key]) {
+      levelStars[key] = { stars: a.stars_earned, points: a.total_points }
+    } else if (a.stars_earned > levelStars[key].stars) {
+      levelStars[key] = { stars: a.stars_earned, points: a.total_points }
+    }
+  })
+
+  if (Object.keys(levelStars).length === 0) return null
+
+  const levels = Object.keys(levelStars).sort((a, b) => parseInt(a) - parseInt(b))
+  const width = 400
+  const height = 250
+  const padding = 40
+  const barWidth = (width - 2 * padding) / (levels.length * 1.5)
+  const maxStars = 5
+
+  return (
+    <Card className="p-4 mb-6 bg-gradient-to-br from-yellow-50 to-amber-50 border-yellow-200">
+      <h3 className="font-bold text-primary mb-3 text-lg flex items-center gap-2">
+        <BarChart3 className="h-5 w-5" /> Best Stars Per Level
+      </h3>
+      <svg width={width} height={height} className="w-full border border-yellow-200 rounded-lg bg-white">
+        {/* Y-axis */}
+        <line x1={padding} y1={padding} x2={padding} y2={height - padding} stroke="#333" strokeWidth="2" />
+        {/* X-axis */}
+        <line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke="#333" strokeWidth="2" />
+
+        {/* Y-axis labels (stars) */}
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <text
+            key={i}
+            x={padding - 10}
+            y={height - padding - (i / maxStars) * (height - 2 * padding) + 4}
+            fontSize="12"
+            textAnchor="end"
+            fill="#666"
+          >
+            {i}⭐
+          </text>
+        ))}
+
+        {/* Bars */}
+        {levels.map((level, i) => {
+          const stars = levelStars[parseInt(level)].stars
+          const barHeight = (stars / maxStars) * (height - 2 * padding)
+          const x = padding + i * (barWidth * 1.5) + barWidth * 0.25
+          const y = height - padding - barHeight
+
+          return (
+            <g key={level}>
+              {/* Bar */}
+              <rect
+                x={x}
+                y={y}
+                width={barWidth}
+                height={barHeight}
+                fill="#f59e0b"
+                rx="2"
+              />
+              {/* Label */}
+              <text
+                x={x + barWidth / 2}
+                y={height - padding + 20}
+                fontSize="12"
+                textAnchor="middle"
+                fill="#666"
+                fontWeight="bold"
+              >
+                L{level}
+              </text>
+              {/* Value on top */}
+              <text
+                x={x + barWidth / 2}
+                y={y - 5}
+                fontSize="12"
+                textAnchor="middle"
+                fill="#b45309"
+                fontWeight="bold"
+              >
+                {stars}⭐
+              </text>
+            </g>
+          )
+        })}
+      </svg>
+    </Card>
+  )
 }
 
 export default function AttemptHistoryPage() {
@@ -210,6 +398,14 @@ export default function AttemptHistoryPage() {
               ))}
             </div>
           </Card>
+        )}
+
+        {/* Visualization Charts */}
+        {!loading && attempts.length > 0 && (
+          <>
+            <ScoreProgressChart attempts={attempts} />
+            <LevelStarsChart attempts={attempts} />
+          </>
         )}
 
         {/* Attempt list */}
