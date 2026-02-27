@@ -22,9 +22,14 @@ export async function GET(request: NextRequest) {
     const params: any[] = []
 
     if (!all) {
-      // Use the combined subject directly (now contains balanced mix of history + geography)
-      query += ` AND s.name = $${params.length + 1}`
-      params.push(subject)
+      // Handle combined subject by fetching from both history and geography
+      if (subject === "combined") {
+        query += ` AND s.name IN ('history', 'geography')`
+      } else {
+        query += ` AND s.name = $${params.length + 1}`
+        params.push(subject)
+      }
+      
       query += ` AND l.level_number = $${params.length + 1}`
       params.push(Number(level))
     }
