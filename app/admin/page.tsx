@@ -207,12 +207,16 @@ export default function AdminPage() {
 
     try {
       setLoading(true)
+      console.log("[SingleDelete] Deleting question with ID:", id)
       const res = await fetch(`/api/admin/questions?id=${id}`, { method: "DELETE" })
       if (!res.ok) {
         const err = await res.json()
-        throw new Error(err.error || "Delete failed")
+        const errorMsg = err.error || "Delete failed"
+        console.error("[SingleDelete] Delete failed. Status:", res.status, "Error:", errorMsg, "Details:", err.details)
+        throw new Error(errorMsg)
       }
       
+      console.log("[SingleDelete] Delete succeeded, refreshing data...")
       // Wait for the data to refresh before showing success message
       if (viewMode === "filtered") {
         await fetchQuestions()
@@ -222,8 +226,8 @@ export default function AdminPage() {
       
       alert("Question deleted successfully!")
     } catch (error) {
-      console.error("Error deleting question:", error)
-      alert("Failed to delete question.")
+      console.error("[SingleDelete] Error deleting question:", error)
+      alert(`Failed to delete question: ${error instanceof Error ? error.message : "Unknown error"}`)
     } finally {
       setLoading(false)
     }
@@ -243,19 +247,25 @@ export default function AdminPage() {
       setLoading(true)
       let successCount = 0
       let failCount = 0
+      const failedIds: { id: string; error: string; status: number }[] = []
       
       for (const id of selectedIds) {
         try {
           const res = await fetch(`/api/admin/questions?id=${id}`, { method: "DELETE" })
           if (res.ok) {
             successCount++
+            console.log(`[BulkDelete] Successfully deleted question ${id}`)
           } else {
+            const errData = await res.json()
             failCount++
-            console.error(`Failed to delete question ${id}`)
+            failedIds.push({ id, error: errData.error || "Unknown error", status: res.status })
+            console.error(`[BulkDelete] Failed to delete question ${id}. Status: ${res.status}, Error: ${errData.error}, Details: ${errData.details}`)
           }
         } catch (err) {
           failCount++
-          console.error("Error deleting question id", id, err)
+          const errorMsg = err instanceof Error ? err.message : String(err)
+          failedIds.push({ id, error: errorMsg, status: 0 })
+          console.error("[BulkDelete] Error deleting question id", id, errorMsg)
         }
       }
 
@@ -269,11 +279,17 @@ export default function AdminPage() {
       
       if (failCount === 0) {
         alert(`${successCount} question(s) deleted successfully!`)
+      } else if (successCount === 0) {
+        // All failed - show error details
+        const errorDetails = failedIds.map((f) => `ID ${f.id}: ${f.error}`).join("\n")
+        console.error("[BulkDelete] All deletions failed:\n" + errorDetails)
+        alert(`Failed to delete all ${failCount} question(s).\n\nErrors:\n${errorDetails}\n\nCheck browser console for more details.`)
       } else {
-        alert(`Deleted ${successCount} question(s). Failed to delete ${failCount} question(s).`)
+        const errorDetails = failedIds.map((f) => `ID ${f.id}: ${f.error}`).join(", ")
+        alert(`Deleted ${successCount} question(s). Failed to delete ${failCount} question(s).\n\nFailed: ${errorDetails}`)
       }
     } catch (error) {
-      console.error("Bulk delete failed:", error)
+      console.error("[BulkDelete] Bulk delete failed:", error instanceof Error ? error.message : error)
       alert("Failed to delete selected questions.")
     } finally {
       setLoading(false)

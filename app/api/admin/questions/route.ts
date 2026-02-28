@@ -266,20 +266,38 @@ export async function DELETE(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get("id")
 
+    console.log("[DELETE] Deleting question with ID:", id)
+
     if (!id) {
+      console.error("[DELETE] Question ID is missing")
       return NextResponse.json({ error: "Question ID required" }, { status: 400 })
     }
 
+    // Parse ID to ensure it's a valid number
+    const questionId = parseInt(id, 10)
+    if (isNaN(questionId)) {
+      console.error("[DELETE] Invalid question ID format:", id)
+      return NextResponse.json({ error: "Invalid question ID format" }, { status: 400 })
+    }
+
     // Delete question (cascades to answer tables due to ON DELETE CASCADE)
-    const result = await pool.query("DELETE FROM questions WHERE id = $1 RETURNING id", [id])
+    console.log("[DELETE] Executing DELETE query for ID:", questionId)
+    const result = await pool.query("DELETE FROM questions WHERE id = $1 RETURNING id", [questionId])
+
+    console.log("[DELETE] Query result:", result.rows)
 
     if (result.rows.length === 0) {
+      console.warn("[DELETE] Question not found with ID:", questionId)
       return NextResponse.json({ error: "Question not found" }, { status: 404 })
     }
 
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error("Error deleting question:", error)
-    return NextResponse.json({ error: "Failed to delete question" }, { status: 500 })
+    console.log("[DELETE] Successfully deleted question:", questionId)
+    return NextResponse.json({ success: true, deletedId: questionId })
+  } catch (error: any) {
+    console.error("[DELETE] Error deleting question:", error?.message || error)
+    return NextResponse.json(
+      { error: "Failed to delete question", details: error?.message || "Unknown error" },
+      { status: 500 }
+    )
   }
 }
