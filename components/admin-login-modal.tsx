@@ -18,32 +18,38 @@ export default function AdminLoginModal({ onClose, onLogin }: AdminLoginModalPro
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
-  // Valid admin credentials
-  const validAdmins = [
-    { username: "MES", password: "test123" },
-    { username: "MIE", password: "test123" },
-  ]
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
     setLoading(true)
 
-    // Validate credentials (case-insensitive comparison, store as uppercase)
-    const matchedAdmin = validAdmins.find(
-      (admin) => admin.username.toUpperCase() === username.toUpperCase() && admin.password === password
-    )
+    try {
+      // Call backend API to validate credentials
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+        credentials: "include", // Include cookies
+      })
 
-    if (matchedAdmin) {
-      const upperUsername = matchedAdmin.username.toUpperCase()
-      sessionStorage.setItem("adminUser", upperUsername)
-      onLogin(upperUsername)
-      onClose()
-    } else {
-      setError("Invalid username or password")
+      const data = await response.json()
+
+      if (response.ok) {
+        // Credentials valid - store authenticated state
+        sessionStorage.setItem("adminUser", data.username)
+        onLogin(data.username)
+        onClose()
+      } else {
+        setError(data.error || "Invalid username or password")
+      }
+    } catch (err) {
+      console.error("Login error:", err)
+      setError("Network error. Please try again.")
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   return (
@@ -94,7 +100,7 @@ export default function AdminLoginModal({ onClose, onLogin }: AdminLoginModalPro
             </Button>
           </form>
 
-          <p className="text-xs text-muted-foreground text-center mt-4">Demo credentials: MES/test123 or MIE/test123</p>
+          <p className="text-xs text-muted-foreground text-center mt-4">Contact your system administrator for credentials</p>
         </div>
       </Card>
     </div>

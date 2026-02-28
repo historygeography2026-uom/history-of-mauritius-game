@@ -1,9 +1,19 @@
 import { NextResponse } from "next/server"
 import { pool } from "@/lib/db"
 import { hashPassword } from "@/lib/auth-utils"
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit"
 
 export async function POST(request: Request) {
   try {
+    // Rate limiting: max 5 registration attempts per IP per hour
+    const clientIp = getClientIp(request)
+    if (!checkRateLimit(clientIp + ":register", 5, 60 * 60 * 1000)) {
+      return NextResponse.json(
+        { error: "Too many registration attempts. Please try again later." },
+        { status: 429 }
+      )
+    }
+
     const body = await request.json()
     const { email, password, name } = body
 

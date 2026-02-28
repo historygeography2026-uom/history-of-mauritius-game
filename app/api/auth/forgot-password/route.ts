@@ -1,9 +1,19 @@
 import { pool } from "@/lib/db"
 import { hashPassword } from "@/lib/auth-utils"
 import { NextRequest, NextResponse } from "next/server"
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit"
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting: max 3 password reset attempts per IP per hour
+    const clientIp = getClientIp(request)
+    if (!checkRateLimit(clientIp + ":forgot-password", 3, 60 * 60 * 1000)) {
+      return NextResponse.json(
+        { error: "Too many password reset attempts. Please try again later." },
+        { status: 429 }
+      )
+    }
+
     const { email, name, newPassword } = await request.json()
 
     // Validate input
