@@ -20,16 +20,48 @@ export async function middleware(request: NextRequest) {
   if (stateChangingMethods.includes(request.method) && isApiRoute) {
     const origin = request.headers.get("origin")
     const referer = request.headers.get("referer")
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+    const host = request.headers.get("host")
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${host}` || "http://localhost:3000"
     
-    // Allow from same origin or no origin (some clients don't send it)
+    // Parse URLs to compare just the hostname
+    const getHostname = (url: string | null): string | null => {
+      if (!url) return null
+      try {
+        return new URL(url.startsWith("http") ? url : `https://${url}`).hostname
+      } catch {
+        return null
+      }
+    }
+    
+    const appHostname = getHostname(appUrl)
+    const originHostname = getHostname(origin)
+    const refererHostname = getHostname(referer)
+    const requestHostname = host ? host.split(":")[0] : null
+    
+    // Allow from same origin, no origin (some clients don't send it), or matching hostname
     const hasValidOrigin = 
-      !origin || 
-      origin.startsWith(appUrl) ||
-      (referer && referer.startsWith(appUrl))
+      !origin || // No origin header (trusted)
+      originHostname === appHostname || // Same hostname
+      originHostname === requestHostname || // Request hostname matches app
+      (referer && refererHostname === appHostname) || // Referer hostname matches
+      (referer && refererHostname === requestHostname) // Referer hostname matches request
+    
+    console.log("[CSRF Check]", {
+      method: request.method,
+      path: request.nextUrl.pathname,
+      origin,
+      originHostname,
+      referer,
+      refererHostname,
+      appUrl,
+      appHostname,
+      host,
+      requestHostname,
+      hasValidOrigin,
+    })
     
     if (!hasValidOrigin) {
-      console.warn(`[CSRF] Blocked request from origin: ${origin}`)
+      console.warn(`[CSRF] Blocked request - Origin: ${origin}, Referer: ${referer}, Host: ${host}`)
       return NextResponse.json(
         { error: "Request blocked for security reasons" },
         { status: 403 }
