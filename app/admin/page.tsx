@@ -664,11 +664,31 @@ export default function AdminPage() {
         throw new Error(result.error || result.message || "Import failed")
       }
 
-      // Show detailed result
+      // Show detailed result with formatted error messages
       if (result.errorCount > 0) {
-        alert(`Import completed: ${result.successCount} succeeded, ${result.errorCount} failed.\n\nErrors:\n${result.errors?.join('\n') || 'Unknown'}`)
+        // Format errors with better readability
+        const errorMessages = Array.isArray(result.errors) 
+          ? result.errors.join('\n\n') 
+          : 'Unknown error'
+        
+        const message = `
+📊 IMPORT SUMMARY
+═══════════════════════════════════════
+✅ Successful: ${result.successCount} questions
+❌ Failed: ${result.errorCount} questions
+Total Processed: ${result.totalProcessed}
+
+📋 ERROR DETAILS:
+═══════════════════════════════════════
+
+${errorMessages}
+
+═══════════════════════════════════════
+💡 TIP: Review the errors above, fix your Excel file, and try again.
+        `
+        alert(message)
       } else {
-        alert(`✓ ${result.successCount} questions imported successfully!`)
+        alert(`✅ SUCCESS!\n\n${result.successCount} questions imported successfully!\n\n${result.message || ''}`)
       }
       
       // Refresh questions based on the current viewMode
@@ -678,9 +698,10 @@ export default function AdminPage() {
         // viewMode === "all"
         fetchAllQuestions()
       }
+      
     } catch (error) {
       console.error("[v0] Excel import error:", error)
-      alert(`Error: ${(error as Error).message}`)
+      alert(`❌ Import Error:\n\n${(error as Error).message}\n\nPlease check your Excel file and try again.`)
       throw error
     }
   }
