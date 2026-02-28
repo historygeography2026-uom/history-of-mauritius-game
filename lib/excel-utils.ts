@@ -48,7 +48,7 @@ export const generateExcelTemplate = () => {
     { Instructions: "4. Save the file and upload it back to the admin panel" },
     { Instructions: "" },
     { Instructions: "REQUIRED FIELDS FOR ALL QUESTIONS:" },
-    { Instructions: "• subject: 'history', 'geography', or 'combined'" },
+    { Instructions: "• subject: 'history' or 'geography'" },
     { Instructions: "• level: 1, 2, or 3 (difficulty level)" },
     { Instructions: "• type: 'mcq', 'matching', 'fill', 'reorder', or 'truefalse'" },
     { Instructions: "• question: The question text" },
@@ -319,7 +319,7 @@ export interface ValidationResult {
   skippedCount: number
 }
 
-const VALID_SUBJECTS = ['history', 'geography', 'combined']
+const VALID_SUBJECTS = ['history', 'geography']
 const VALID_TYPES = ['mcq', 'matching', 'fill', 'reorder', 'truefalse']
 const VALID_LEVELS = [1, 2, 3]
 
@@ -350,7 +350,7 @@ export const validateExcelQuestions = (questions: ExcelQuestion[]): ValidationRe
       errors.push({ row, field: 'subject', message: 'Subject field is empty. You must specify a subject (e.g., History, Geography, Culture, Economy, Technology). This field cannot be left blank.', question: questionPreview })
       hasError = true
     } else if (!VALID_SUBJECTS.includes(toStr(q.subject).toLowerCase())) {
-      errors.push({ row, field: 'subject', message: `Subject "${q.subject}" is not recognized. Please use one of these valid subjects: ${VALID_SUBJECTS.join(', ')}. Check for typos or extra spaces.`, question: questionPreview })
+      errors.push({ row, field: 'subject', message: `Subject "${q.subject}" is not recognized. Please use 'history' or 'geography'. Check for typos or extra spaces.`, question: questionPreview })
       hasError = true
     }
 

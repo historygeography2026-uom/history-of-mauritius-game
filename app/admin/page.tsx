@@ -25,6 +25,7 @@ interface Question {
   subject: string
   level: number
   question: string
+  instruction?: string
   options?: { A: string; B: string; C: string; D: string; correct: string } | string[] // For reorder, options become the items to reorder
   pairs?: { left: string; right: string }[]
   answer: string | string[] | { left: string; right: string }[] | boolean // For truefalse, answer is boolean
@@ -516,6 +517,7 @@ export default function AdminPage() {
             level: levelNum,
             type: selectedType,
             question_text: formData.question,
+            instruction: formData.instruction || "",
             image_url: imageUrl,
             timer_seconds: formData.timer || 30,
             answer_data: buildAnswerData(),
@@ -537,6 +539,7 @@ export default function AdminPage() {
             level: levelNum,
             type: selectedType,
             question_text: formData.question,
+            instruction: formData.instruction || "",
             image_url: imageUrl,
             timer_seconds: formData.timer || 30,
             answer_data: buildAnswerData(),
@@ -775,6 +778,17 @@ export default function AdminPage() {
                   placeholder="Enter the question"
                   className="resize-none min-h-24"
                 />
+              </div>
+
+              <div>
+                <Label className="block text-sm font-semibold text-slate-700 mb-2">Optional Instruction</Label>
+                <Textarea
+                  value={formData.instruction || ""}
+                  onChange={(e) => setFormData({ ...formData, instruction: e.target.value })}
+                  placeholder="Add custom instruction text (e.g., 'Match each item on the left with its description on the right')"
+                  className="resize-none min-h-16"
+                />
+                <p className="text-xs text-slate-500 mt-1">This instruction will be shown to students when they answer this question</p>
               </div>
 
               {selectedType === "mcq" && (

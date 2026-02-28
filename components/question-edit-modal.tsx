@@ -23,6 +23,7 @@ interface Question {
   id: string
   type: "mcq" | "matching" | "fill" | "reorder" | "truefalse"
   question: string
+  instruction?: string
   subject: string
   level: number
   timer?: number
@@ -31,7 +32,6 @@ interface Question {
   pairs?: Array<{ left: string; right: string }>
   answer?: string
   items?: string[]
-  statement?: string
   correctAnswer?: boolean
   createdAt?: string
   createdBy?: string
@@ -300,7 +300,6 @@ export default function QuestionEditModal({ question, isOpen, onClose, onSave }:
                   <SelectContent>
                     <SelectItem value="history">📚 History</SelectItem>
                     <SelectItem value="geography">🗺️ Geography</SelectItem>
-                    <SelectItem value="combined">📖 Combined</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -350,6 +349,19 @@ export default function QuestionEditModal({ question, isOpen, onClose, onSave }:
                   className="resize-none"
                   placeholder="Enter your question here..."
                 />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Optional Instruction</Label>
+                <Textarea
+                  value={formData.instruction || ""}
+                  onChange={(e) => setFormData({ ...formData, instruction: e.target.value })}
+                  rows={2}
+                  className="resize-none"
+                  placeholder="Add custom instruction text (e.g., 'Match each item on the left with its description on the right')"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Custom instruction shown to students when they answer this question
+                </p>
               </div>
             </div>
           </div>
@@ -568,32 +580,20 @@ export default function QuestionEditModal({ question, isOpen, onClose, onSave }:
 
               {/* True/False */}
               {formData.type === "truefalse" && (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Statement</Label>
-                    <Textarea
-                      value={formData.statement || ""}
-                      onChange={(e) => setFormData({ ...formData, statement: e.target.value })}
-                      rows={2}
-                      className="resize-none"
-                      placeholder="Enter the statement to evaluate..."
-                    />
-                  </div>
-                  <div className="space-y-2 max-w-xs">
-                    <Label className="text-sm font-medium">Correct Answer</Label>
-                    <Select
-                      value={formData.correctAnswer ? "true" : "false"}
-                      onValueChange={(val) => setFormData({ ...formData, correctAnswer: val === "true" })}
-                    >
-                      <SelectTrigger className="h-10">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="true">✓ True</SelectItem>
-                        <SelectItem value="false">✗ False</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-2 max-w-xs">
+                  <Label className="text-sm font-medium">Correct Answer</Label>
+                  <Select
+                    value={formData.correctAnswer ? "true" : "false"}
+                    onValueChange={(val) => setFormData({ ...formData, correctAnswer: val === "true" })}
+                  >
+                    <SelectTrigger className="h-10">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="true">✓ True</SelectItem>
+                      <SelectItem value="false">✗ False</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
             </div>
