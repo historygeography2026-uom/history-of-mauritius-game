@@ -787,12 +787,12 @@ ${errorMessages}
             Back to Questions
           </Button>
 
-          <Card className="p-8 border-0 shadow-lg">
+          <Card className="p-8 border-0 shadow-lg flex flex-col max-h-[80vh]">
             <h2 className="text-2xl font-bold mb-6 text-slate-900">
               {editingId ? "Edit Question" : `Add New ${selectedType.toUpperCase()} Question`}
             </h2>
 
-            <div className="space-y-6">
+            <div className="space-y-6 overflow-y-auto pr-4 flex-1">
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label className="block text-sm font-semibold text-slate-700 mb-2">Question Type</Label>
@@ -1098,15 +1098,15 @@ ${errorMessages}
                   </div>
                 )}
               </div>
+            </div>
 
-              <div className="flex gap-4 pt-6 border-t border-slate-200">
-                <Button onClick={handleSaveQuestion} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
-                  Save Question
-                </Button>
-                <Button onClick={() => setShowForm(false)} variant="outline" className="flex-1">
-                  Cancel
-                </Button>
-              </div>
+            <div className="flex gap-4 pt-6 border-t border-slate-200 mt-6">
+              <Button onClick={handleSaveQuestion} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
+                Save Question
+              </Button>
+              <Button onClick={() => setShowForm(false)} variant="outline" className="flex-1">
+                Cancel
+              </Button>
             </div>
           </Card>
         </div>
