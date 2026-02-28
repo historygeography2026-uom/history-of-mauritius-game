@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ArrowLeft, Plus, Trash2, Edit2, X, LogOut, Search } from "lucide-react"
@@ -206,20 +206,26 @@ export default function AdminPage() {
     if (!confirm("Delete this question?")) return
 
     try {
+      setLoading(true)
       const res = await fetch(`/api/admin/questions?id=${id}`, { method: "DELETE" })
       if (!res.ok) {
         const err = await res.json()
         throw new Error(err.error || "Delete failed")
       }
-      alert("Question deleted successfully!")
+      
+      // Wait for the data to refresh before showing success message
       if (viewMode === "filtered") {
-        fetchQuestions()
+        await fetchQuestions()
       } else {
-        fetchAllQuestions()
+        await fetchAllQuestions()
       }
+      
+      alert("Question deleted successfully!")
     } catch (error) {
       console.error("Error deleting question:", error)
       alert("Failed to delete question.")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -235,20 +241,36 @@ export default function AdminPage() {
 
     try {
       setLoading(true)
+      let successCount = 0
+      let failCount = 0
+      
       for (const id of selectedIds) {
         try {
-          await fetch(`/api/admin/questions?id=${id}`, { method: "DELETE" })
+          const res = await fetch(`/api/admin/questions?id=${id}`, { method: "DELETE" })
+          if (res.ok) {
+            successCount++
+          } else {
+            failCount++
+            console.error(`Failed to delete question ${id}`)
+          }
         } catch (err) {
+          failCount++
           console.error("Error deleting question id", id, err)
         }
       }
 
-      alert(`${selectedIds.length} question(s) deleted successfully!`)
+      // Wait for the data to refresh before showing success message
       clearSelection()
       if (viewMode === "filtered") {
-        fetchQuestions()
+        await fetchQuestions()
       } else {
-        fetchAllQuestions()
+        await fetchAllQuestions()
+      }
+      
+      if (failCount === 0) {
+        alert(`${successCount} question(s) deleted successfully!`)
+      } else {
+        alert(`Deleted ${successCount} question(s). Failed to delete ${failCount} question(s).`)
       }
     } catch (error) {
       console.error("Bulk delete failed:", error)
@@ -716,6 +738,15 @@ ${errorMessages}
     })
   }
 
+  // Memoize the filtered questions to avoid recalculating on every render
+  const filteredAllQuestionsForCheckbox = useMemo(() => getFilteredAllQuestions(), [
+    allQuestions,
+    searchQuery,
+    filterSubject,
+    filterLevel,
+    filterType,
+  ])
+
   const filteredQuestions = questions.filter((q) => q.subject === selectedSubject && q.level === selectedLevel)
 
   if (!currentUser) {
@@ -1180,9 +1211,9 @@ ${errorMessages}
                           <Input
                             type="checkbox"
                             className="h-4 w-4"
-                            checked={getFilteredAllQuestions().length > 0 && selectedIds.length === getFilteredAllQuestions().length}
+                            checked={filteredAllQuestionsForCheckbox.length > 0 && selectedIds.length === filteredAllQuestionsForCheckbox.length}
                             onChange={(e) => {
-                              const displayed = getFilteredAllQuestions().map((q) => q.id)
+                              const displayed = filteredAllQuestionsForCheckbox.map((q) => q.id)
                               if (e.target.checked) setSelectedIds(displayed)
                               else clearSelection()
                             }}
@@ -1207,14 +1238,14 @@ ${errorMessages}
                             Loading questions...
                           </TableCell>
                         </TableRow>
-                      ) : getFilteredAllQuestions().length === 0 ? (
+                      ) : filteredAllQuestionsForCheckbox.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={11} className="text-center py-8 text-slate-500">
                             No questions found. Try adjusting your filters or create a new question.
                           </TableCell>
                         </TableRow>
                       ) : (
-                        getFilteredAllQuestions().map((question) => (
+                        filteredAllQuestionsForCheckbox.map((question) => (
                           <TableRow key={question.id} className="hover:bg-slate-50">
                             <TableCell className="w-12">
                               <Input type="checkbox" className="h-4 w-4" checked={selectedIds.includes(question.id)} onChange={() => toggleSelectId(question.id)} />
@@ -1300,7 +1331,7 @@ ${errorMessages}
               </div>
 
               <div className="text-sm text-slate-600 text-center">
-                Showing {getFilteredAllQuestions().length} of {allQuestions.length} total questions
+                Showing {filteredAllQuestionsForCheckbox.length} of {allQuestions.length} total questions
               </div>
             </div>
           )}
