@@ -1031,24 +1031,70 @@ ${errorMessages}
               </div>
 
               <div>
-                <label className="text-sm font-medium mb-2 block">Image URL (Optional)</label>
-                <input
-                  type="url"
-                  value={formData.image}
-                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                  placeholder="https://example.com/image.jpg"
-                  className="w-full p-3 border rounded-lg"
-                />
-                {formData.image && (
-                  <div className="mt-2">
+                <Label className="block text-sm font-semibold text-slate-700 mb-2">Question Image (Optional)</Label>
+                <div className="space-y-3">
+                  {/* Image Upload Section */}
+                  <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 hover:border-blue-400 transition-colors">
+                    <div className="flex items-center justify-center gap-3">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        disabled={isUploadingImage}
+                        id="image-upload"
+                        className="hidden"
+                      />
+                      <label
+                        htmlFor="image-upload"
+                        className="flex-1 cursor-pointer text-center py-3 px-4 bg-blue-50 hover:bg-blue-100 rounded border-2 border-blue-200 transition-colors"
+                      >
+                        <span className="text-sm font-medium text-blue-700">
+                          {isUploadingImage ? "Processing..." : "📤 Click to Upload Image"}
+                        </span>
+                        <p className="text-xs text-slate-600 mt-1">or drag and drop</p>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* OR Divider */}
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-slate-300"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-2 bg-white text-slate-700 font-medium">OR</span>
+                    </div>
+                  </div>
+
+                  {/* Image URL Input */}
+                  <div>
+                    <Label className="text-xs font-medium text-slate-600 mb-2 block">Paste Image URL</Label>
+                    <input
+                      type="url"
+                      value={formData.image || ""}
+                      onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                      placeholder="https://example.com/image.jpg"
+                      className="w-full p-3 border border-slate-300 rounded-lg text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">Accepted formats: JPG, PNG, GIF, WebP (max 5MB recommended)</p>
+                  </div>
+                </div>
+
+                {/* Image Preview */}
+                {(imagePreview || formData.image) && (
+                  <div className="mt-4 p-3 bg-slate-50 rounded-lg">
+                    <p className="text-xs font-medium text-slate-700 mb-2">📸 Image Preview:</p>
                     <img
-                      src={formData.image || "/placeholder.svg"}
+                      src={imagePreview || formData.image || "/placeholder.svg"}
                       alt="Preview"
-                      className="max-w-xs max-h-48 rounded border"
+                      className="max-w-xs max-h-48 rounded border border-slate-300 shadow-sm"
                       onError={(e) => {
                         e.currentTarget.src = "/placeholder.svg?height=200&width=300"
                       }}
                     />
+                    {pendingImageBlob && (
+                      <p className="text-xs text-green-600 font-medium mt-2">✓ Image ready to upload</p>
+                    )}
                   </div>
                 )}
               </div>
