@@ -675,9 +675,9 @@ export default function AdminPage() {
   }
 
   const handleExcelImport = async (questions: any[]) => {
-    // Validate and normalize currentUser
+    // Validate currentUser (any authenticated admin is allowed)
     const normalizedUser = currentUser ? currentUser.trim().toUpperCase() : null
-    if (!normalizedUser || (normalizedUser !== 'MES' && normalizedUser !== 'MIE')) {
+    if (!normalizedUser) {
       alert('Error: Admin user not properly authenticated. Please refresh the page and try again.')
       return
     }
