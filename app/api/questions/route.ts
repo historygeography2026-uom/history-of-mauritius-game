@@ -91,6 +91,9 @@ export async function GET(request: NextRequest) {
             `SELECT answer_text FROM fill_answers WHERE question_id = $1`,
             [q.id]
           )
+          if (!answers.rows[0]) {
+            console.warn(`[questions API] No answer marked for fill question id=${q.id}: "${q.question_text?.substring(0, 50)}"`)
+          }
           return {
             ...baseQuestion,
             question: q.question_text,
