@@ -85,13 +85,13 @@ interface ExcelQuestion {
   imageUrl?: string
 }
 
-// Helper function to create clear error messages
+// Helper function to create comprehensive, detailed error messages for uploaders
 function createErrorMessage(rowNum: number, questionPreview: string, field: string, reason: string, details?: string): string {
-  let msg = `❌ Row ${rowNum}: "${questionPreview}"`
-  msg += `\n   Field: ${field}`
-  msg += `\n   Issue: ${reason}`
+  let msg = `❌ Row ${rowNum}: "${questionPreview}"\n`
+  msg += `   Error in Field: ${field}\n`
+  msg += `   What Went Wrong: ${reason}\n`
   if (details) {
-    msg += `\n   Details: ${details}`
+    msg += `   How to Fix: ${details}`
   }
   return msg
 }
@@ -139,8 +139,8 @@ export async function POST(req: NextRequest) {
           [q.subject]
         )
         if (subjectResult.rows.length === 0) {
-          const reason = `Subject "${q.subject}" does not exist in the system`
-          const details = `Valid subjects are: "history", "geography". Provided: "${q.subject}". Check spelling and spacing.`
+          const reason = `Subject "${q.subject}" is not recognized in the system`
+          const details = `The system only has TWO subjects: "history" and "geography".\n   You entered: "${q.subject}"\n   Solution: Change the subject to either 'history' or 'geography' (case-insensitive, but check for typos and extra spaces).`
           errors.push(createErrorMessage(rowNum, questionPreview, 'subject', reason, details))
           errorCount++
           continue
@@ -153,8 +153,8 @@ export async function POST(req: NextRequest) {
           [q.level]
         )
         if (levelResult.rows.length === 0) {
-          const reason = `Level "${q.level}" is not valid`
-          const details = `Difficulty level must be 1 (Easy), 2 (Medium), or 3 (Hard). Provided: "${q.level}". Make sure it's a number without text.`
+          const reason = `Difficulty level "${q.level}" is not valid`
+          const details = `The system supports THREE difficulty levels: 1 (Easy), 2 (Medium), and 3 (Hard).\n   You entered: "${q.level}"\n   Solution: Change the level to either 1, 2, or 3. Make sure it's a number, not text.`
           errors.push(createErrorMessage(rowNum, questionPreview, 'level', reason, details))
           errorCount++
           continue
@@ -167,8 +167,8 @@ export async function POST(req: NextRequest) {
           [q.type]
         )
         if (typeResult.rows.length === 0) {
-          const reason = `Question type "${q.type}" does not exist`
-          const details = `Valid types are: "mcq", "matching", "fill", "reorder", "truefalse". Provided: "${q.type}". Ensure type matches the Excel sheet name.`
+          const reason = `Question type "${q.type}" is not recognized`
+          const details = `The system supports FIVE question types: 'mcq' (Multiple Choice), 'matching', 'fill' (Fill-in-Blank), 'reorder', and 'truefalse'.\n   You entered: "${q.type}"\n   Solution: Change the type to one of the five options above (lowercase). Also make sure you're putting the question on the correct Excel sheet.`
           errors.push(createErrorMessage(rowNum, questionPreview, 'type', reason, details))
           errorCount++
           continue
@@ -220,8 +220,8 @@ export async function POST(req: NextRequest) {
               if (!q.optionB) missingOptions.push('B')
               if (!q.optionC) missingOptions.push('C')
               if (!q.optionD) missingOptions.push('D')
-              const reason = `MCQ missing option(s): ${missingOptions.join(', ')}`
-              const details = `All four options (A, B, C, D) are required. Missing: ${missingOptions.join(', ')}.`
+              const reason = `Multiple Choice question is missing option${missingOptions.length > 1 ? 's' : ''}: ${missingOptions.join(', ')}`
+              const details = `All FOUR options (A, B, C, D) are REQUIRED for Multiple Choice questions.\n   Missing: ${missingOptions.join(', ')}\n   Solution: Fill in the missing option${missingOptions.length > 1 ? 's' : ''} with valid text.`
               errors.push(createErrorMessage(rowNum, questionPreview, `option${missingOptions[0]}`, reason, details))
               errorCount++
               continue
@@ -268,8 +268,8 @@ export async function POST(req: NextRequest) {
 
             // Critical validation: must find a correct answer
             if (foundIndex === -1) {
-              const reason = `Cannot determine correct answer - no match found after all matching attempts`
-              const details = `Correct Answer: "${q.correctAnswer}". Options are: A="${q.optionA}", B="${q.optionB}", C="${q.optionC}", D="${q.optionD}". Ensure correctAnswer matches at least the first few characters of one option.`
+              const reason = `Cannot determine which option is the correct answer`
+              const details = `The "Correct Answer" value doesn't match any of the four options (A, B, C, D). \n   Options: A="${q.optionA}", B="${q.optionB}", C="${q.optionC}", D="${q.optionD}"\n   Your entered: "${q.correctAnswer}"\n   Solution: Make sure the correct answer text exactly matches one of the options above, or use just the letter (A, B, C, or D).`
               errors.push(createErrorMessage(rowNum, questionPreview, 'correctAnswer', reason, details))
               errorCount++
               // Delete the question we just created since we can't determine correct answer
@@ -375,8 +375,8 @@ export async function POST(req: NextRequest) {
           } else if (q.type === "truefalse") {
             const isTrueValue = (q.isTrue || "").toString().toLowerCase().trim()
             if (isTrueValue !== 'true' && isTrueValue !== 'false') {
-              const reason = `Invalid True/False value`
-              const details = `The "isTrue" field must be "True" or "False" (case-insensitive). Provided: "${q.isTrue}". Check for typos.`
+              const reason = `Invalid True/False value - the answer must be either "True" or "False"`
+              const details = `The 'isTrue' field must contain exactly "True" or "False" (case-insensitive).\n   You entered: "${q.isTrue}"\n   Solution: Change to either 'True' or 'False'. Make sure there are no extra spaces or typos.`
               errors.push(createErrorMessage(rowNum, questionPreview, 'isTrue', reason, details))
               errorCount++
               continue
@@ -406,21 +406,56 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Build summary message
+    // Build comprehensive summary message for the uploader
     let summaryMessage = ""
+    
+    // Header with what just happened
+    summaryMessage += `📊 EXCEL IMPORT SUMMARY\n`
+    summaryMessage += `${'='.repeat(60)}\n\n`
+    
     if (successCount > 0) {
-      summaryMessage += `✅ Success: ${successCount} question(s) imported successfully.\n`
+      summaryMessage += `✅ Successfully Imported: ${successCount} question(s)\n`
+      summaryMessage += `   These questions have been added to the question bank and are ready for students to answer.\n\n`
     }
+    
     if (errorCount > 0) {
-      summaryMessage += `❌ Failed: ${errorCount} question(s) failed to import.\n`
+      summaryMessage += `❌ Failed to Import: ${errorCount} question(s)\n`
+      summaryMessage += `   These questions were NOT added to protect data integrity. Review the reasons below.\n\n`
     }
+    
+    // Quality assurance information
+    summaryMessage += `🛡️ QUALITY ASSURANCE PROCESS\n`
+    summaryMessage += `The system validates each question before importing to ensure:\n`
+    summaryMessage += `   • Every question has all required fields (subject, level, type, question text)\n`
+    summaryMessage += `   • For Multiple Choice questions: Exactly ONE correct answer is marked\n`
+    summaryMessage += `   • For Matching questions: Minimum 2 complete pairs are provided\n`
+    summaryMessage += `   • For Fill-in-Blank questions: An answer word is specified\n`
+    summaryMessage += `   • For Reorder questions: All 4 steps are in the correct order\n`
+    summaryMessage += `   • For True/False questions: A valid true/false value is provided\n`
+    summaryMessage += `   • Images are downloadable and not corrupted\n\n`
+    
     if (errors.length > 0) {
-      summaryMessage += `\n📋 Error Details (showing first ${Math.min(errors.length, 15)} issues):\n\n`
+      summaryMessage += `📋 ERROR DETAILS (${errors.length} total issue${errors.length !== 1 ? 's' : ''})\n`
+      summaryMessage += `${'='.repeat(60)}\n\n`
+      summaryMessage += `Showing first ${Math.min(errors.length, 15)} issue${Math.min(errors.length, 15) !== 1 ? 's' : ''}:\n\n`
       summaryMessage += errors.slice(0, 15).join('\n\n')
       
       if (errors.length > 15) {
-        summaryMessage += `\n\n... and ${errors.length - 15} more error(s) not shown. Check your data and try again.`
+        summaryMessage += `\n\n⚠️  ... and ${errors.length - 15} more error${errors.length - 15 !== 1 ? 's' : ''} not shown.\n`
+        summaryMessage += `Please review all ${errors.length} errors, fix them in your Excel file, and try again.\n`
       }
+    }
+    
+    // Next steps
+    summaryMessage += `\n\n${'='.repeat(60)}\n`
+    summaryMessage += `📝 NEXT STEPS\n`
+    if (errorCount === 0 && successCount > 0) {
+      summaryMessage += `✅ All questions imported successfully! They are now available in the question bank.\n`
+    } else if (errorCount > 0) {
+      summaryMessage += `1. Review the error details above to understand what needs to be fixed\n`
+      summaryMessage += `2. Correct the issues in your Excel file\n`
+      summaryMessage += `3. Re-upload the corrected file\n`
+      summaryMessage += `4. The system will validate and import only the corrected questions\n`
     }
 
     return NextResponse.json({
