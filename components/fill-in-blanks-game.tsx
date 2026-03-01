@@ -125,7 +125,9 @@ export default function FillInBlanksGame({
   const sentence = getSentence()
   const correctAnswer = getCorrectAnswer()
   const hint = getHint()
-  const isCorrect = answer.toLowerCase().trim() === correctAnswer.toLowerCase()
+  // Normalize both sides: trim whitespace (including non-breaking spaces), lowercase
+  const normalizeText = (text: string) => text.replace(/[\s\u00A0\u200B\u200C\u200D\uFEFF]+/g, ' ').trim().toLowerCase()
+  const isCorrect = normalizeText(answer) === normalizeText(correctAnswer)
 
   const handleSubmit = () => {
     if (isSubmitting) return
