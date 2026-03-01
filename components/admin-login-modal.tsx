@@ -13,7 +13,7 @@ interface AdminLoginModalProps {
 }
 
 export default function AdminLoginModal({ onClose, onLogin }: AdminLoginModalProps) {
-  const [username, setUsername] = useState("historygeography2026")
+  const [username, setUsername] = useState("MES")
   const [password, setPassword] = useState("test123Aa*")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
