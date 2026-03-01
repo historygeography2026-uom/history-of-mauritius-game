@@ -227,7 +227,7 @@ export async function POST(req: NextRequest) {
               continue
             }
 
-            // Normalize correctAnswer for robust matching
+            // Normalize correctAnswer for robust matching with 3-tier fallback system
             const correctAnswerNorm = (q.correctAnswer || "").toString().trim().toLowerCase()
             const options = [
               { text: (q.optionA || "").toString().trim(), order: 1, label: 'A' },
@@ -236,22 +236,55 @@ export async function POST(req: NextRequest) {
               { text: (q.optionD || "").toString().trim(), order: 4, label: 'D' },
             ]
             
-            // Validate correctAnswer matches one option
-            let foundCorrect = false
-            for (const option of options) {
-              const isCorrect = option.text.toLowerCase() === correctAnswerNorm
-              if (isCorrect) foundCorrect = true
+            // Tier 1: Exact text match (normalized)
+            let foundIndex = -1
+            for (let i = 0; i < options.length; i++) {
+              if (options[i].text.toLowerCase() === correctAnswerNorm) {
+                foundIndex = i
+                break
+              }
+            }
+
+            // Tier 2: Single letter match (A, B, C, D)
+            if (foundIndex === -1 && correctAnswerNorm.length === 1) {
+              const letterChar = correctAnswerNorm.charCodeAt(0)
+              const aCharCode = 'a'.charCodeAt(0)
+              const letterIndex = letterChar - aCharCode
+              if (letterIndex >= 0 && letterIndex < 4) {
+                foundIndex = letterIndex
+              }
+            }
+
+            // Tier 3: Partial match (first 10 characters)
+            if (foundIndex === -1 && correctAnswerNorm.length > 0) {
+              const searchPrefix = correctAnswerNorm.substring(0, Math.min(10, correctAnswerNorm.length))
+              for (let i = 0; i < options.length; i++) {
+                if (options[i].text.toLowerCase().startsWith(searchPrefix)) {
+                  foundIndex = i
+                  break
+                }
+              }
+            }
+
+            // Critical validation: must find a correct answer
+            if (foundIndex === -1) {
+              const reason = `Cannot determine correct answer - no match found after all matching attempts`
+              const details = `Correct Answer: "${q.correctAnswer}". Options are: A="${q.optionA}", B="${q.optionB}", C="${q.optionC}", D="${q.optionD}". Ensure correctAnswer matches at least the first few characters of one option.`
+              errors.push(createErrorMessage(rowNum, questionPreview, 'correctAnswer', reason, details))
+              errorCount++
+              // Delete the question we just created since we can't determine correct answer
+              await pool.query(`DELETE FROM questions WHERE id = $1`, [questionId])
+              continue
+            }
+
+            // Now safely insert all options with only ONE marked as correct
+            for (let i = 0; i < options.length; i++) {
+              const isCorrect = i === foundIndex
               await pool.query(
                 `INSERT INTO mcq_options (question_id, option_order, option_text, is_correct)
                  VALUES ($1, $2, $3, $4)`,
-                [questionId, option.order, option.text, isCorrect]
+                [questionId, options[i].order, options[i].text, isCorrect]
               )
-            }
-            
-            if (!foundCorrect && q.correctAnswer) {
-              const reason = `Correct answer doesn't match any option`
-              const details = `Correct Answer: "${q.correctAnswer}". Options are: A="${q.optionA}", B="${q.optionB}", C="${q.optionC}", D="${q.optionD}". Check for typos and spacing.`
-              errors.push(createErrorMessage(rowNum, questionPreview, 'correctAnswer', reason, details))
             }
           } else if (q.type === "matching") {
             // Validate matching pairs
