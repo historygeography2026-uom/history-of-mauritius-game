@@ -1,10 +1,18 @@
 import { pool } from "@/lib/db"
 import { NextResponse } from "next/server"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
 export async function GET(request: Request) {
+  // Require authentication
+  const session = await getServerSession(authOptions)
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
   const { searchParams } = new URL(request.url)
-  const userId = searchParams.get("user_id")
-  const playerName = searchParams.get("player_name")
+  // Always use the authenticated user's ID — ignore client-provided user_id
+  const userId = session.user.id
   const subject = searchParams.get("subject")
   const limitParam = searchParams.get("limit")
   const limit = Math.min(Number.parseInt(limitParam || "50"), 200)
@@ -13,14 +21,9 @@ export async function GET(request: Request) {
     const conditions: string[] = []
     const params: any[] = []
 
-    // Filter by user_id or player_name
-    if (userId) {
-      params.push(userId)
-      conditions.push(`lb.user_id = $${params.length}`)
-    } else if (playerName) {
-      params.push(playerName)
-      conditions.push(`lb.player_name = $${params.length}`)
-    }
+    // Always filter by authenticated user
+    params.push(userId)
+    conditions.push(`lb.user_id = $${params.length}`)
 
     // Filter by subject
     if (subject && subject !== "all") {

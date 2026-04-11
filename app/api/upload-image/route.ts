@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { writeFile, mkdir, unlink } from "fs/promises"
 import path from "path"
+import { verifyAdminToken } from "@/lib/admin-auth"
 
 // Render persistent disk mount point (or local fallback for dev)
 const IMAGES_DIR = process.env.RENDER_DISK_PATH
@@ -8,11 +9,9 @@ const IMAGES_DIR = process.env.RENDER_DISK_PATH
   : path.join(process.cwd(), "public", "uploads")
 
 export async function POST(request: Request) {
-  // Admin auth check via cookie
-  const cookieHeader = request.headers.get("cookie")
-  if (!cookieHeader?.includes("admin-session=")) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  // Admin auth check via token validation
+  const authError = verifyAdminToken(request)
+  if (authError) return authError
 
   try {
     const formData = await request.formData()
@@ -73,11 +72,9 @@ export async function POST(request: Request) {
 
 // Delete an image file from disk
 export async function DELETE(request: Request) {
-  // Admin auth check via cookie
-  const cookieHeader = request.headers.get("cookie")
-  if (!cookieHeader?.includes("admin-session=")) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  // Admin auth check via token validation
+  const authError = verifyAdminToken(request)
+  if (authError) return authError
 
   try {
     const { searchParams } = new URL(request.url)

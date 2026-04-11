@@ -1,7 +1,15 @@
 import { pool } from "@/lib/db"
 import { NextRequest, NextResponse } from "next/server"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
 export async function GET(request: NextRequest) {
+  // Require authentication to access questions (prevents answer leakage to anonymous users)
+  const session = await getServerSession(authOptions)
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
   try {
     const { searchParams } = new URL(request.url)
     const subject = searchParams.get("subject") || "history"

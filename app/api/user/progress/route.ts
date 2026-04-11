@@ -6,29 +6,22 @@ import { authOptions } from "@/lib/auth"
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const subject = searchParams.get("subject")
-  const userId = searchParams.get("user_id")
 
-  // Get session if available (for authenticated users)
+  // Get session — require authentication
   const session = await getServerSession(authOptions)
   const currentUserId = session?.user?.id
 
   try {
-    if (!subject && !userId && !currentUserId) {
-      return NextResponse.json({ error: "Missing required parameters" }, { status: 400 })
+    if (!currentUserId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const conditions: string[] = []
     const params: any[] = []
 
-    // If user_id is provided explicitly, use it
-    if (userId) {
-      params.push(userId)
-      conditions.push(`user_id = $${params.length}`)
-    } else if (currentUserId) {
-      // Otherwise use current session user
-      params.push(currentUserId)
-      conditions.push(`user_id = $${params.length}`)
-    }
+    // Always use the authenticated user's ID
+    params.push(currentUserId)
+    conditions.push(`user_id = $${params.length}`)
 
     if (subject) {
       params.push(subject)

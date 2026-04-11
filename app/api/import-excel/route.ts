@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { pool } from "@/lib/db"
 import { writeFile, mkdir } from "fs/promises"
 import path from "path"
+import { verifyAdminToken } from "@/lib/admin-auth"
 
 // Render persistent disk (or local fallback for dev)
 const IMAGES_DIR = process.env.RENDER_DISK_PATH
@@ -97,11 +98,9 @@ function createErrorMessage(rowNum: number, questionPreview: string, field: stri
 }
 
 export async function POST(req: NextRequest) {
-  // Admin auth check via cookie
-  const cookieHeader = req.headers.get("cookie")
-  if (!cookieHeader?.includes("admin-session=")) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  // Admin auth check via token validation
+  const authError = verifyAdminToken(req)
+  if (authError) return authError
 
   try {
     const formData = await req.formData()

@@ -38,9 +38,8 @@ export async function middleware(request: NextRequest) {
     const refererHostname = getHostname(referer)
     const requestHostname = host ? host.split(":")[0] : null
     
-    // Allow from same origin, no origin (some clients don't send it), or matching hostname
+    // Allow from same origin or matching hostname — do NOT trust missing origin
     const hasValidOrigin = 
-      !origin || // No origin header (trusted)
       originHostname === appHostname || // Same hostname
       originHostname === requestHostname || // Request hostname matches app
       (referer && refererHostname === appHostname) || // Referer hostname matches

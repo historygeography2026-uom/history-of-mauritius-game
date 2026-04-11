@@ -20,6 +20,7 @@ yarn-error.log*
 .env
 .env.local
 .env.*.local
+.env.render.production
 !.env.example
 
 # vercel
@@ -28,3 +29,69 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Sensitive docs with credentials
+DATABASE_CREDENTIALS.md
+CONNECT_DATABASE_TO_WEB_SERVICE.md
+POSTGRES_QUICK_REFERENCE.md
+QUICK_REF_WEB_SERVICE.md
+WEB_SERVICE_DEPLOYMENT.md
+
+# Python utility/diagnostic scripts (contain DB credentials)
+*.py
+
+# Build/server logs
+*.log
+build.log
+build-test.log
+.build-result.log
+dev-server.log
+pnpm-start.log
+
+# Result/verification files
+*.txt
+!LICENSE.txt
+
+# Deployment docs (may contain credentials)
+DEPLOYMENT_PROGRESS.md
+DEPLOY_DATABASE_ONLY.md
+DEPLOY_FROM_VSCODE.md
+DEPLOYMENT_READY_VSCODE.md
+DEPLOYMENT_READY.md
+FINAL_DEPLOYMENT.md
+MASTER_DEPLOYMENT_GUIDE.md
+RENDER_DEPLOYMENT_METHOD.md
+RENDER_DEPLOYMENT.md
+RENDER_ENV_SETUP.md
+RENDER_CHECKLIST.md
+RENDER_PERSISTENT_DISK_GUIDE.md
+README_VSCODE_DEPLOYMENT.md
+MIGRATION_COMPLETE.md
+MIGRATION_TO_RENDER_POSTGRESQL.md
+DATABASE_MIGRATION.md
+
+# Utility JS scripts (may contain credentials)
+analyze-questions.js
+cleanup-questions.js
+verify-questions.js
+remove-combined-subject.js
+
+# Deploy scripts
+deploy.ps1
+deploy-to-render.ps1
+create-deploy-zip.bat
+
+# Implementation/analysis/fix docs
+ADMIN_PANEL_SOURCE_CODE_ANALYSIS.md
+BUG_FIXES_SUMMARY.md
+DISCREPANCY_FIXES_REPORT.md
+DOCUMENTATION_INDEX.md
+EXCEL_FORM_CONSISTENCY_REPORT.md
+EXCEL_IMPORT_ERROR_IMPROVEMENTS.md
+EXCEL_UPLOAD_ERROR_MESSAGES_GUIDE.md
+IMPLEMENTATION_VERIFICATION.md
+MCQ_CORRECTION_REPORT.md
+MCQ_FIX_IMPLEMENTATION.md
+MCQ_ROOT_CAUSE_ANALYSIS.md
+MCQ_UPLOAD_FIX_FINAL_SUMMARY.md
+OAUTH_SETUP.md

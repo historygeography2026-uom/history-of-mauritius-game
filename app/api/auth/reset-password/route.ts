@@ -13,6 +13,11 @@ export async function POST(request: NextRequest) {
 
     const { email, newPassword } = await request.json()
 
+    // Users can only reset their own password
+    if (email !== session.user.email) {
+      return NextResponse.json({ error: "You can only reset your own password" }, { status: 403 })
+    }
+
     // Verify password strength
     if (!newPassword || newPassword.length < 8) {
       return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 })

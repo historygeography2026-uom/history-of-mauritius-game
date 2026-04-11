@@ -1,22 +1,17 @@
 import { pool } from "@/lib/db"
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { verifyAdminToken } from "@/lib/admin-auth"
 
 const VALID_TYPES = ["mcq", "matching", "fill", "reorder", "truefalse"]
 const VALID_SUBJECTS = ["history", "geography", "combined"]
 
-async function requireAdmin(): Promise<NextResponse | null> {
-  const session = await getServerSession(authOptions)
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-  return null
+async function requireAdmin(request: Request): Promise<NextResponse | null> {
+  return verifyAdminToken(request)
 }
 
 // GET all questions with filtering + type-specific details
 export async function GET(request: NextRequest) {
-  const authError = await requireAdmin()
+  const authError = await requireAdmin(request)
   if (authError) return authError
 
   try {
@@ -108,7 +103,7 @@ export async function GET(request: NextRequest) {
 
 // POST - Create new question
 export async function POST(request: NextRequest) {
-  const authError = await requireAdmin()
+  const authError = await requireAdmin(request)
   if (authError) return authError
 
   try {
@@ -244,7 +239,7 @@ export async function POST(request: NextRequest) {
 
 // PUT - Update question
 export async function PUT(request: NextRequest) {
-  const authError = await requireAdmin()
+  const authError = await requireAdmin(request)
   if (authError) return authError
 
   try {
@@ -347,7 +342,7 @@ export async function PUT(request: NextRequest) {
 
 // DELETE - Delete question
 export async function DELETE(request: NextRequest) {
-  const authError = await requireAdmin()
+  const authError = await requireAdmin(request)
   if (authError) return authError
 
   try {

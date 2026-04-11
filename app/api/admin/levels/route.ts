@@ -1,11 +1,10 @@
 import { pool } from "@/lib/db"
 import { NextRequest, NextResponse } from "next/server"
+import { verifyAdminToken } from "@/lib/admin-auth"
 
 export async function GET(request: NextRequest) {
-  const cookieHeader = request.headers.get("cookie")
-  if (!cookieHeader?.includes("admin-session=")) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const authError = verifyAdminToken(request)
+  if (authError) return authError
 
   try {
     const result = await pool.query(

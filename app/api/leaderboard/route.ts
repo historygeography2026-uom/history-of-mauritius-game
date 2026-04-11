@@ -1,5 +1,7 @@
 import { pool } from "@/lib/db"
 import { NextResponse } from "next/server"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -92,8 +94,16 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    // Require authentication to submit scores
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const body = await request.json()
-    const { player_name, user_id, subject, level, total_points, stars_earned, questions_completed, total_questions, timed_out } = body
+    const { player_name, subject, level, total_points, stars_earned, questions_completed, total_questions, timed_out } = body
+    // Use session user_id instead of trusting client-provided value
+    const user_id = session.user.id
 
     if (!player_name || !subject || !level) {
       return NextResponse.json({ error: "player_name, subject, and level are required" }, { status: 400 })
