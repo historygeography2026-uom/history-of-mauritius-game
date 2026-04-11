@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo, memo, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation" // Added useRouter
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Trophy, Star, ArrowLeft, CheckCircle, Clock, Zap } from "lucide-react"
+import { Trophy, Star, ArrowLeft, CheckCircle, Clock, Zap, LogOut } from "lucide-react"
 import MultipleChoiceGame from "@/components/multiple-choice-game"
 import MatchingGame from "@/components/matching-game"
 import FillInBlanksGame from "@/components/fill-in-blanks-game"
@@ -56,6 +56,7 @@ const GamePage = () => {
   const isAdvancingRef = useRef(false) // Guard against rapid-click Continue skipping questions
   const [showTimeoutScreen, setShowTimeoutScreen] = useState(false) // Added state for timeout screen
   const [levelTimedOut, setLevelTimedOut] = useState(false) // Track if level timed out
+  const [showExitConfirm, setShowExitConfirm] = useState(false) // Show exit confirmation dialog
   const [error, setError] = useState<string | null>(null)
   const [showLevelCompleteConfetti, setShowLevelCompleteConfetti] = useState(false)
   const [levelUnlocked, setLevelUnlocked] = useState(true) // Track if level is unlocked
@@ -400,6 +401,74 @@ const GamePage = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentQuestionIndex, mixedQuestions, allCompleted, answeredQuestions, totalStars, subject])
 
+  // Handle exit quiz - pause timer when showing confirmation
+  const handleExitRequest = useCallback(() => {
+    timerPausedRef.current = true
+    setTimerPaused(true)
+    setShowExitConfirm(true)
+  }, [])
+
+  // Cancel exit - resume timer
+  const handleExitCancel = useCallback(() => {
+    setShowExitConfirm(false)
+    timerPausedRef.current = false
+    setTimerPaused(false)
+  }, [])
+
+  // Confirm exit - save partial score and navigate home
+  const handleExitConfirm = useCallback(async () => {
+    if (isUnmountingRef.current) return
+    isUnmountingRef.current = true
+    isMountedRef.current = false
+
+    // Save partial progress to localStorage and database
+    saveProgress(subject, parseInt(level), totalStars, false, session?.user?.id)
+
+    // Persist partial results to leaderboard
+    try {
+      const total_points = totalStars * GAME_CONFIG.POINTS_PER_STAR
+      const questionsCompleted = Object.keys(answeredQuestions).length
+      const totalQuestions = mixedQuestions.length
+      const playerName = session?.user?.name || "Guest"
+      const userId = session?.user?.id || null
+
+      await fetch("/api/leaderboard", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          player_name: playerName,
+          user_id: userId,
+          subject,
+          level,
+          stars_earned: totalStars,
+          total_points,
+          questions_completed: questionsCompleted,
+          total_questions: totalQuestions,
+          timed_out: false,
+        }),
+      })
+    } catch (e) {
+      console.error("[v0] Failed to save partial leaderboard entry on exit", e)
+    }
+
+    // Cleanup
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current)
+      timerIntervalRef.current = null
+    }
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel()
+    }
+    try { stopAllSounds() } catch (e) { /* ignore */ }
+    try { clearAllToastsTimeouts() } catch (e) { /* ignore */ }
+
+    router.push("/")
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalStars, answeredQuestions, mixedQuestions, subject, level, session, router])
+
   // Persist results to leaderboard when all questions are completed or level times out
   // PERF FIX: Only trigger on allCompleted to avoid running on every answered question
   useEffect(() => {
@@ -707,6 +776,15 @@ const GamePage = () => {
                 <SoundToggle onToggle={setMuted} />
               </div>
               <div className="flex items-center gap-6">
+                <Button
+                  onClick={handleExitRequest}
+                  variant="outline"
+                  size="sm"
+                  className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 font-bold rounded-xl"
+                >
+                  <LogOut className="mr-1 h-4 w-4" />
+                  Exit
+                </Button>
                 <DodoTimer
                   timeLeft={levelTimeLeft}
                   initialTime={levelInitialTime}
@@ -731,6 +809,36 @@ const GamePage = () => {
         {/* Game container - compact, no-scroll on desktop */}
         <div className="p-2 md:p-4 flex items-start justify-center">
           <div className="w-full max-w-4xl">
+            {/* Exit Confirmation Dialog */}
+            {showExitConfirm && (
+              <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+                <Card className="border-4 border-orange-400 bg-gradient-to-br from-orange-50 via-yellow-50 to-white p-8 text-center max-w-md mx-4">
+                  <div className="text-5xl mb-4">🚪</div>
+                  <h2 className="text-3xl font-bold text-orange-600 mb-3">Exit Quiz?</h2>
+                  <p className="text-lg text-gray-700 mb-2">
+                    You've completed <span className="font-bold text-primary">{Object.keys(answeredQuestions).length}</span> of <span className="font-bold">{mixedQuestions.length}</span> questions.
+                  </p>
+                  <p className="text-lg text-gray-700 mb-6">
+                    Your progress of <span className="font-bold text-secondary">⭐ {totalStars} stars</span> will be saved.
+                  </p>
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={handleExitCancel}
+                      className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:opacity-90 py-4 font-bold rounded-xl text-lg"
+                    >
+                      ▶ Continue
+                    </Button>
+                    <Button
+                      onClick={handleExitConfirm}
+                      variant="outline"
+                      className="flex-1 border-2 border-red-400 text-red-600 hover:bg-red-50 py-4 font-bold rounded-xl text-lg"
+                    >
+                      🚪 Exit
+                    </Button>
+                  </div>
+                </Card>
+              </div>
+            )}
             {showTimeoutScreen && <TimeoutScreen />} {/* Conditionally render TimeoutScreen */}
             {renderQuestion()}
           </div>

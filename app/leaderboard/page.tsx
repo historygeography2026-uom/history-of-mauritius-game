@@ -6,7 +6,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Trophy, ArrowLeft, Medal, Calendar } from "lucide-react"
+import { Trophy, ArrowLeft } from "lucide-react"
 import { useSession } from "next-auth/react"
 
 export const dynamic = 'force-dynamic'
@@ -48,67 +48,42 @@ export default function Leaderboard() {
 
   const allRows: LeaderboardRow[] = Array.isArray(data) ? data : []
   
-  // Get top 10 rows
-  const top10Rows = allRows.slice(0, 10)
-  
-  // Find current user's position if not in top 10
-  let currentUserRow: LeaderboardRow | null = null
-  let currentUserRank: number | null = null
-  
-  if (session?.user?.id) {
-    const currentUserIndex = allRows.findIndex(r => r.user_id === session.user.id)
-    if (currentUserIndex >= 10) {
-      currentUserRow = allRows[currentUserIndex]
-      currentUserRank = currentUserIndex + 1
-    }
-  }
+  // Find current user's position to highlight
+  const currentUserId = session?.user?.id || null
 
   const renderLeaderboardRow = (r: LeaderboardRow, rank: number, isCurrentUser: boolean) => {
-    const dateTime = r.created_at ? new Date(r.created_at) : null
-    const formattedDate = dateTime ? dateTime.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : ''
-    const formattedTime = dateTime ? dateTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : ''
-    
     return (
-      <Card 
+      <div 
         key={r.id} 
-        className={`p-2 flex items-center justify-between transition-all ${
+        className={`flex items-center justify-between px-3 py-1.5 rounded-lg transition-all ${
           isCurrentUser 
-            ? "ring-2 ring-primary bg-primary/10 shadow-lg" 
-            : ""
+            ? "ring-2 ring-primary bg-primary/10" 
+            : rank % 2 === 0 ? "bg-gray-50" : ""
         }`}
       >
-        <div className="flex items-center gap-4">
-          <div className={`text-2xl font-bold w-12 text-center ${isCurrentUser ? "text-primary" : ""}`}>
-            #{rank}
+        <div className="flex items-center gap-2 min-w-0">
+          <div className={`text-sm font-bold w-8 text-center shrink-0 ${isCurrentUser ? "text-primary" : "text-muted-foreground"}`}>
+            {rank <= 3 ? ["🥇", "🥈", "🥉"][rank - 1] : `#${rank}`}
           </div>
-          <Avatar className={`h-10 w-10 ${isCurrentUser ? "ring-2 ring-primary" : ""}`}>
+          <Avatar className={`h-7 w-7 shrink-0 ${isCurrentUser ? "ring-2 ring-primary" : ""}`}>
             <AvatarImage src={r.avatar_url ?? undefined} alt={r.display_name} />
-            <AvatarFallback>{r.display_name?.slice(0, 2).toUpperCase()}</AvatarFallback>
+            <AvatarFallback className="text-xs">{r.display_name?.slice(0, 2).toUpperCase()}</AvatarFallback>
           </Avatar>
-          <div>
-            <div className={`font-semibold flex items-center gap-2 ${isCurrentUser ? "text-primary" : ""}`}>
-              {rank === 1 && <Medal className="h-5 w-5 text-yellow-500" />}
-              {rank === 2 && <Medal className="h-5 w-5 text-gray-400" />}
-              {rank === 3 && <Medal className="h-5 w-5 text-orange-600" />}
-              <span>{r.display_name}</span>
-              {isCurrentUser && <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full ml-1">You</span>}
+          <div className="min-w-0">
+            <div className={`text-sm font-semibold flex items-center gap-1 ${isCurrentUser ? "text-primary" : ""}`}>
+              <span className="truncate">{r.display_name}</span>
+              {isCurrentUser && <span className="text-[10px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full shrink-0">You</span>}
             </div>
-            <div className="text-sm text-muted-foreground">
-              {(r.subject || "").toString()} · Level {r.level ?? "-"}
+            <div className="text-xs text-muted-foreground">
+              {(r.subject || "").toString()} · Lv{r.level ?? "-"}
             </div>
-            {dateTime && (
-              <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                <Calendar className="h-3 w-3" />
-                <span>{formattedDate} at {formattedTime}</span>
-              </div>
-            )}
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <div className={`text-xl font-bold ${isCurrentUser ? "text-primary" : ""}`}>{r.total_points}</div>
-          <div className="text-xl">⭐ {r.stars_earned}</div>
+        <div className="flex items-center gap-3 shrink-0">
+          <div className={`text-sm font-bold ${isCurrentUser ? "text-primary" : ""}`}>{r.total_points} pts</div>
+          <div className="text-sm">⭐{r.stars_earned}</div>
         </div>
-      </Card>
+      </div>
     )
   }
 
@@ -147,27 +122,24 @@ export default function Leaderboard() {
           ))}
         </div>
 
-        <div className="grid gap-1">
-          {isLoading && <Card className="p-2">Loading leaderboard…</Card>}
-          {error && <Card className="p-2 border-red-500">Failed to load leaderboard</Card>}
-          {!isLoading && !error && allRows.length === 0 && <Card className="p-2">No scores yet.</Card>}
+        <Card className="p-2">
+          {isLoading && <p className="p-2 text-center">Loading leaderboard…</p>}
+          {error && <p className="p-2 text-center text-red-500">Failed to load leaderboard</p>}
+          {!isLoading && !error && allRows.length === 0 && <p className="p-2 text-center">No scores yet.</p>}
 
-          {!isLoading && !error &&
-            top10Rows.map((r, i) => {
-              const isCurrentUser = session?.user?.id !== undefined && r.user_id === session.user.id
-              return renderLeaderboardRow(r, i + 1, isCurrentUser)
-            })}
-          
-          {/* Show current user as 11th row if not in top 10 */}
-          {!isLoading && !error && currentUserRow && currentUserRank && (
-            <>
-              <div className="flex items-center justify-center py-2 text-muted-foreground">
-                <span className="px-4">• • •</span>
-              </div>
-              {renderLeaderboardRow(currentUserRow, currentUserRank, true)}
-            </>
+          {!isLoading && !error && allRows.length > 0 && (
+            <div className="divide-y divide-gray-100">
+              {allRows.map((r, i) => {
+                const isCurrentUser = currentUserId !== undefined && currentUserId !== null && r.user_id === currentUserId
+                return renderLeaderboardRow(r, i + 1, isCurrentUser)
+              })}
+            </div>
           )}
-        </div>
+
+          {!isLoading && !error && allRows.length > 0 && (
+            <p className="text-center text-xs text-muted-foreground py-2">Showing all {allRows.length} scores</p>
+          )}
+        </Card>
 
         <Card className="mt-8">
           <div className="p-6 text-center">

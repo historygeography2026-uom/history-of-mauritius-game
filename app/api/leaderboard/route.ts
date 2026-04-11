@@ -6,7 +6,7 @@ export async function GET(request: Request) {
   const subject = searchParams.get("subject") // subject name or "all"
   const levelParam = searchParams.get("level") // optional level number
   const limitParam = searchParams.get("limit") // optional result limit
-  const limit = Math.min(Number.parseInt(limitParam || "50"), 100)
+  const limit = limitParam ? Math.min(Number.parseInt(limitParam), 10000) : 10000
   const showAllAttempts = searchParams.get("all") === "true"
 
   try {
@@ -39,7 +39,6 @@ export async function GET(request: Request) {
       JOIN levels l ON lb.level_id = l.id
       ${whereClause}
       ORDER BY lb.total_points DESC
-      LIMIT 500
     `
 
     const result = await pool.query(query, params)

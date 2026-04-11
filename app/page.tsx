@@ -205,6 +205,12 @@ export default function SubjectSelection() {
                 <span className="hidden sm:inline">Admin Panel</span>
               </Button>
             </Link>
+            <Link href="/explore-map">
+              <Button className="bg-gradient-to-r from-cyan-500 to-teal-600 hover:from-cyan-600 hover:to-teal-700 text-white flex items-center gap-1 sm:gap-2 font-bold shadow-lg hover:shadow-xl hover:shadow-cyan-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm md:text-base">
+                <Map className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Explore Map</span>
+              </Button>
+            </Link>
           </div>
 
           <div className="flex gap-1 sm:gap-2 items-center flex-wrap">

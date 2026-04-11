@@ -296,53 +296,13 @@ export default function AdminPage() {
     }
   }
 
-  // Resize image on canvas and return as Blob for upload
-  const resizeImageToBlob = (file: File, maxWidth: number = 800, maxHeight: number = 600, quality: number = 0.85): Promise<{ blob: Blob; previewUrl: string }> => {
+  // Create a preview URL for the image file (no canvas processing to preserve colors)
+  const createImagePreview = (file: File): Promise<{ blob: Blob; previewUrl: string }> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
       reader.onload = (e) => {
-        const img = document.createElement('img')
-        img.onload = () => {
-          let { width, height } = img
-          
-          if (width > maxWidth) {
-            height = (height * maxWidth) / width
-            width = maxWidth
-          }
-          if (height > maxHeight) {
-            width = (width * maxHeight) / height
-            height = maxHeight
-          }
-
-          const canvas = document.createElement('canvas')
-          canvas.width = width
-          canvas.height = height
-          
-          const ctx = canvas.getContext('2d')
-          if (!ctx) {
-            reject(new Error('Could not get canvas context'))
-            return
-          }
-
-          ctx.imageSmoothingEnabled = true
-          ctx.imageSmoothingQuality = 'high'
-          ctx.drawImage(img, 0, 0, width, height)
-
-          canvas.toBlob(
-            (blob) => {
-              if (blob) {
-                const previewUrl = canvas.toDataURL('image/jpeg', quality)
-                resolve({ blob, previewUrl })
-              } else {
-                reject(new Error('Failed to create blob'))
-              }
-            },
-            'image/jpeg',
-            quality
-          )
-        }
-        img.onerror = () => reject(new Error('Failed to load image'))
-        img.src = e.target?.result as string
+        const previewUrl = e.target?.result as string
+        resolve({ blob: file, previewUrl })
       }
       reader.onerror = () => reject(new Error('Failed to read file'))
       reader.readAsDataURL(file)
@@ -351,8 +311,9 @@ export default function AdminPage() {
 
   // Upload image to storage
   const uploadImageToStorage = async (blob: Blob, questionId?: string): Promise<string> => {
+    const ext = (blob instanceof File && blob.name) ? blob.name.split('.').pop() || 'jpg' : 'jpg'
     const formDataUpload = new FormData()
-    formDataUpload.append('file', blob, `image-${Date.now()}.jpg`)
+    formDataUpload.append('file', blob, `image-${Date.now()}.${ext}`)
     if (questionId) {
       formDataUpload.append('questionId', questionId)
     }
@@ -380,54 +341,13 @@ export default function AdminPage() {
     return url.startsWith('http://') || url.startsWith('https://')
   }
 
-  // Download external image and return as Blob
+  // Download external image and return as Blob (raw fetch, no canvas processing)
   const downloadExternalImage = async (url: string): Promise<Blob> => {
-    return new Promise((resolve, reject) => {
-      const img = document.createElement('img')
-      img.crossOrigin = 'anonymous'
-      img.onload = () => {
-        let { width, height } = img
-        const maxWidth = 800
-        const maxHeight = 600
-        
-        if (width > maxWidth) {
-          height = (height * maxWidth) / width
-          width = maxWidth
-        }
-        if (height > maxHeight) {
-          width = (width * maxHeight) / height
-          height = maxHeight
-        }
-
-        const canvas = document.createElement('canvas')
-        canvas.width = width
-        canvas.height = height
-        
-        const ctx = canvas.getContext('2d')
-        if (!ctx) {
-          reject(new Error('Could not get canvas context'))
-          return
-        }
-
-        ctx.imageSmoothingEnabled = true
-        ctx.imageSmoothingQuality = 'high'
-        ctx.drawImage(img, 0, 0, width, height)
-
-        canvas.toBlob(
-          (blob) => {
-            if (blob) {
-              resolve(blob)
-            } else {
-              reject(new Error('Failed to create blob'))
-            }
-          },
-          'image/jpeg',
-          0.85
-        )
-      }
-      img.onerror = () => reject(new Error('Failed to load external image'))
-      img.src = url
-    })
+    const response = await fetch(url)
+    if (!response.ok) throw new Error('Failed to download external image')
+    const blob = await response.blob()
+    if (!blob.type.startsWith('image/')) throw new Error('Downloaded file is not an image')
+    return blob
   }
 
   const [isUploadingImage, setIsUploadingImage] = useState(false)
@@ -438,7 +358,7 @@ export default function AdminPage() {
     if (file) {
       try {
         setIsUploadingImage(true)
-        const { blob, previewUrl } = await resizeImageToBlob(file)
+        const { blob, previewUrl } = await createImagePreview(file)
         setImagePreview(previewUrl)
         setPendingImageBlob(blob)
         // Don't set formData.image yet - will upload when saving
