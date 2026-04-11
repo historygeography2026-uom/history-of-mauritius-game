@@ -178,12 +178,12 @@ export default function MultipleChoiceGame({
   return (
     <>
       <GameConfetti trigger={showConfetti} type="correct" />
-      <Card className="border-4 border-primary/30 bg-card p-3 md:p-4 relative overflow-visible">
-        <div className="mb-2 flex items-center justify-between">
-          <span className="text-lg font-bold text-muted-foreground">
+      <Card className="border-4 border-primary/30 bg-card p-2 md:p-3 relative overflow-visible">
+        <div className="mb-1 flex items-center justify-between">
+          <span className="text-sm font-bold text-muted-foreground">
             {isSingleMode ? "Question" : `Question ${currentQuestionIndex + 1} of ${builtInQuestions.length}`}
           </span>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             {/* Mascot */}
             <DodoMascot 
               mood={mascotMood} 
@@ -191,21 +191,21 @@ export default function MultipleChoiceGame({
               showSpeechBubble={!!mascotMessage}
               speechText={mascotMessage}
             />
-            <div className="flex items-center gap-2 bg-secondary/20 px-4 py-2 rounded-full">
-              <Star className="h-6 w-6 fill-secondary text-secondary" />
-              <span className="text-xl font-bold text-secondary">{score}</span>
+            <div className="flex items-center gap-1.5 bg-secondary/20 px-3 py-1 rounded-full">
+              <Star className="h-5 w-5 fill-secondary text-secondary" />
+              <span className="text-lg font-bold text-secondary">{score}</span>
             </div>
           </div>
         </div>
 
       {question.image && (
-        <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 bg-white flex items-center justify-center">
+        <div className="mb-1 overflow-hidden rounded-lg border-2 border-primary/20 bg-white flex items-center justify-center">
           <Image
             src={question.image || "/placeholder.svg"}
             alt={question.imageAlt || "Question image"}
             width={1200}
             height={800}
-            className="w-full h-auto object-contain max-h-[25vh] sm:max-h-[28vh] md:max-h-[30vh]"
+            className="w-full h-auto object-contain max-h-[15vh] sm:max-h-[18vh] md:max-h-[20vh]"
             quality={100}
             unoptimized
             priority
@@ -213,28 +213,28 @@ export default function MultipleChoiceGame({
         </div>
       )}
 
-      <div className="mb-3 flex items-start gap-2">
-        <h2 className="text-lg font-bold leading-snug text-card-foreground md:text-xl flex-1">
+      <div className="mb-1.5 flex items-start gap-2">
+        <h2 className="text-base font-bold leading-snug text-card-foreground md:text-lg flex-1">
           {question.question}
         </h2>
         <Button
           variant="ghost"
           size="icon"
           onClick={() => speakText(question.question)}
-          className="shrink-0 h-10 w-10 rounded-full bg-primary/10 hover:bg-primary/20 text-primary"
+          className="shrink-0 h-8 w-8 rounded-full bg-primary/10 hover:bg-primary/20 text-primary"
           title="Listen to question"
         >
-          <Volume2 className="h-5 w-5" />
+          <Volume2 className="h-4 w-4" />
         </Button>
       </div>
 
-      <div className="space-y-1.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
         {(question.options || []).map((option, index) => (
           <Button
             key={index}
             onClick={() => !showResult && handleAnswer(index)}
             disabled={showResult}
-            className={`h-auto w-full justify-start p-2.5 md:p-3 text-left text-sm md:text-base transition-all rounded-xl ${
+            className={`h-auto w-full justify-start p-2 text-left text-sm transition-all rounded-xl ${
               showResult
                 ? index === question.correctAnswer
                   ? "bg-gradient-to-r from-green-400 to-green-500 text-white border-4 border-green-300 shadow-lg"
@@ -244,26 +244,26 @@ export default function MultipleChoiceGame({
                 : "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:from-primary/90 hover:to-primary/70 shadow-md"
             }`}
           >
-            <span className="mr-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/20 text-lg font-bold">
+            <span className="mr-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/20 text-base font-bold">
               {String.fromCharCode(65 + index)}
             </span>
-            <span className="break-words whitespace-normal text-left flex-1">{option}</span>
+            <span className="break-words whitespace-normal text-left flex-1 leading-tight">{option}</span>
           </Button>
         ))}
       </div>
 
       {showResult && (
-        <div className="mt-2 space-y-2">
+        <div className="mt-1.5 space-y-1.5">
           <div
-            className={`rounded-2xl p-3 text-center ${isCorrect ? "bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-400" : "bg-gradient-to-br from-orange-100 to-orange-200 border-2 border-orange-400"}`}
+            className={`rounded-xl p-2 text-center ${isCorrect ? "bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-400" : "bg-gradient-to-br from-orange-100 to-orange-200 border-2 border-orange-400"}`}
           >
-            <p className="mb-1 text-xl md:text-2xl font-bold">{isCorrect ? "🎉 Awesome!" : "💪 Good try!"}</p>
-            <p className="text-sm text-card-foreground">{question.funFact}</p>
+            <p className="mb-0.5 text-lg font-bold">{isCorrect ? "🎉 Awesome!" : "💪 Good try!"}</p>
+            <p className="text-xs text-card-foreground">{question.funFact}</p>
           </div>
 
           <Button
             onClick={handleNext}
-            className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-3 rounded-xl shadow-lg font-bold"
+            className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-base py-2 rounded-xl shadow-lg font-bold"
           >
             {isSingleMode ? "Continue →" : currentQuestionIndex < builtInQuestions.length - 1 ? "Next Question →" : "Finish! 🎊"}
           </Button>
