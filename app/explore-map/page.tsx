@@ -838,9 +838,34 @@ export default function ExploreMap() {
                               <feMergeNode in="SourceGraphic"/>
                             </feMerge>
                           </filter>
+                          <clipPath id="rodClip">
+                            <path d={rodriguesCoastline.d} transform={rodriguesCoastline.transform} />
+                          </clipPath>
                         </defs>
+                        {/* Base island fill */}
                         <g transform={rodriguesCoastline.transform}>
-                          <path d={rodriguesCoastline.d} fill="#f5c542" stroke="#b8860b" strokeWidth="2" filter="url(#rodShadow)" className="transition-all duration-300" />
+                          <path d={rodriguesCoastline.d} fill="#e8d5a3" stroke="#b8860b" strokeWidth="2" filter="url(#rodShadow)" className="transition-all duration-300" />
+                        </g>
+                        {/* Zone color patches clipped to island boundary */}
+                        <g clipPath="url(#rodClip)">
+                          {rodriguesZones.map((zone, i) => {
+                            const zoneColors = [
+                              "#81c784", "#a5d6a7", "#66bb6a", "#4db6ac", "#80cbc4",
+                              "#aed581", "#c5e1a5", "#dce775", "#fff176", "#ffcc80",
+                              "#ef9a9a", "#ce93d8", "#90caf9", "#80deea"
+                            ]
+                            return (
+                              <ellipse
+                                key={zone.id}
+                                cx={zone.x}
+                                cy={zone.y}
+                                rx={38}
+                                ry={30}
+                                fill={zoneColors[i % zoneColors.length]}
+                                opacity={0.55}
+                              />
+                            )
+                          })}
                         </g>
                         <g transform={ISLAND_LAYER_TRANSFORM}>
                           {rodriguesSmallIslands.map((island) => (
@@ -852,7 +877,7 @@ export default function ExploreMap() {
                         </g>
                         {showZones && (
                           <g transform={rodriguesZoneBorders.transform}>
-                            <path d={rodriguesZoneBorders.d} fill="none" stroke="#8B6914" strokeWidth="0.8" strokeDasharray="6,4" opacity="0.6" />
+                            <path d={rodriguesZoneBorders.d} fill="none" stroke="#5d4037" strokeWidth="0.8" strokeDasharray="6,4" opacity="0.7" />
                           </g>
                         )}
                         {showZones && rodriguesZones.map((zone) => (
