@@ -25,7 +25,8 @@ export default function LoginPage() {
   
   // Validate redirectTo to prevent open redirect attacks
   const rawRedirect = searchParams.get("redirectTo") || "/"
-  const redirectTo = rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") ? rawRedirect : "/"
+  const isRelativePath = (url: string) => url.startsWith("/") && !url.startsWith("//") && !url.startsWith("/\\") && !url.includes(":\\")
+  const redirectTo = isRelativePath(rawRedirect.trim()) ? rawRedirect.trim() : "/"
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -16,6 +16,9 @@ async function requireAdmin(): Promise<NextResponse | null> {
 
 // GET all questions with filtering + type-specific details
 export async function GET(request: NextRequest) {
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   try {
     const { searchParams } = new URL(request.url)
     const subject = searchParams.get("subject")
