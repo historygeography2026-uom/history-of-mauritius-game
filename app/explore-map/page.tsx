@@ -486,9 +486,9 @@ export default function ExploreMap() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-cyan-900 overflow-x-hidden">
 
 
-      <div className="relative z-10 p-4 md:p-6 max-w-[1600px] mx-auto">
+      <div className="relative z-10 p-2 md:p-3 max-w-[1600px] mx-auto">
         {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 mb-2">
           <div className="flex items-center gap-4">
             <Link href="/">
               <Button variant="outline" className="kid-btn bg-white/10 border-white/20 text-white hover:bg-white/20">
@@ -511,7 +511,7 @@ export default function ExploreMap() {
         </div>
 
         {/* Filters & toggles */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
           <div className="flex flex-wrap gap-2">
             {activeMap === "mauritius" ? (
               <>
@@ -708,8 +708,23 @@ export default function ExploreMap() {
                             </feMerge>
                           </filter>
                         </defs>
-                        {/* Single combined island path — outer boundary only, no internal district lines */}
-                        <path d={mauritiusDistricts.map(d => d.d).join(' ')} fill="url(#islandGradient)" stroke={currentTheme.stroke} strokeWidth="3" strokeLinejoin="round" className="transition-all duration-500" filter="url(#shadow)" style={{ paintOrder: 'stroke' }} />
+                        {/* Island fill — each district as its own path so borders can be toggled */}
+                        <g>
+                          {mauritiusDistricts.map(district => (
+                            <path key={district.id} d={district.d} fill="url(#islandGradient)" stroke={showDistricts ? currentTheme.stroke : "none"} strokeWidth={showDistricts ? "1.5" : "0"} strokeLinejoin="round" className="transition-all duration-500" />
+                          ))}
+                        </g>
+                        {/* Outer coastline border */}
+                        <path d={mauritiusDistricts.map(d => d.d).join(' ')} fill="none" stroke={currentTheme.stroke} strokeWidth="3" strokeLinejoin="round" className="transition-all duration-500" filter="url(#shadow)" style={{ paintOrder: 'stroke' }} />
+                        {/* District name labels */}
+                        {showDistricts && districts.map(district => {
+                          const { x, y } = latLngToXY(district.center[0], district.center[1])
+                          return (
+                            <text key={district.name} x={x} y={y} textAnchor="middle" className="pointer-events-none select-none" style={{ fontSize: '8px', fontWeight: 700, fill: '#ffffff', textShadow: '0 1px 3px rgba(0,0,0,0.8), 0 0 6px rgba(0,0,0,0.5)', letterSpacing: '0.5px' }}>
+                              {district.name}
+                            </text>
+                          )
+                        })}
                         {/* ══════ RIVERS — smooth bezier with animated flow ══════ */}
                         {filteredFeatures.filter(f => f.type === "river" && f.path).map((river) => {
                           const d = pointsToSmoothPath(river.path!)
