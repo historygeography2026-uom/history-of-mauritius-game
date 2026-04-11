@@ -96,16 +96,17 @@ export default function Leaderboard() {
     <div className="relative">
       <div className="mx-auto max-w-4xl relative z-10 p-4 md:p-6">
         <Link href="/">
-          <Button className="mb-6 bg-gradient-to-r from-secondary via-secondary/80 to-secondary hover:shadow-lg hover:shadow-secondary/50 text-white font-bold transition-all duration-300 hover:scale-105 rounded-xl px-6 py-3">
-            <ArrowLeft className="mr-2 h-5 w-5 transition-transform hover:translate-x-1" />
+          <Button className="kid-btn mb-6 bg-gradient-to-r from-secondary via-secondary/80 to-secondary hover:shadow-lg hover:shadow-secondary/50 text-white font-bold transition-all duration-300 hover:scale-105 px-6 py-3">
+            <ArrowLeft className="mr-2 h-5 w-5" />
             🏠 Back Home
           </Button>
         </Link>
 
         <div className="mb-8 text-center">
+          <div className="text-5xl mb-2 animate-bounce-gentle">🏆</div>
           <div className="mb-4 flex items-center justify-center gap-3">
             <Trophy className="h-10 w-10 text-secondary" />
-            <h1 className="text-5xl font-bold text-primary md:text-6xl">Leaderboard</h1>
+            <h1 className="kid-heading text-5xl font-bold text-primary md:text-6xl">Leaderboard</h1>
             <Trophy className="h-10 w-10 text-secondary" />
           </div>
           <p className="text-lg text-muted-foreground md:text-xl">Top performers in Mauritius Learning Hub 🎓</p>
@@ -116,9 +117,9 @@ export default function Leaderboard() {
             <Button
               key={category.id}
               onClick={() => setSelectedCategory(category.id)}
-              className={`py-6 font-semibold transition-all rounded-lg ${
+              className={`kid-btn py-6 font-semibold transition-all ${
                 selectedCategory === category.id
-                  ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg hover:shadow-xl hover:shadow-amber-500/50 scale-105"
+                  ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg scale-105"
                   : "bg-gradient-to-r from-gray-300 to-gray-400 text-gray-700 hover:from-gray-400 hover:to-gray-500"
               }`}
             >
@@ -127,7 +128,7 @@ export default function Leaderboard() {
           ))}
         </div>
 
-        <Card className="p-2">
+        <Card className="kid-card p-2 bg-white/90 backdrop-blur-sm">
           {isLoading && <p className="p-2 text-center">Loading leaderboard…</p>}
           {error && <p className="p-2 text-center text-red-500">Failed to load leaderboard</p>}
           {!isLoading && !error && allRows.length === 0 && <p className="p-2 text-center">No scores yet.</p>}
@@ -171,7 +172,7 @@ export default function Leaderboard() {
           )}
         </Card>
 
-        <Card className="mt-8">
+        <Card className="kid-card mt-8 bg-white/90">
           <div className="p-6 text-center">
             <p className="text-lg text-card-foreground">
               Keep playing to climb the leaderboard! Complete all levels and ace every quiz to earn more points! 🚀

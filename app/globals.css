@@ -758,3 +758,107 @@
     stroke-linejoin: round;
   }
 }
+
+/* ===== KID-FRIENDLY DESIGN SYSTEM ===== */
+
+/* Playful card style with dashed colorful border and bubbly shadow */
+.kid-card {
+  border-radius: 1.25rem;
+  border: 3px dashed;
+  box-shadow: 0 6px 0 -2px rgba(0,0,0,0.08), 0 12px 30px -8px rgba(0,0,0,0.12);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.kid-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 0 -2px rgba(0,0,0,0.06), 0 20px 40px -8px rgba(0,0,0,0.15);
+}
+
+/* Bouncy button effect */
+.kid-btn {
+  border-radius: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.15);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+  top: 0;
+}
+.kid-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 rgba(0,0,0,0.15);
+}
+.kid-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.15);
+  top: 2px;
+}
+
+/* Rainbow animated border */
+@keyframes rainbow-border {
+  0% { border-color: #f472b6; }
+  16% { border-color: #fb923c; }
+  33% { border-color: #facc15; }
+  50% { border-color: #4ade80; }
+  66% { border-color: #38bdf8; }
+  83% { border-color: #a78bfa; }
+  100% { border-color: #f472b6; }
+}
+.kid-border-rainbow {
+  border: 3px solid;
+  animation: rainbow-border 4s linear infinite;
+}
+
+/* Fun heading with text shadow */
+.kid-heading {
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.08), 0 0 20px rgba(99, 102, 241, 0.15);
+}
+
+/* Subject card icon container with shine effect */
+.kid-icon-box {
+  position: relative;
+  overflow: hidden;
+}
+.kid-icon-box::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(255,255,255,0.35) 50%,
+    transparent 70%
+  );
+  animation: kid-shine 3s ease-in-out infinite;
+}
+@keyframes kid-shine {
+  0% { transform: translateX(-100%) translateY(-100%); }
+  100% { transform: translateX(100%) translateY(100%); }
+}
+
+/* Badge/pill style for level indicators */
+.kid-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.03em;
+}
+
+/* Wobble animation for attention */
+@keyframes kid-wobble {
+  0%, 100% { transform: rotate(0deg); }
+  15% { transform: rotate(-6deg); }
+  30% { transform: rotate(5deg); }
+  45% { transform: rotate(-4deg); }
+  60% { transform: rotate(3deg); }
+  75% { transform: rotate(-2deg); }
+}
+.kid-wobble:hover {
+  animation: kid-wobble 0.6s ease-in-out;
+}

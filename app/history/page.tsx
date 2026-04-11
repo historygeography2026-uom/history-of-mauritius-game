@@ -290,15 +290,16 @@ export default function AttemptHistoryPage() {
       <div className="min-h-screen bg-transparent p-4 md:p-8">
         <div className="mx-auto max-w-4xl relative z-10">
           <Link href="/">
-            <Button className="mb-6 bg-gradient-to-r from-secondary via-secondary/80 to-secondary hover:shadow-lg hover:shadow-secondary/50 text-white font-bold transition-all duration-300 hover:scale-105 rounded-xl px-6 py-3">
-              <ArrowLeft className="mr-2 h-5 w-5 transition-transform hover:translate-x-1" />
+            <Button className="kid-btn mb-6 bg-gradient-to-r from-secondary via-secondary/80 to-secondary hover:shadow-lg hover:shadow-secondary/50 text-white font-bold transition-all duration-300 hover:scale-105 px-6 py-3">
+              <ArrowLeft className="mr-2 h-5 w-5" />
               🏠 Back Home
             </Button>
           </Link>
-          <Card className="p-8 text-center">
+          <Card className="kid-card p-8 text-center bg-white/90 backdrop-blur-sm">
+            <div className="text-5xl mb-3 animate-bounce-gentle">🔒</div>
             <p className="text-lg text-muted-foreground">Please log in to see your attempt history.</p>
             <Link href="/auth/login">
-              <Button className="mt-4 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white font-bold shadow-lg hover:shadow-xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-6 py-2">Log In</Button>
+              <Button className="kid-btn mt-4 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white font-bold shadow-lg">🦤 Log In</Button>
             </Link>
           </Card>
         </div>
@@ -310,17 +311,18 @@ export default function AttemptHistoryPage() {
     <div className="min-h-screen bg-transparent p-4 md:p-8">
       <div className="mx-auto max-w-4xl relative z-10">
         <Link href="/">
-          <Button className="mb-6 bg-gradient-to-r from-secondary via-secondary/80 to-secondary hover:shadow-lg hover:shadow-secondary/50 text-white font-bold transition-all duration-300 hover:scale-105 rounded-xl px-6 py-3">
-            <ArrowLeft className="mr-2 h-5 w-5 transition-transform hover:translate-x-1" />
+          <Button className="kid-btn mb-6 bg-gradient-to-r from-secondary via-secondary/80 to-secondary hover:shadow-lg hover:shadow-secondary/50 text-white font-bold transition-all duration-300 hover:scale-105 px-6 py-3">
+            <ArrowLeft className="mr-2 h-5 w-5" />
             🏠 Back Home
           </Button>
         </Link>
 
         {/* Header */}
         <div className="mb-8 text-center">
+          <div className="text-5xl mb-2 animate-bounce-gentle">📊</div>
           <div className="mb-4 flex items-center justify-center gap-3">
             <Clock className="h-10 w-10 text-primary" />
-            <h1 className="text-4xl font-bold text-primary md:text-5xl">My Progress</h1>
+            <h1 className="kid-heading text-4xl font-bold text-primary md:text-5xl">My Progress</h1>
           </div>
           <p className="text-lg text-muted-foreground">Track your learning journey through Mauritius! 🇲🇺</p>
         </div>
@@ -328,22 +330,22 @@ export default function AttemptHistoryPage() {
         {/* Summary Cards */}
         {summary && !loading && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-            <Card className="p-4 text-center bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+            <Card className="kid-card p-4 text-center bg-gradient-to-br from-blue-50 to-blue-100 border-blue-300">
               <Target className="h-6 w-6 text-blue-600 mx-auto mb-1" />
               <p className="text-2xl font-bold text-blue-700">{summary.totalAttempts}</p>
               <p className="text-xs text-blue-600 font-medium">Total Attempts</p>
             </Card>
-            <Card className="p-4 text-center bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
+            <Card className="kid-card p-4 text-center bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-300">
               <Trophy className="h-6 w-6 text-yellow-600 mx-auto mb-1" />
               <p className="text-2xl font-bold text-yellow-700">{summary.bestScore}</p>
               <p className="text-xs text-yellow-600 font-medium">Best Score</p>
             </Card>
-            <Card className="p-4 text-center bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+            <Card className="kid-card p-4 text-center bg-gradient-to-br from-green-50 to-green-100 border-green-300">
               <Star className="h-6 w-6 text-green-600 mx-auto mb-1" />
               <p className="text-2xl font-bold text-green-700">{summary.totalStarsEarned}</p>
               <p className="text-xs text-green-600 font-medium">Total Stars</p>
             </Card>
-            <Card className="p-4 text-center bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+            <Card className="kid-card p-4 text-center bg-gradient-to-br from-purple-50 to-purple-100 border-purple-300">
               <TrendingUp className="h-6 w-6 text-purple-600 mx-auto mb-1" />
               <p className="text-2xl font-bold text-purple-700">{summary.avgScore}</p>
               <p className="text-xs text-purple-600 font-medium">Avg Score</p>
@@ -353,7 +355,7 @@ export default function AttemptHistoryPage() {
 
         {/* Trend indicator */}
         {trend && (
-          <Card className={`p-3 mb-6 text-center ${trend === "improving" ? "bg-green-50 border-green-300" : "bg-orange-50 border-orange-300"}`}>
+          <Card className={`kid-card p-3 mb-6 text-center ${trend === "improving" ? "bg-green-50 border-green-300" : "bg-orange-50 border-orange-300"}`}>
             <p className={`font-bold ${trend === "improving" ? "text-green-700" : "text-orange-700"}`}>
               {trend === "improving"
                 ? "📈 Your scores are improving! Keep it up!"
@@ -368,9 +370,9 @@ export default function AttemptHistoryPage() {
             <Button
               key={c.id}
               onClick={() => setSelectedSubject(c.id)}
-              className={`font-semibold transition-all rounded-lg px-4 py-2 ${
+              className={`kid-btn font-semibold transition-all px-4 py-2 ${
                 selectedSubject === c.id
-                  ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg hover:shadow-xl hover:shadow-blue-500/50 scale-105"
+                  ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg scale-105"
                   : "bg-gradient-to-r from-gray-300 to-gray-400 text-gray-700 hover:from-gray-400 hover:to-gray-500"
               }`}
             >
@@ -381,7 +383,7 @@ export default function AttemptHistoryPage() {
 
         {/* Per-subject best scores */}
         {summary && Object.keys(summary.subjectStats).length > 0 && (
-          <Card className="p-4 mb-6 bg-gradient-to-r from-primary/5 to-secondary/5">
+          <Card className="kid-card p-4 mb-6 bg-gradient-to-r from-primary/5 to-secondary/5">
             <h3 className="font-bold text-primary mb-3 text-lg">🏆 Best Scores by Subject & Level</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {Object.entries(summary.subjectStats)
@@ -411,12 +413,13 @@ export default function AttemptHistoryPage() {
         {/* Attempt list */}
         <h3 className="font-bold text-primary mb-3 text-lg">📋 All Attempts</h3>
         <div className="space-y-2">
-          {loading && <Card className="p-4 text-center">Loading your history...</Card>}
+          {loading && <Card className="kid-card p-4 text-center">Loading your history...</Card>}
           {!loading && attempts.length === 0 && (
-            <Card className="p-6 text-center">
+            <Card className="kid-card p-6 text-center bg-white/90">
+              <div className="text-4xl mb-2">🎮</div>
               <p className="text-muted-foreground text-lg">No attempts yet. Start playing to track your progress!</p>
               <Link href="/">
-              <Button className="mt-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold shadow-lg hover:shadow-xl hover:shadow-green-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-6 py-2">Start Playing 🎮</Button>
+              <Button className="kid-btn mt-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold shadow-lg">Start Playing 🎮</Button>
               </Link>
             </Card>
           )}
@@ -460,7 +463,7 @@ export default function AttemptHistoryPage() {
           ))}
         </div>
 
-        <Card className="mt-8">
+        <Card className="kid-card mt-8 bg-white/90">
           <div className="p-6 text-center">
             <p className="text-lg text-card-foreground">
               Keep playing to improve your scores and climb the leaderboard! 🚀

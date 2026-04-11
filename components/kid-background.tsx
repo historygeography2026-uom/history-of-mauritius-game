@@ -2,11 +2,10 @@
 
 /**
  * Kid-friendly animated background with Mauritius history & geography themed icons.
- * Renders floating, slowly drifting SVG icons (dodo, compass, palm tree, ship, book, globe, etc.)
- * behind the page content at low opacity so they don't distract from gameplay.
+ * Renders floating, slowly drifting emoji icons, a decorative wave, and subtle patterns
+ * behind the page content at pleasant opacity for a fun kids' game feel.
  */
 export function KidBackground() {
-  // Each icon: emoji, size (rem), top%, left%, animation delay, drift direction
   const icons = [
     { emoji: "🦤", size: 3.5, top: 5, left: 8, delay: 0, drift: "drift1" },
     { emoji: "🧭", size: 2.8, top: 12, left: 85, delay: 2, drift: "drift2" },
@@ -24,6 +23,10 @@ export function KidBackground() {
     { emoji: "🌺", size: 2.5, top: 70, left: 60, delay: 2.8, drift: "drift2" },
     { emoji: "⚓", size: 2.8, top: 30, left: 40, delay: 4.2, drift: "drift3" },
     { emoji: "🏔️", size: 3, top: 60, left: 95, delay: 1.2, drift: "drift1" },
+    { emoji: "🎓", size: 2.6, top: 15, left: 70, delay: 1.8, drift: "drift2" },
+    { emoji: "🐠", size: 2.4, top: 82, left: 30, delay: 3.2, drift: "drift3" },
+    { emoji: "🌈", size: 3.2, top: 3, left: 55, delay: 0.3, drift: "drift1" },
+    { emoji: "🦋", size: 2.3, top: 50, left: 5, delay: 4.8, drift: "drift2" },
   ]
 
   return (
@@ -31,27 +34,55 @@ export function KidBackground() {
       className="fixed inset-0 overflow-hidden pointer-events-none z-0"
       aria-hidden="true"
     >
-      {/* Warm gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-sky-100/60 via-amber-50/40 to-emerald-100/60" />
+      {/* Warm gradient overlay — slightly more vivid for kid-game feel */}
+      <div className="absolute inset-0 bg-gradient-to-br from-sky-100/70 via-amber-50/50 to-emerald-100/70" />
 
-      {/* Subtle topographic/map-like pattern */}
-      <svg className="absolute inset-0 w-full h-full opacity-[0.04]" xmlns="http://www.w3.org/2000/svg">
+      {/* Subtle dot grid pattern */}
+      <svg className="absolute inset-0 w-full h-full opacity-[0.035]" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <pattern id="topo" x="0" y="0" width="200" height="200" patternUnits="userSpaceOnUse">
-            <circle cx="100" cy="100" r="80" fill="none" stroke="currentColor" strokeWidth="0.5" />
-            <circle cx="100" cy="100" r="60" fill="none" stroke="currentColor" strokeWidth="0.5" />
-            <circle cx="100" cy="100" r="40" fill="none" stroke="currentColor" strokeWidth="0.5" />
-            <circle cx="100" cy="100" r="20" fill="none" stroke="currentColor" strokeWidth="0.5" />
+          <pattern id="dots" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+            <circle cx="20" cy="20" r="2" fill="currentColor" />
           </pattern>
         </defs>
-        <rect width="100%" height="100%" fill="url(#topo)" />
+        <rect width="100%" height="100%" fill="url(#dots)" />
+      </svg>
+
+      {/* Decorative wave at bottom */}
+      <svg
+        className="absolute bottom-0 left-0 w-full opacity-[0.12]"
+        viewBox="0 0 1440 120"
+        preserveAspectRatio="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M0,60 C240,120 480,0 720,60 C960,120 1200,0 1440,60 L1440,120 L0,120 Z"
+          fill="#38bdf8"
+        />
+        <path
+          d="M0,80 C300,20 600,100 900,60 C1200,20 1350,90 1440,70 L1440,120 L0,120 Z"
+          fill="#34d399"
+        />
+      </svg>
+
+      {/* Decorative clouds at top */}
+      <svg
+        className="absolute top-0 left-0 w-full opacity-[0.08]"
+        viewBox="0 0 1440 100"
+        preserveAspectRatio="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <ellipse cx="200" cy="50" rx="180" ry="50" fill="white" />
+        <ellipse cx="350" cy="30" rx="120" ry="40" fill="white" />
+        <ellipse cx="900" cy="40" rx="200" ry="55" fill="white" />
+        <ellipse cx="1100" cy="25" rx="140" ry="35" fill="white" />
+        <ellipse cx="1350" cy="50" rx="160" ry="45" fill="white" />
       </svg>
 
       {/* Floating themed icons */}
       {icons.map((icon, i) => (
         <span
           key={i}
-          className="absolute select-none opacity-[0.13]"
+          className="absolute select-none opacity-[0.18]"
           style={{
             fontSize: `${icon.size}rem`,
             top: `${icon.top}%`,

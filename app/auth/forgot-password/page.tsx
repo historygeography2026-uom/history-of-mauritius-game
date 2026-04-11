@@ -62,16 +62,17 @@ export default function ForgotPasswordPage() {
     return (
       <div className="min-h-screen bg-transparent flex items-center justify-center p-4 relative z-10">
         <div className="w-full max-w-md">
-          <Card className="border-2 border-green-400/40">
+          <Card className="kid-card border-green-400/40 bg-white/90 backdrop-blur-sm">
             <CardContent className="pt-8 pb-8 text-center">
+              <div className="text-5xl mb-3 animate-bounce-gentle">🎉</div>
               <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
-              <h2 className="text-2xl font-bold mb-2">Password Reset!</h2>
+              <h2 className="kid-heading text-2xl font-bold mb-2">Password Reset! ✅</h2>
               <p className="text-muted-foreground mb-6">
                 Your password has been updated successfully. You can now log in with your new password.
               </p>
               <Link href="/auth/login">
-                <Button className="w-full bg-primary text-primary-foreground">
-                  Go to Login
+                <Button className="kid-btn w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold shadow-lg">
+                  🦤 Go to Login
                 </Button>
               </Link>
             </CardContent>
@@ -85,18 +86,16 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen bg-transparent flex items-center justify-center p-4 relative z-10">
       <div className="w-full max-w-md">
         <Link href="/auth/login">
-          <Button className="mb-4 bg-gradient-to-r from-secondary via-secondary/80 to-secondary hover:shadow-lg hover:shadow-secondary/50 text-white font-bold transition-all duration-300 hover:scale-105 rounded-xl px-6 py-3">
-            <ArrowLeft className="mr-2 h-4 w-4 transition-transform hover:translate-x-1" />
+          <Button className="kid-btn mb-4 bg-gradient-to-r from-secondary via-secondary/80 to-secondary hover:shadow-lg hover:shadow-secondary/50 text-white font-bold transition-all duration-300 hover:scale-105 px-6 py-3">
+            <ArrowLeft className="mr-2 h-4 w-4" />
             ← Back to Login
           </Button>
         </Link>
 
-        <Card className="border-2 border-primary/20">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <KeyRound className="h-6 w-6 text-primary" />
-              <CardTitle className="text-2xl">Forgot Password</CardTitle>
-            </div>
+        <Card className="kid-card border-amber-400/40 bg-white/90 backdrop-blur-sm">
+          <CardHeader className="text-center">
+            <div className="text-5xl mb-2 animate-bounce-gentle">🔑</div>
+            <CardTitle className="kid-heading text-2xl">Forgot Password? 🤔</CardTitle>
             <CardDescription>
               Enter your email and the full name on your account to verify your identity, then set a new password.
             </CardDescription>
@@ -161,10 +160,14 @@ export default function ForgotPasswordPage() {
                   />
                 </div>
 
-                {error && <p className="text-sm text-red-500">{error}</p>}
+                {error && (
+                  <div className="rounded-xl bg-red-50 border-2 border-red-200 px-4 py-2 text-sm text-red-600 flex items-center gap-2">
+                    <span>⚠️</span>{error}
+                  </div>
+                )}
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Resetting..." : "Reset Password"}
+                <Button type="submit" className="kid-btn w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold shadow-lg" disabled={isLoading}>
+                  {isLoading ? "Resetting... ⏳" : "Reset Password 🔓"}
                 </Button>
               </div>
 

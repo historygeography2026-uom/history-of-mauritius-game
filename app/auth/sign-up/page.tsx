@@ -108,16 +108,17 @@ export default function SignUpPage() {
     <div className="min-h-screen bg-transparent flex items-center justify-center p-4 relative z-10">
       <div className="w-full max-w-md">
         <Link href="/">
-          <Button className="mb-4 bg-gradient-to-r from-secondary via-secondary/80 to-secondary hover:shadow-lg hover:shadow-secondary/50 text-white font-bold transition-all duration-300 hover:scale-105 rounded-xl px-6 py-3">
-            <ArrowLeft className="mr-2 h-4 w-4 transition-transform hover:translate-x-1" />
+          <Button className="kid-btn mb-4 bg-gradient-to-r from-secondary via-secondary/80 to-secondary text-white px-6 py-3">
+            <ArrowLeft className="mr-2 h-4 w-4" />
             🏠 Back Home
           </Button>
         </Link>
 
-        <Card className="border-2 border-primary/20">
-          <CardHeader>
-            <CardTitle className="text-2xl">Create Account</CardTitle>
-            <CardDescription>Join Mauritius Learning Hub</CardDescription>
+        <Card className="kid-card border-green-400/40 bg-white/90 backdrop-blur-sm">
+          <CardHeader className="text-center">
+            <div className="text-5xl mb-2 animate-bounce-gentle">🌟</div>
+            <CardTitle className="text-2xl kid-heading">Join the Adventure! ✨</CardTitle>
+            <CardDescription>Create your account to start learning</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSignUp}>
@@ -215,9 +216,9 @@ export default function SignUpPage() {
                     onChange={(e) => setRepeatPassword(e.target.value)}
                   />
                 </div>
-                {error && <p className="text-sm text-red-500">{error}</p>}
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Creating Account..." : "Sign Up"}
+                {error && <p className="text-sm text-red-500 bg-red-50 rounded-lg p-2 border border-red-200">⚠️ {error}</p>}
+                <Button type="submit" className="kid-btn w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 text-lg" disabled={isLoading}>
+                  {isLoading ? "Creating Account... ⏳" : "🚀 Sign Up"}
                 </Button>
               </div>
               <div className="mt-4 text-center text-sm">

@@ -578,13 +578,13 @@ const GamePage = () => {
   if (!levelUnlocked && unlockError) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-transparent p-4">
-        <Card className="p-8 text-center border-4 border-orange-500 max-w-md bg-gradient-to-br from-orange-50 to-yellow-50">
-          <div className="text-6xl mb-4">🔒</div>
-          <h2 className="text-3xl font-bold text-orange-600 mb-4">Level Locked!</h2>
+        <Card className="kid-card p-8 text-center border-orange-500 max-w-md bg-gradient-to-br from-orange-50 to-yellow-50">
+          <div className="text-7xl mb-4 animate-bounce-gentle">🔒</div>
+          <h2 className="text-3xl font-bold text-orange-600 mb-4 kid-heading">Level Locked!</h2>
           <p className="text-lg text-gray-700 mb-6">{unlockError}</p>
           <Button 
             onClick={() => router.push("/")} 
-            className="w-full bg-gradient-to-r from-primary to-secondary text-white hover:opacity-90 py-4 font-bold rounded-xl"
+            className="kid-btn w-full bg-gradient-to-r from-primary to-secondary text-white py-4 text-lg"
           >
             ← Back to Home
           </Button>
@@ -644,13 +644,13 @@ const GamePage = () => {
               
               // NOW safe to navigate
               router.push("/")
-            }} className="mb-6 bg-gradient-to-r from-secondary via-secondary/80 to-secondary hover:shadow-lg hover:shadow-secondary/50 text-white font-bold transition-all duration-300 hover:scale-105 rounded-xl px-6 py-3">
+            }} className="kid-btn mb-6 bg-gradient-to-r from-secondary via-secondary/80 to-secondary text-white px-6 py-3">
               {/* Changed window.history.back to router.push("/") */}
-              <ArrowLeft className="mr-2 h-5 w-5 transition-transform hover:translate-x-1" />
+              <ArrowLeft className="mr-2 h-5 w-5" />
               🏠 Back to Home
             </Button>
 
-            <Card className="border-4 border-secondary/50 bg-gradient-to-br from-secondary/20 to-accent/20 p-8 text-center animate-pop-in relative overflow-visible">
+            <Card className="kid-card border-secondary/50 bg-gradient-to-br from-secondary/20 to-accent/20 p-8 text-center animate-pop-in relative overflow-visible">
               {/* Celebrating Mascot */}
               <div className="absolute -top-16 right-4">
                 <DodoMascot mood="celebrating" size="lg" showSpeechBubble speechText={getRandomMessage("levelComplete")} />
@@ -766,12 +766,12 @@ const GamePage = () => {
           that caused browser freeze when combined with timer re-renders every second */}
 
       <div className="relative z-10">
-        <div className="bg-white/80 backdrop-blur-sm sticky top-0 p-4">
+        <div className="bg-white/90 backdrop-blur-sm sticky top-0 p-4 border-b-4 border-dashed border-primary/20 shadow-md">
           <div className="mx-auto max-w-6xl">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <p className="text-lg font-bold text-primary">
-                  Question {currentQuestionIndex + 1} of {mixedQuestions.length}
+                  📝 Question {currentQuestionIndex + 1} of {mixedQuestions.length}
                 </p>
                 {/* Sound Toggle */}
                 <SoundToggle onToggle={setMuted} />
@@ -781,7 +781,7 @@ const GamePage = () => {
                   onClick={handleExitRequest}
                   variant="outline"
                   size="sm"
-                  className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 font-bold rounded-xl"
+                  className="kid-btn border-2 border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
                 >
                   <LogOut className="mr-1 h-4 w-4" />
                   Exit
@@ -791,16 +791,16 @@ const GamePage = () => {
                   initialTime={levelInitialTime}
                   onTimeUp={noopCallback}
                 />
-                <div className="flex items-center gap-2 rounded-full bg-secondary/20 px-4 py-3">
-                  <Star className="h-6 w-6 fill-secondary text-secondary" />
-                  <span className="text-xl font-bold text-secondary">{totalStars}</span>
+                <div className="flex items-center gap-2 rounded-full bg-gradient-to-r from-amber-100 to-yellow-100 border-2 border-amber-300 px-4 py-2.5">
+                  <Star className="h-6 w-6 fill-amber-500 text-amber-500" />
+                  <span className="text-xl font-bold text-amber-700">{totalStars}</span>
                 </div>
               </div>
             </div>
 
-            <div className="h-3 bg-gray-200 rounded-full overflow-hidden shadow-inner">
+            <div className="h-4 bg-gray-200 rounded-full overflow-hidden shadow-inner border-2 border-gray-300">
               <div
-                className="h-full bg-gradient-to-r from-secondary to-primary transition-all duration-500"
+                className="h-full bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 transition-all duration-500 rounded-full"
                 style={{ width: `${progressPercent}%` }}
               ></div>
             </div>
@@ -813,9 +813,9 @@ const GamePage = () => {
             {/* Exit Confirmation Dialog */}
             {showExitConfirm && (
               <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-                <Card className="border-4 border-orange-400 bg-gradient-to-br from-orange-50 via-yellow-50 to-white p-8 text-center max-w-md mx-4">
-                  <div className="text-5xl mb-4">🚪</div>
-                  <h2 className="text-3xl font-bold text-orange-600 mb-3">Exit Quiz?</h2>
+                <Card className="kid-card border-orange-400 bg-gradient-to-br from-orange-50 via-yellow-50 to-white p-8 text-center max-w-md mx-4">
+                  <div className="text-6xl mb-4 animate-bounce-gentle">🚪</div>
+                  <h2 className="text-3xl font-bold text-orange-600 mb-3 kid-heading">Exit Quiz?</h2>
                   <p className="text-lg text-gray-700 mb-2">
                     You've completed <span className="font-bold text-primary">{Object.keys(answeredQuestions).length}</span> of <span className="font-bold">{mixedQuestions.length}</span> questions.
                   </p>
@@ -825,14 +825,14 @@ const GamePage = () => {
                   <div className="flex gap-3">
                     <Button
                       onClick={handleExitCancel}
-                      className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:opacity-90 py-4 font-bold rounded-xl text-lg"
+                      className="kid-btn flex-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white py-4 text-lg"
                     >
                       ▶ Continue
                     </Button>
                     <Button
                       onClick={handleExitConfirm}
                       variant="outline"
-                      className="flex-1 border-2 border-red-400 text-red-600 hover:bg-red-50 py-4 font-bold rounded-xl text-lg"
+                      className="kid-btn flex-1 border-2 border-red-400 text-red-600 hover:bg-red-50 py-4 text-lg"
                     >
                       🚪 Exit
                     </Button>

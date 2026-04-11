@@ -491,9 +491,9 @@ export default function ExploreMap() {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
           <div className="flex items-center gap-4">
             <Link href="/">
-              <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+              <Button variant="outline" className="kid-btn bg-white/10 border-white/20 text-white hover:bg-white/20">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back Home
+                🏠 Back Home
               </Button>
             </Link>
             <div className="flex items-center gap-3">
@@ -501,7 +501,7 @@ export default function ExploreMap() {
                 <Compass className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-white">Interactive Map</h1>
+                <h1 className="kid-heading text-2xl md:text-3xl font-bold text-white">🗺️ Interactive Map</h1>
                 <p className="text-cyan-300 text-sm">Explore Mauritius &amp; Rodrigues â€” history and geography</p>
               </div>
             </div>

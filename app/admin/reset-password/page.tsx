@@ -67,15 +67,16 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen bg-transparent flex items-center justify-center p-4 relative z-10">
       <div className="w-full max-w-md">
         <Link href="/admin">
-          <Button className="mb-4 bg-gradient-to-r from-secondary via-secondary/80 to-secondary hover:shadow-lg hover:shadow-secondary/50 text-white font-bold transition-all duration-300 hover:scale-105 rounded-xl px-6 py-3">
-            <ArrowLeft className="mr-2 h-4 w-4 transition-transform hover:translate-x-1" />
+          <Button className="kid-btn mb-4 bg-gradient-to-r from-secondary via-secondary/80 to-secondary hover:shadow-lg hover:shadow-secondary/50 text-white font-bold transition-all duration-300 hover:scale-105 px-6 py-3">
+            <ArrowLeft className="mr-2 h-4 w-4" />
             ← Back to Admin
           </Button>
         </Link>
 
-        <Card className="border-2 border-primary/20">
-          <CardHeader>
-            <CardTitle className="text-2xl">Reset User Password</CardTitle>
+        <Card className="kid-card border-primary/30 bg-white/90 backdrop-blur-sm">
+          <CardHeader className="text-center">
+            <div className="text-5xl mb-2 animate-bounce-gentle">🛡️</div>
+            <CardTitle className="kid-heading text-2xl">Reset User Password 🔧</CardTitle>
             <CardDescription>Admin can reset any user password</CardDescription>
           </CardHeader>
           <CardContent>
@@ -92,10 +93,18 @@ export default function ResetPasswordPage() {
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
-                {error && <p className="text-sm text-red-500">{error}</p>}
-                {message && <p className="text-sm text-green-500">{message}</p>}
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Sending Reset Email..." : "Send Password Reset Email"}
+                {error && (
+                  <div className="rounded-xl bg-red-50 border-2 border-red-200 px-4 py-2 text-sm text-red-600 flex items-center gap-2">
+                    <span>⚠️</span>{error}
+                  </div>
+                )}
+                {message && (
+                  <div className="rounded-xl bg-green-50 border-2 border-green-200 px-4 py-2 text-sm text-green-600 flex items-center gap-2">
+                    <span>✅</span>{message}
+                  </div>
+                )}
+                <Button type="submit" className="kid-btn w-full bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-700 text-white font-bold shadow-lg" disabled={isLoading}>
+                  {isLoading ? "Sending... ⏳" : "Send Password Reset Email 📧"}
                 </Button>
               </div>
             </form>

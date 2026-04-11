@@ -1,12 +1,11 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Baloo_2 } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { NextAuthProvider } from '@/components/providers'
 import { KidBackground } from '@/components/kid-background'
 import './globals.css'
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const baloo = Baloo_2({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"] });
 
 export const metadata: Metadata = {
   title: 'Mauritius Learning Hub',
@@ -23,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`font-sans antialiased`}>
+      <body className={`${baloo.className} antialiased`}>
         <NextAuthProvider>
           <KidBackground />
           {children}

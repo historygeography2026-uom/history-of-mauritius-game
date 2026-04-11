@@ -48,31 +48,37 @@ export default function SubjectSelection() {
       title: "History",
       description: "Learn about Mauritius's fascinating past",
       icon: "📚",
+      emoji2: "🏛️",
       color: "from-blue-500 to-purple-500",
       borderColor: "border-blue-400",
+      bgTint: "bg-blue-50",
     },
     {
       id: "geography",
       title: "Geography",
       description: "Explore the islands and landscapes",
       icon: "🗺️",
+      emoji2: "🌴",
       color: "from-green-500 to-teal-500",
       borderColor: "border-green-400",
+      bgTint: "bg-green-50",
     },
     {
       id: "combined",
       title: "History & Geography",
       description: "Master both subjects together",
       icon: "🌍",
+      emoji2: "⛵",
       color: "from-orange-500 to-red-500",
       borderColor: "border-orange-400",
+      bgTint: "bg-orange-50",
     },
   ]
 
   const levels = [
-    { id: 1, title: "Level 1", difficulty: "Easy", icon: "🌟" },
-    { id: 2, title: "Level 2", difficulty: "Medium", icon: "⭐⭐" },
-    { id: 3, title: "Level 3", difficulty: "Hard", icon: "⭐⭐⭐" },
+    { id: 1, title: "Level 1", difficulty: "Easy", icon: "🌟", emoji: "🐣", color: "from-green-400 to-emerald-500", border: "border-green-400" },
+    { id: 2, title: "Level 2", difficulty: "Medium", icon: "⭐⭐", emoji: "🦊", color: "from-amber-400 to-orange-500", border: "border-amber-400" },
+    { id: 3, title: "Level 3", difficulty: "Hard", icon: "⭐⭐⭐", emoji: "🦁", color: "from-red-400 to-rose-500", border: "border-red-400" },
   ]
 
   if (selectedSubject) {
@@ -121,39 +127,40 @@ export default function SubjectSelection() {
           <div className="flex justify-between items-center mb-6">
             <Button
               onClick={() => setSelectedSubject(null)}
-              className="bg-gradient-to-r from-secondary via-secondary/80 to-secondary hover:shadow-lg hover:shadow-secondary/50 text-white font-bold transition-all duration-300 hover:scale-105 rounded-xl px-6 py-3"
+              className="kid-btn bg-gradient-to-r from-secondary via-secondary/80 to-secondary text-white px-6 py-3"
             >
-              <ArrowLeft className="mr-2 h-5 w-5 transition-transform group hover:translate-x-1" />
+              <ArrowLeft className="mr-2 h-5 w-5" />
               ← Back
             </Button>
             
             <Button
               onClick={() => setShowProgressMap(true)}
-              className="bg-accent hover:bg-accent/90 text-white flex items-center gap-2"
+              className="kid-btn bg-gradient-to-r from-accent to-teal-500 text-white flex items-center gap-2 px-6 py-3"
             >
               <Map className="h-5 w-5" />
-              Adventure Map
+              🗺️ Adventure Map
             </Button>
           </div>
 
           {/* Subject Header */}
           <div className="mb-8 text-center">
+            <div className="mb-2 text-6xl animate-bounce-gentle">{subject?.icon}</div>
             <div className="mb-4 flex items-center justify-center gap-2">
               <Sparkles className="h-8 w-8 text-secondary" />
-              <h1 className="text-4xl font-bold text-primary md:text-5xl">{subject?.title}</h1>
+              <h1 className="text-4xl font-bold text-primary md:text-5xl kid-heading">{subject?.title}</h1>
               <Sparkles className="h-8 w-8 text-secondary" />
             </div>
             <p className="text-lg text-muted-foreground md:text-xl">
-              {subject?.description}
+              Choose your difficulty level! 🎯
             </p>
           </div>
 
           {/* Levels Grid */}
           <div className="grid gap-6 md:grid-cols-3">
-            {levels.map((level, index) => (
+            {levels.map((level) => (
               <Card
                 key={level.id}
-                className="group cursor-pointer overflow-hidden border-4 border-primary/20 bg-card hover:opacity-90"
+                className={`kid-card group cursor-pointer overflow-hidden ${level.border} ${subject?.bgTint} hover:opacity-90`}
                 onClick={() => {
                   const queryParams = new URLSearchParams({
                     subject: selectedSubject,
@@ -162,15 +169,16 @@ export default function SubjectSelection() {
                   window.location.href = `/game?${queryParams.toString()}`
                 }}
               >
-                <div className="p-6">
+                <div className="p-6 text-center">
+                  <div className="text-5xl mb-3 animate-float">{level.emoji}</div>
                   <div
-                    className={`mb-4 flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br ${subject?.color} text-5xl shadow-lg`}
+                    className={`kid-icon-box mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br ${level.color} text-4xl shadow-lg`}
                   >
                     {level.icon}
                   </div>
-                  <h3 className="mb-2 text-2xl font-bold text-card-foreground">{level.title}</h3>
-                  <p className="mb-4 text-muted-foreground text-lg font-semibold">{level.difficulty}</p>
-                  <Button className="w-full bg-gradient-to-r from-blue-500 via-blue-600 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold text-lg py-3 shadow-lg hover:shadow-xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105 rounded-xl">
+                  <h3 className="mb-1 text-2xl font-bold text-card-foreground">{level.title}</h3>
+                  <span className={`kid-badge bg-gradient-to-r ${level.color} text-white mb-4`}>{level.difficulty}</span>
+                  <Button className={`kid-btn w-full mt-4 bg-gradient-to-r ${level.color} text-white text-lg py-3`}>
                     Play Now! 🎮
                   </Button>
                 </div>
@@ -188,27 +196,27 @@ export default function SubjectSelection() {
         <div className="flex justify-between items-center mb-8">
           <div className="flex flex-wrap gap-2">
             <Link href="/leaderboard">
-              <Button className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white flex items-center gap-1 sm:gap-2 font-bold shadow-lg hover:shadow-xl hover:shadow-amber-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm md:text-base">
+              <Button className="kid-btn bg-gradient-to-r from-amber-500 to-orange-600 text-white flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm md:text-base">
                 <Trophy className="h-4 w-4 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">Leaderboard</span>
+                <span className="hidden sm:inline">🏆 Leaderboard</span>
               </Button>
             </Link>
             <Link href="/history">
-              <Button className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white flex items-center gap-1 sm:gap-2 font-bold shadow-lg hover:shadow-xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm md:text-base">
+              <Button className="kid-btn bg-gradient-to-r from-blue-500 to-cyan-600 text-white flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm md:text-base">
                 <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">My Progress</span>
+                <span className="hidden sm:inline">📊 My Progress</span>
               </Button>
             </Link>
             <Link href="/admin">
-              <Button className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white flex items-center gap-1 sm:gap-2 font-bold shadow-lg hover:shadow-xl hover:shadow-purple-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm md:text-base">
+              <Button className="kid-btn bg-gradient-to-r from-purple-500 to-pink-600 text-white flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm md:text-base">
                 <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">Admin Panel</span>
+                <span className="hidden sm:inline">⚙️ Admin</span>
               </Button>
             </Link>
             <Link href="/explore-map">
-              <Button className="bg-gradient-to-r from-cyan-500 to-teal-600 hover:from-cyan-600 hover:to-teal-700 text-white flex items-center gap-1 sm:gap-2 font-bold shadow-lg hover:shadow-xl hover:shadow-cyan-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm md:text-base">
+              <Button className="kid-btn bg-gradient-to-r from-cyan-500 to-teal-600 text-white flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm md:text-base">
                 <Map className="h-4 w-4 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">Explore Map</span>
+                <span className="hidden sm:inline">🗺️ Explore Map</span>
               </Button>
             </Link>
           </div>
@@ -216,8 +224,8 @@ export default function SubjectSelection() {
           <div className="flex gap-1 sm:gap-2 items-center flex-wrap">
             {session ? (
               <>
-                <div className="text-xs sm:text-sm text-muted-foreground mr-1 sm:mr-2">Welcome, {profile?.name || session?.user?.name || session?.user?.email || "Student"}!</div>
-                <Button onClick={handleLogout} className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white flex items-center gap-1 sm:gap-2 font-bold shadow-lg hover:shadow-xl hover:shadow-red-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm md:text-base">
+                <div className="text-xs sm:text-sm text-muted-foreground mr-1 sm:mr-2 bg-white/60 rounded-full px-3 py-1">👋 {profile?.name || session?.user?.name || session?.user?.email || "Student"}</div>
+                <Button onClick={handleLogout} className="kid-btn bg-gradient-to-r from-red-500 to-rose-600 text-white flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm md:text-base">
                   <LogOut className="h-4 w-4" />
                   <span className="hidden sm:inline">Logout</span>
                 </Button>
@@ -225,10 +233,10 @@ export default function SubjectSelection() {
             ) : (
               <>
                 <Link href="/auth/login">
-                  <Button className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white font-bold shadow-lg hover:shadow-xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm md:text-base">Login</Button>
+                  <Button className="kid-btn bg-gradient-to-r from-blue-500 to-cyan-600 text-white px-3 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm md:text-base">🔑 Login</Button>
                 </Link>
                 <Link href="/auth/sign-up">
-                  <Button className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold shadow-lg hover:shadow-xl hover:shadow-green-500/50 transition-all duration-300 hover:scale-105 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm md:text-base">Sign Up</Button>
+                  <Button className="kid-btn bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm md:text-base">✨ Sign Up</Button>
                 </Link>
               </>
             )}
@@ -242,34 +250,44 @@ export default function SubjectSelection() {
             <DodoMascot mood="idle" size="lg" showSpeechBubble speechText={welcomeMessage} />
           </div>
           
-          <div className="mb-4 flex items-center justify-center gap-2">
-            <Sparkles className="h-10 w-10 text-secondary" />
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-primary">History & Geography Game</h1>
-            <Sparkles className="h-10 w-10 text-secondary" />
+          {/* Fun island illustration */}
+          <div className="text-7xl sm:text-8xl mb-4 animate-bounce-gentle">🏝️</div>
+          
+          <div className="mb-4 flex items-center justify-center gap-3">
+            <span className="text-3xl animate-float">🦤</span>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold kid-heading bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+              Mauritius Learning Hub
+            </h1>
+            <span className="text-3xl animate-float" style={{ animationDelay: "0.5s" }}>🌺</span>
           </div>
           <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground mt-4">
-            Choose your subject and start learning! 🎓
+            Choose your subject and start the adventure! 🎓🌴
           </p>
         </div>
 
         {/* Subjects Grid */}
         <div className="grid gap-8 md:grid-cols-3 mb-12">
-          {subjects.map((subject, index) => (
+          {subjects.map((subject) => (
             <Card
               key={subject.id}
-              className={`group cursor-pointer overflow-hidden border-4 ${subject.borderColor} bg-card transition-all hover:scale-105 hover:shadow-2xl`}
+              className={`kid-card group cursor-pointer overflow-hidden ${subject.borderColor} ${subject.bgTint} transition-all`}
               onClick={() => setSelectedSubject(subject.id)}
             >
-              <div className="p-4 sm:p-6 md:p-8">
+              <div className="p-4 sm:p-6 md:p-8 text-center">
+                {/* Decorative emoji pair */}
+                <div className="flex justify-center gap-3 mb-3">
+                  <span className="text-2xl animate-float">{subject.emoji2}</span>
+                  <span className="text-2xl animate-float" style={{ animationDelay: "0.4s" }}>✨</span>
+                </div>
                 <div
-                  className={`mb-6 flex h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 items-center justify-center rounded-3xl bg-gradient-to-br ${subject.color} text-4xl sm:text-5xl md:text-7xl shadow-lg transition-transform mx-auto`}
+                  className={`kid-icon-box mx-auto mb-6 flex h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32 items-center justify-center rounded-3xl bg-gradient-to-br ${subject.color} text-5xl sm:text-6xl md:text-7xl shadow-lg kid-wobble`}
                 >
                   {subject.icon}
                 </div>
-                <h3 className="mb-2 text-xl sm:text-2xl md:text-3xl font-bold text-card-foreground text-center">{subject.title}</h3>
-                <p className="mb-6 text-muted-foreground text-center">{subject.description}</p>
-                <Button className="w-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-600 hover:to-pink-600 text-white font-bold text-lg py-4 shadow-lg hover:shadow-xl hover:shadow-purple-500/50 transition-all duration-300 hover:scale-105 rounded-xl">
-                  Start Exploring! →
+                <h3 className="mb-2 text-xl sm:text-2xl md:text-3xl font-bold text-card-foreground">{subject.title}</h3>
+                <p className="mb-6 text-muted-foreground">{subject.description}</p>
+                <Button className={`kid-btn w-full bg-gradient-to-r ${subject.color} text-white text-lg py-4`}>
+                  Start Exploring! 🚀
                 </Button>
               </div>
             </Card>
@@ -277,13 +295,17 @@ export default function SubjectSelection() {
         </div>
 
         {/* Info Card */}
-        <Card className="border-4 border-accent/30 bg-accent/10">
+        <Card className="kid-card border-accent/40 bg-gradient-to-r from-amber-50/80 via-sky-50/80 to-emerald-50/80">
           <div className="p-8 text-center">
-            <Sparkles className="mx-auto mb-4 h-12 w-12 text-secondary" />
-            <h3 className="mb-3 text-2xl font-bold text-card-foreground">Welcome to History & Geography Game 🌴</h3>
+            <div className="flex justify-center gap-2 mb-4">
+              <span className="text-3xl">🦤</span>
+              <span className="text-3xl">🌴</span>
+              <span className="text-3xl">🏝️</span>
+            </div>
+            <h3 className="mb-3 text-2xl font-bold text-card-foreground kid-heading">Welcome to the Adventure! 🌴</h3>
             <p className="text-lg leading-relaxed text-card-foreground">
-              Select a subject above to begin your adventure! Each subject has 3 exciting levels with fun games, visual
-              questions, and amazing facts about our beautiful island. Collect stars and become a Mauritius expert!
+              Pick a subject above to begin! Each one has 3 exciting levels with fun games, 
+              pictures, and amazing facts about our beautiful island. Collect ⭐ stars and become a Mauritius expert!
             </p>
           </div>
         </Card>
