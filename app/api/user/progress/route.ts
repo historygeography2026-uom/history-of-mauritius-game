@@ -94,7 +94,7 @@ export async function POST(request: Request) {
     const starsNum = parseInt(stars)
     const isCompleted = Boolean(completed)
 
-    if (isNaN(levelNum) || isNaN(starsNum) || levelNum < 1 || starsNum < 0) {
+    if (isNaN(levelNum) || isNaN(starsNum) || levelNum < 1 || levelNum > 3 || starsNum < 0 || starsNum > 60) {
       return NextResponse.json(
         { error: "Invalid level or stars value" },
         { status: 400 }

@@ -22,7 +22,10 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get("redirectTo") || "/"
+  
+  // Validate redirectTo to prevent open redirect attacks
+  const rawRedirect = searchParams.get("redirectTo") || "/"
+  const redirectTo = rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") ? rawRedirect : "/"
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()

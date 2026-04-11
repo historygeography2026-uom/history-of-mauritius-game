@@ -6,7 +6,9 @@ export async function GET(request: Request) {
   const subject = searchParams.get("subject") // subject name or "all"
   const levelParam = searchParams.get("level") // optional level number
   const limitParam = searchParams.get("limit") // optional result limit
-  const limit = limitParam ? Math.min(Number.parseInt(limitParam), 10000) : 10000
+  const pageParam = searchParams.get("page") // optional page number (1-based)
+  const limit = limitParam ? Math.min(Number.parseInt(limitParam), 200) : 50
+  const page = pageParam ? Math.max(1, Number.parseInt(pageParam)) : 1
   const showAllAttempts = searchParams.get("all") === "true"
 
   try {
@@ -47,7 +49,7 @@ export async function GET(request: Request) {
     let bestRows: typeof rows
 
     if (showAllAttempts) {
-      bestRows = rows.slice(0, limit)
+      bestRows = rows
     } else {
       // Keep only the best score per player_name per subject+level
       const bestMap = new Map<string, (typeof rows)[number]>()
@@ -60,10 +62,13 @@ export async function GET(request: Request) {
       }
       bestRows = Array.from(bestMap.values())
         .sort((a, b) => b.total_points - a.total_points || new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-        .slice(0, limit)
     }
 
-    const payload = bestRows.map((r) => ({
+    const totalCount = bestRows.length
+    const offset = (page - 1) * limit
+    const paginatedRows = bestRows.slice(offset, offset + limit)
+
+    const payload = paginatedRows.map((r) => ({
       id: r.id,
       user_id: r.user_id || null,
       display_name: r.player_name || "Player",
@@ -78,7 +83,7 @@ export async function GET(request: Request) {
       timed_out: r.timed_out || false,
     }))
 
-    return NextResponse.json(payload)
+    return NextResponse.json({ data: payload, total: totalCount, page, limit })
   } catch (error: any) {
     console.error("Error fetching leaderboard:", error)
     return NextResponse.json({ error: error.message }, { status: 500 })

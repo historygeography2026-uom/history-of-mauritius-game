@@ -27,15 +27,17 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
 export default function Leaderboard() {
   const [selectedCategory, setSelectedCategory] = useState("all")
+  const [page, setPage] = useState(1)
   const { data: session } = useSession()
 
-  const { data, isLoading, error, mutate } = useSWR<LeaderboardRow[]>(
-    `/api/leaderboard?subject=${selectedCategory}&all=true`,
+  const { data, isLoading, error, mutate } = useSWR<{ data: LeaderboardRow[]; total: number; page: number; limit: number }>(
+    `/api/leaderboard?subject=${selectedCategory}&all=true&page=${page}&limit=50`,
     fetcher,
-    { refreshInterval: 15000 },
+    { refreshInterval: 30000 },
   )
 
   useEffect(() => {
+    setPage(1)
     void mutate()
   }, [selectedCategory, mutate])
 
@@ -46,7 +48,10 @@ export default function Leaderboard() {
     { id: "combined", label: "History & Geography", icon: "📖" },
   ]
 
-  const allRows: LeaderboardRow[] = Array.isArray(data) ? data : []
+  const allRows: LeaderboardRow[] = Array.isArray(data?.data) ? data.data : []
+  const totalCount = data?.total || 0
+  const totalPages = Math.ceil(totalCount / 50)
+  const pageOffset = (page - 1) * 50
   
   // Find current user's position to highlight
   const currentUserId = session?.user?.id || null
@@ -130,14 +135,39 @@ export default function Leaderboard() {
           {!isLoading && !error && allRows.length > 0 && (
             <div className="divide-y divide-gray-100">
               {allRows.map((r, i) => {
+                const rank = pageOffset + i + 1
                 const isCurrentUser = currentUserId !== undefined && currentUserId !== null && r.user_id === currentUserId
-                return renderLeaderboardRow(r, i + 1, isCurrentUser)
+                return renderLeaderboardRow(r, rank, isCurrentUser)
               })}
             </div>
           )}
 
+          {!isLoading && !error && totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 py-3">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                Previous
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Page {page} of {totalPages}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          )}
+
           {!isLoading && !error && allRows.length > 0 && (
-            <p className="text-center text-xs text-muted-foreground py-2">Showing all {allRows.length} scores</p>
+            <p className="text-center text-xs text-muted-foreground py-2">Showing {allRows.length} of {totalCount} scores</p>
           )}
         </Card>
 

@@ -373,6 +373,35 @@ export default function ExploreMap() {
     setMauDragging(false)
     setRodDragging(false)
   }
+
+  // Touch event handlers for mobile support
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      const touch = e.touches[0]
+      if (activeMap === "mauritius") {
+        setMauDragging(true)
+        setMauDragStart({ x: touch.clientX - mauPan.x, y: touch.clientY - mauPan.y })
+      } else {
+        setRodDragging(true)
+        setRodDragStart({ x: touch.clientX - rodPan.x, y: touch.clientY - rodPan.y })
+      }
+    }
+  }
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      const touch = e.touches[0]
+      if (activeMap === "mauritius" && mauDragging) {
+        setMauPan({ x: touch.clientX - mauDragStart.x, y: touch.clientY - mauDragStart.y })
+      } else if (activeMap === "rodrigues" && rodDragging) {
+        setRodPan({ x: touch.clientX - rodDragStart.x, y: touch.clientY - rodDragStart.y })
+      }
+    }
+  }
+  const handleTouchEnd = () => {
+    setMauDragging(false)
+    setRodDragging(false)
+  }
+
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault()
     if (e.deltaY < 0) handleZoomIn()
@@ -608,11 +637,14 @@ export default function ExploreMap() {
               {/* Interactive map area */}
               <div
                 ref={mapRef}
-                className="relative aspect-[4/3] md:aspect-[16/10] cursor-grab active:cursor-grabbing overflow-hidden"
+                className="relative aspect-[4/3] md:aspect-[16/10] cursor-grab active:cursor-grabbing overflow-hidden touch-none"
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
                 onWheel={handleWheel}
               >
                 {/* Ocean background */}

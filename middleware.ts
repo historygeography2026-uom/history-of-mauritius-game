@@ -62,21 +62,32 @@ export async function middleware(request: NextRequest) {
     
     if (!hasValidOrigin) {
       console.warn(`[CSRF] Blocked request - Origin: ${origin}, Referer: ${referer}, Host: ${host}`)
-      return NextResponse.json(
+      const blockedResponse = NextResponse.json(
         { error: "Request blocked for security reasons" },
         { status: 403 }
       )
+      blockedResponse.headers.set("X-Content-Type-Options", "nosniff")
+      blockedResponse.headers.set("X-Frame-Options", "DENY")
+      return blockedResponse
     }
   }
 
+  // Add security headers to all responses
+  const response = NextResponse.next()
+  response.headers.set("X-Content-Type-Options", "nosniff")
+  response.headers.set("X-Frame-Options", "DENY")
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin")
+  response.headers.set("X-XSS-Protection", "1; mode=block")
+  response.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload")
+
   // Always allow public routes, API routes, and static assets
   if (isPublicRoute || isApiRoute || isStaticAsset) {
-    return NextResponse.next()
+    return response
   }
 
   // For protected routes, we can't use auth() in middleware due to Edge Runtime limitations
   // The client-side SessionProvider will handle redirects for protected content
-  return NextResponse.next()
+  return response
 }
 
 export const config = {

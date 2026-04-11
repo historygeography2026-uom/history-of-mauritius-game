@@ -26,10 +26,10 @@ export const GAME_CONFIG = {
 
   /**
    * Demo/Guest account credentials for quick login.
-   * This account should be pre-created in the database.
+   * Uses environment variables so credentials are not exposed in the client bundle.
    */
   DEMO_ACCOUNT: {
-    EMAIL: "demo@mauritius-game.com",
-    PASSWORD: "demo123456",
+    EMAIL: process.env.NEXT_PUBLIC_DEMO_EMAIL || "demo@mauritius-game.com",
+    PASSWORD: process.env.NEXT_PUBLIC_DEMO_PASSWORD || "demo123456",
   },
 }

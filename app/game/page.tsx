@@ -345,7 +345,8 @@ const GamePage = () => {
     isAdvancingRef.current = true // Lock advancement
 
     const currentQuestion = mixedQuestions[currentQuestionIndex]
-    const isCorrect = stars > 0
+    const clampedStars = Math.max(0, Math.min(3, Math.floor(stars))) // Validate stars: 0-3 integers only
+    const isCorrect = clampedStars > 0
     
     // Record question for achievements (ONLY if not unmounting)
     if (!isUnmountingRef.current) {
@@ -355,15 +356,15 @@ const GamePage = () => {
     setAnsweredQuestions((prev: Record<number, { stars: number; title: string; type: string }>) => ({
       ...prev,
       [currentQuestionIndex]: {
-        stars,
+        stars: clampedStars,
         title: currentQuestion.title || "Question",
         type: currentQuestion.type || "unknown",
       },
     }))
-    setTotalStars((prev) => prev + stars)
+    setTotalStars((prev) => prev + clampedStars)
     
     // Play star sound for correct answers (ONLY if not unmounting)
-    if (stars > 0 && !isUnmountingRef.current) {
+    if (clampedStars > 0 && !isUnmountingRef.current) {
       playStar()
     }
 

@@ -1,5 +1,18 @@
 import { pool } from "@/lib/db"
 import { NextRequest, NextResponse } from "next/server"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+
+const VALID_TYPES = ["mcq", "matching", "fill", "reorder", "truefalse"]
+const VALID_SUBJECTS = ["history", "geography", "combined"]
+
+async function requireAdmin(): Promise<NextResponse | null> {
+  const session = await getServerSession(authOptions)
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+  return null
+}
 
 // GET all questions with filtering + type-specific details
 export async function GET(request: NextRequest) {
@@ -92,9 +105,27 @@ export async function GET(request: NextRequest) {
 
 // POST - Create new question
 export async function POST(request: NextRequest) {
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   try {
     const body = await request.json()
     const { subject, level, type, question_text, instruction, image_url, timer_seconds, answer_data, created_by } = body
+
+    // Validate required fields
+    if (!question_text || typeof question_text !== "string" || question_text.trim().length === 0) {
+      return NextResponse.json({ error: "question_text is required" }, { status: 400 })
+    }
+    if (!VALID_TYPES.includes(type)) {
+      return NextResponse.json({ error: `Invalid type. Must be one of: ${VALID_TYPES.join(", ")}` }, { status: 400 })
+    }
+    if (!VALID_SUBJECTS.includes(subject)) {
+      return NextResponse.json({ error: `Invalid subject. Must be one of: ${VALID_SUBJECTS.join(", ")}` }, { status: 400 })
+    }
+    const levelNum = Number(level)
+    if (!Number.isInteger(levelNum) || levelNum < 1 || levelNum > 3) {
+      return NextResponse.json({ error: "Level must be 1, 2, or 3" }, { status: 400 })
+    }
 
     // Get IDs from names
     const [subjectResult, levelResult, typeResult] = await Promise.all([
@@ -175,6 +206,9 @@ export async function POST(request: NextRequest) {
 
 // PUT - Update question
 export async function PUT(request: NextRequest) {
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   try {
     const body = await request.json()
     const { id, subject, level, type, question_text, instruction, image_url, timer_seconds, answer_data, created_by } = body
@@ -262,6 +296,9 @@ export async function PUT(request: NextRequest) {
 
 // DELETE - Delete question
 export async function DELETE(request: NextRequest) {
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   try {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get("id")

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Star, Volume2 } from "lucide-react"
@@ -92,18 +92,33 @@ export default function MultipleChoiceGame({
       setMascotMessage("")
     }
   }, [singleQuestion, isSingleMode])
-  const question = isSingleMode
-    ? {
-        question: singleQuestion.question || singleQuestion.title || "Question",
-        options: singleQuestion.options || [],
-        correctAnswer: (singleQuestion.correct || 1) - 1, // DB uses 1-indexed
-        funFact: "Great job!",
-        image: singleQuestion.image,
-        imageAlt: singleQuestion.imageAlt,
-      }
-    : builtInQuestions[currentQuestionIndex]
+  const question = useMemo(() => {
+    if (!isSingleMode) return builtInQuestions[currentQuestionIndex]
+    
+    const originalOptions: string[] = singleQuestion.options || []
+    const originalCorrectIndex = (singleQuestion.correct || 1) - 1 // DB uses 1-indexed
+    const correctOptionText = originalOptions[originalCorrectIndex]
+    
+    // Fisher-Yates shuffle on a copy
+    const shuffled = [...originalOptions]
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+    }
+    
+    return {
+      question: singleQuestion.question || singleQuestion.title || "Question",
+      options: shuffled,
+      correctAnswer: shuffled.indexOf(correctOptionText),
+      funFact: "Great job!",
+      image: singleQuestion.image,
+      imageAlt: singleQuestion.imageAlt,
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSingleMode, singleQuestion, currentQuestionIndex])
 
   const handleAnswer = (index: number) => {
+    if (showResult) return // Prevent double-click
     playClick()
     setSelectedAnswer(index)
     setShowResult(true)

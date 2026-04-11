@@ -8,9 +8,8 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.app',
+  title: 'Mauritius Learning Hub',
+  description: 'A fun educational game for children to learn about the history and geography of Mauritius',
   icons: {
     icon: '/icon.svg',
   },
