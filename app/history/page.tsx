@@ -287,8 +287,8 @@ export default function AttemptHistoryPage() {
 
   if (!session?.user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 p-4 md:p-8">
-        <div className="mx-auto max-w-4xl">
+      <div className="min-h-screen bg-transparent p-4 md:p-8">
+        <div className="mx-auto max-w-4xl relative z-10">
           <Link href="/">
             <Button className="mb-6 bg-gradient-to-r from-secondary via-secondary/80 to-secondary hover:shadow-lg hover:shadow-secondary/50 text-white font-bold transition-all duration-300 hover:scale-105 rounded-xl px-6 py-3">
               <ArrowLeft className="mr-2 h-5 w-5 transition-transform hover:translate-x-1" />
@@ -307,7 +307,7 @@ export default function AttemptHistoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 p-4 md:p-8">
+    <div className="min-h-screen bg-transparent p-4 md:p-8">
       <div className="mx-auto max-w-4xl relative z-10">
         <Link href="/">
           <Button className="mb-6 bg-gradient-to-r from-secondary via-secondary/80 to-secondary hover:shadow-lg hover:shadow-secondary/50 text-white font-bold transition-all duration-300 hover:scale-105 rounded-xl px-6 py-3">

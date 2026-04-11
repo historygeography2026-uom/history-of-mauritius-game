@@ -130,6 +130,41 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Level must be 1, 2, or 3" }, { status: 400 })
     }
 
+    // Validate answer_data per question type
+    if (type === "mcq") {
+      if (!answer_data?.options || !Array.isArray(answer_data.options) || answer_data.options.length < 2) {
+        return NextResponse.json({ error: "MCQ questions require at least 2 options" }, { status: 400 })
+      }
+      const hasCorrect = answer_data.options.some((o: any) => o.is_correct)
+      if (!hasCorrect) {
+        return NextResponse.json({ error: "MCQ questions require at least one correct option" }, { status: 400 })
+      }
+      const hasEmpty = answer_data.options.some((o: any) => !o.text || typeof o.text !== "string" || o.text.trim().length === 0)
+      if (hasEmpty) {
+        return NextResponse.json({ error: "MCQ option text cannot be empty" }, { status: 400 })
+      }
+    } else if (type === "fill") {
+      if (!answer_data?.answers || !Array.isArray(answer_data.answers) || answer_data.answers.length === 0) {
+        return NextResponse.json({ error: "Fill questions require at least one answer" }, { status: 400 })
+      }
+      const hasEmpty = answer_data.answers.some((a: any) => !a || typeof a !== "string" || a.trim().length === 0)
+      if (hasEmpty) {
+        return NextResponse.json({ error: "Fill answer text cannot be empty" }, { status: 400 })
+      }
+    } else if (type === "matching") {
+      if (!answer_data?.pairs || !Array.isArray(answer_data.pairs) || answer_data.pairs.length < 2) {
+        return NextResponse.json({ error: "Matching questions require at least 2 pairs" }, { status: 400 })
+      }
+    } else if (type === "reorder") {
+      if (!answer_data?.items || !Array.isArray(answer_data.items) || answer_data.items.length < 2) {
+        return NextResponse.json({ error: "Reorder questions require at least 2 items" }, { status: 400 })
+      }
+    } else if (type === "truefalse") {
+      if (!answer_data || typeof answer_data.correct_answer !== "boolean") {
+        return NextResponse.json({ error: "True/False questions require a boolean correct_answer" }, { status: 400 })
+      }
+    }
+
     // Get IDs from names
     const [subjectResult, levelResult, typeResult] = await Promise.all([
       pool.query("SELECT id FROM subjects WHERE name = $1", [subject]),
@@ -223,71 +258,84 @@ export async function PUT(request: NextRequest) {
       pool.query("SELECT id FROM question_types WHERE name = $1", [type]),
     ])
 
-    // Update question
-    await pool.query(
-      `UPDATE questions 
-       SET subject_id = $1, level_id = $2, question_type_id = $3, 
-           question_text = $4, instruction = $5, image_url = $6, timer_seconds = $7, updated_at = NOW()
-       WHERE id = $8`,
-      [
-        subjectResult.rows[0].id,
-        levelResult.rows[0].id,
-        typeResult.rows[0].id,
-        question_text,
-        instruction || null,
-        image_url || null,
-        timer_seconds || 30,
-        id,
-      ]
-    )
+    // Use a transaction to atomically delete old answers and insert new ones
+    const client = await pool.connect()
+    try {
+      await client.query("BEGIN")
 
-    // Delete old answer data
-    await Promise.all([
-      pool.query("DELETE FROM mcq_options WHERE question_id = $1", [id]),
-      pool.query("DELETE FROM matching_pairs WHERE question_id = $1", [id]),
-      pool.query("DELETE FROM fill_answers WHERE question_id = $1", [id]),
-      pool.query("DELETE FROM reorder_items WHERE question_id = $1", [id]),
-      pool.query("DELETE FROM truefalse_answers WHERE question_id = $1", [id]),
-    ])
-
-    // Insert new answer data (same as POST)
-    if (type === "mcq" && answer_data?.options) {
-      for (const [index, option] of answer_data.options.entries()) {
-        await pool.query(
-          `INSERT INTO mcq_options (question_id, option_order, option_text, is_correct)
-           VALUES ($1, $2, $3, $4)`,
-          [id, index, option.text, option.is_correct]
-        )
-      }
-    } else if (type === "matching" && answer_data?.pairs) {
-      for (const [index, pair] of answer_data.pairs.entries()) {
-        await pool.query(
-          `INSERT INTO matching_pairs (question_id, pair_order, left_item, right_item)
-           VALUES ($1, $2, $3, $4)`,
-          [id, index, pair.left, pair.right]
-        )
-      }
-    } else if (type === "fill" && answer_data?.answers) {
-      for (const answer of answer_data.answers) {
-        await pool.query(
-          `INSERT INTO fill_answers (question_id, answer_text) VALUES ($1, $2)`,
-          [id, answer]
-        )
-      }
-    } else if (type === "reorder" && answer_data?.items) {
-      for (const [index, item] of answer_data.items.entries()) {
-        await pool.query(
-          `INSERT INTO reorder_items (question_id, item_order, item_text, correct_position)
-           VALUES ($1, $2, $3, $4)`,
-          [id, index, item.text, item.correct_position]
-        )
-      }
-    } else if (type === "truefalse" && answer_data) {
-      await pool.query(
-        `INSERT INTO truefalse_answers (question_id, correct_answer, explanation)
-         VALUES ($1, $2, $3)`,
-        [id, answer_data.correct_answer, answer_data.explanation || ""]
+      // Update question
+      await client.query(
+        `UPDATE questions 
+         SET subject_id = $1, level_id = $2, question_type_id = $3, 
+             question_text = $4, instruction = $5, image_url = $6, timer_seconds = $7, updated_at = NOW()
+         WHERE id = $8`,
+        [
+          subjectResult.rows[0].id,
+          levelResult.rows[0].id,
+          typeResult.rows[0].id,
+          question_text,
+          instruction || null,
+          image_url || null,
+          timer_seconds || 30,
+          id,
+        ]
       )
+
+      // Delete old answer data
+      await Promise.all([
+        client.query("DELETE FROM mcq_options WHERE question_id = $1", [id]),
+        client.query("DELETE FROM matching_pairs WHERE question_id = $1", [id]),
+        client.query("DELETE FROM fill_answers WHERE question_id = $1", [id]),
+        client.query("DELETE FROM reorder_items WHERE question_id = $1", [id]),
+        client.query("DELETE FROM truefalse_answers WHERE question_id = $1", [id]),
+      ])
+
+      // Insert new answer data (same as POST)
+      if (type === "mcq" && answer_data?.options) {
+        for (const [index, option] of answer_data.options.entries()) {
+          await client.query(
+            `INSERT INTO mcq_options (question_id, option_order, option_text, is_correct)
+             VALUES ($1, $2, $3, $4)`,
+            [id, index, option.text, option.is_correct]
+          )
+        }
+      } else if (type === "matching" && answer_data?.pairs) {
+        for (const [index, pair] of answer_data.pairs.entries()) {
+          await client.query(
+            `INSERT INTO matching_pairs (question_id, pair_order, left_item, right_item)
+             VALUES ($1, $2, $3, $4)`,
+            [id, index, pair.left, pair.right]
+          )
+        }
+      } else if (type === "fill" && answer_data?.answers) {
+        for (const answer of answer_data.answers) {
+          await client.query(
+            `INSERT INTO fill_answers (question_id, answer_text) VALUES ($1, $2)`,
+            [id, answer]
+          )
+        }
+      } else if (type === "reorder" && answer_data?.items) {
+        for (const [index, item] of answer_data.items.entries()) {
+          await client.query(
+            `INSERT INTO reorder_items (question_id, item_order, item_text, correct_position)
+             VALUES ($1, $2, $3, $4)`,
+            [id, index, item.text, item.correct_position]
+          )
+        }
+      } else if (type === "truefalse" && answer_data) {
+        await client.query(
+          `INSERT INTO truefalse_answers (question_id, correct_answer, explanation)
+           VALUES ($1, $2, $3)`,
+          [id, answer_data.correct_answer, answer_data.explanation || ""]
+        )
+      }
+
+      await client.query("COMMIT")
+    } catch (txError) {
+      await client.query("ROLLBACK")
+      throw txError
+    } finally {
+      client.release()
     }
 
     return NextResponse.json({ success: true })

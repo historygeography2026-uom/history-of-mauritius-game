@@ -81,7 +81,7 @@ export default function SubjectSelection() {
     // Show Progress Map view
     if (showProgressMap) {
       return (
-        <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 p-4 md:p-8">
+        <div className="min-h-screen bg-transparent p-4 md:p-8">
           <div className="mx-auto max-w-6xl relative z-10">
             <Button
               onClick={() => setShowProgressMap(false)}
@@ -115,7 +115,7 @@ export default function SubjectSelection() {
     }
     
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 p-4 md:p-8">
+      <div className="min-h-screen bg-transparent p-4 md:p-8">
         <div className="mx-auto max-w-4xl relative z-10">
           {/* Back Button and Map Toggle */}
           <div className="flex justify-between items-center mb-6">
@@ -183,7 +183,7 @@ export default function SubjectSelection() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 p-4 md:p-8">
+    <div className="min-h-screen bg-transparent p-4 md:p-8">
       <div className="mx-auto max-w-6xl relative z-10">
         <div className="flex justify-between items-center mb-8">
           <div className="flex flex-wrap gap-2">

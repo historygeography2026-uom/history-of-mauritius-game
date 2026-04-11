@@ -45,47 +45,38 @@ export async function POST(request: Request) {
       )
     }
 
-    const client = await pool.connect()
+    // Hash password before attempting insert
+    const passwordHash = await hashPassword(password)
 
-    try {
-      // Check if user already exists
-      const existingUser = await client.query(
-        "SELECT id FROM users WHERE email = $1",
-        [email]
-      )
+    // Atomic insert with ON CONFLICT to prevent TOCTOU race
+    const result = await pool.query(
+      `INSERT INTO users (email, name, password_hash, email_verified, created_at, updated_at)
+       VALUES ($1, $2, $3, NOW(), NOW(), NOW())
+       ON CONFLICT (email) DO NOTHING
+       RETURNING id, email, name`,
+      [email, name, passwordHash]
+    )
 
-      if (existingUser.rows.length > 0) {
-        return NextResponse.json(
-          { error: "User with this email already exists" },
-          { status: 400 }
-        )
-      }
-
-      // Hash password
-      const passwordHash = await hashPassword(password)
-
-      // Create new user (snake_case columns to match DB schema)
-      const result = await client.query(
-        'INSERT INTO users (email, name, password_hash, email_verified, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW(), NOW()) RETURNING id, email, name',
-        [email, name, passwordHash]
-      )
-
-      const newUser = result.rows[0]
-
+    if (result.rows.length === 0) {
       return NextResponse.json(
-        {
-          message: "User created successfully",
-          user: {
-            id: newUser.id,
-            email: newUser.email,
-            name: newUser.name,
-          },
-        },
-        { status: 201 }
+        { error: "User with this email already exists" },
+        { status: 400 }
       )
-    } finally {
-      client.release()
     }
+
+    const newUser = result.rows[0]
+
+    return NextResponse.json(
+      {
+        message: "User created successfully",
+        user: {
+          id: newUser.id,
+          email: newUser.email,
+          name: newUser.name,
+        },
+      },
+      { status: 201 }
+    )
   } catch (error) {
     console.error("[auth/register] Error:", error)
     return NextResponse.json(

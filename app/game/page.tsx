@@ -577,7 +577,7 @@ const GamePage = () => {
 
   if (!levelUnlocked && unlockError) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 p-4">
+      <div className="flex items-center justify-center min-h-screen bg-transparent p-4">
         <Card className="p-8 text-center border-4 border-orange-500 max-w-md bg-gradient-to-br from-orange-50 to-yellow-50">
           <div className="text-6xl mb-4">🔒</div>
           <h2 className="text-3xl font-bold text-orange-600 mb-4">Level Locked!</h2>
@@ -617,7 +617,7 @@ const GamePage = () => {
     return (
       <>
         <GameConfetti trigger={showLevelCompleteConfetti} type="levelComplete" duration={5000} />
-        <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 p-4 md:p-8">
+        <div className="min-h-screen bg-transparent p-4 md:p-8">
           {/* PERF FIX: Removed GPU-heavy blobs from completion screen too */}
 
           <div className="mx-auto max-w-2xl relative z-10">
@@ -761,7 +761,7 @@ const GamePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10">
+    <div className="min-h-screen bg-transparent">
       {/* PERF FIX: Removed GPU-heavy background blobs (blur-3xl + mix-blend-multiply × 3)
           that caused browser freeze when combined with timer re-renders every second */}
 
