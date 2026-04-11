@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
@@ -48,7 +48,7 @@ const rodriguesLocations: MapLocation[] = [
     icon: "building",
     color: "bg-blue-500",
     markerColor: "#3b82f6",
-    title: "Port Mathurin â€“ Capital of Rodrigues",
+    title: "Port Mathurin – Capital of Rodrigues",
     description: "Port Mathurin is the tiny capital of Rodrigues Island. It sits on the north coast and serves as the administrative, commercial, and social hub of the island. Saturday market day brings the whole island together.",
     yearEstablished: "1735",
     region: "Port Mathurin",
@@ -63,21 +63,21 @@ const rodriguesLocations: MapLocation[] = [
     icon: "mountain",
     color: "bg-amber-600",
     markerColor: "#d97706",
-    title: "Caverne Patate â€“ Limestone Caves",
+    title: "Caverne Patate – Limestone Caves",
     description: "Caverne Patate is a spectacular network of limestone caves with stalactites and stalagmites in southwestern Rodrigues. The caves feature beautiful natural formations sculpted over millions of years.",
     region: "Plaine Corail",
     island: "rodrigues"
   },
   {
     id: "francois-leguat",
-    name: "FranÃ§ois Leguat Reserve",
+    name: "François Leguat Reserve",
     x: 248, y: 270,
     lat: -19.7250, lng: 63.3600,
     category: "both",
     icon: "bird",
     color: "bg-green-600",
     markerColor: "#16a34a",
-    title: "FranÃ§ois Leguat Giant Tortoise & Cave Reserve",
+    title: "François Leguat Giant Tortoise & Cave Reserve",
     description: "Named after the French Huguenot explorer who arrived in 1691, this reserve is home to over 3,000 giant tortoises and features impressive limestone caverns. It commemorates the first settlers of Rodrigues.",
     yearEstablished: "2007",
     region: "Plaine Corail",
@@ -106,7 +106,7 @@ const rodriguesLocations: MapLocation[] = [
     icon: "waves",
     color: "bg-cyan-500",
     markerColor: "#06b6d4",
-    title: "Trou d'Argent â€“ Hidden Beach",
+    title: "Trou d'Argent – Hidden Beach",
     description: "Trou d'Argent is a secluded cove on the southeast coast, often described as one of the most beautiful beaches in the Indian Ocean. Accessible only by a steep path, this turquoise lagoon is a hidden gem.",
     region: "Port Sud-Est",
     island: "rodrigues"
@@ -128,15 +128,15 @@ const rodriguesLocations: MapLocation[] = [
   },
   {
     id: "ile-aux-cocos",
-    name: "ÃŽle aux Cocos",
+    name: "Île aux Cocos",
     x: 66, y: 228,
     lat: -19.7250, lng: 63.2800,
     category: "geography",
     icon: "bird",
     color: "bg-teal-500",
     markerColor: "#14b8a6",
-    title: "ÃŽle aux Cocos â€“ Bird Sanctuary",
-    description: "ÃŽle aux Cocos is a small island nature reserve off the west coast of Rodrigues, famous as a sanctuary for seabirds including fairy terns, noddies, and tropical birds. A boat trip there crosses a stunning turquoise lagoon.",
+    title: "Île aux Cocos – Bird Sanctuary",
+    description: "Île aux Cocos is a small island nature reserve off the west coast of Rodrigues, famous as a sanctuary for seabirds including fairy terns, noddies, and tropical birds. A boat trip there crosses a stunning turquoise lagoon.",
     region: "Offshore Island",
     island: "rodrigues"
   },
@@ -149,7 +149,7 @@ const rodriguesLocations: MapLocation[] = [
     icon: "mountain",
     color: "bg-indigo-500",
     markerColor: "#6366f1",
-    title: "Mont Limon â€“ Highest Point",
+    title: "Mont Limon – Highest Point",
     description: "At 398 metres, Mont Limon is the highest point on Rodrigues Island. From the summit, you can enjoy panoramic views of the entire island, the surrounding lagoon, and the vast Indian Ocean.",
     region: "Mont Lubin",
     island: "rodrigues"
@@ -163,7 +163,7 @@ const rodriguesLocations: MapLocation[] = [
     icon: "waves",
     color: "bg-sky-500",
     markerColor: "#0ea5e9",
-    title: "Anse Mourouk â€“ Southern Beach",
+    title: "Anse Mourouk – Southern Beach",
     description: "Anse Mourouk is a popular beach on the south coast of Rodrigues, known for kitesurfing and windsurfing. Unlike the calmer lagoon in the north, the southern coast offers exciting wave conditions.",
     region: "Port Sud-Est",
     island: "rodrigues"
@@ -191,8 +191,8 @@ const rodriguesLocations: MapLocation[] = [
     icon: "landmark",
     color: "bg-orange-500",
     markerColor: "#f97316",
-    title: "Plaine Corail â€“ Airport & Coral Plains",
-    description: "Plaine Corail is the site of the Sir GaÃ«tan Duval Airport, and the area is named for the coral limestone plains that characterise this part of the island. Historically, it was a key area for agriculture.",
+    title: "Plaine Corail – Airport & Coral Plains",
+    description: "Plaine Corail is the site of the Sir Gaëtan Duval Airport, and the area is named for the coral limestone plains that characterise this part of the island. Historically, it was a key area for agriculture.",
     yearEstablished: "1972",
     region: "Plaine Corail",
     island: "rodrigues"
@@ -204,7 +204,7 @@ const allItems = [...mauritiusFeatures, ...rodriguesLocations]
 const districts = [
   { name: "Port Louis", color: "#3b82f6", center: [-20.16, 57.50] },
   { name: "Pamplemousses", color: "#22c55e", center: [-20.10, 57.58] },
-  { name: "RiviÃ¨re du Rempart", color: "#f97316", center: [-20.08, 57.70] },
+  { name: "Rivière du Rempart", color: "#f97316", center: [-20.08, 57.70] },
   { name: "Flacq", color: "#14b8a6", center: [-20.19, 57.71] },
   { name: "Grand Port", color: "#8b5cf6", center: [-20.40, 57.70] },
   { name: "Savanne", color: "#ec4899", center: [-20.45, 57.52] },
@@ -478,18 +478,7 @@ export default function ExploreMap() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-full px-5 py-2.5 border border-white/20">
-              <span className="text-sm font-medium text-cyan-200">Explored:</span>
-              <span className="text-xl font-bold text-white">{visitedLocations.size}/{allItems.length}</span>
-              <div className="w-28 h-2.5 bg-white/20 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-cyan-400 to-green-400 transition-all duration-500 rounded-full"
-                  style={{ width: `${(visitedLocations.size / allItems.length) * 100}%` }}
-                />
-              </div>
-            </div>
-          </div>
+
         </div>
 
         {/* Filters & toggles */}
@@ -851,11 +840,11 @@ export default function ExploreMap() {
                           </filter>
                         </defs>
                         <g transform={rodriguesCoastline.transform}>
-                          <path d={rodriguesCoastline.d} fill="#22c55e" stroke="#166534" strokeWidth="2" filter="url(#rodShadow)" className="transition-all duration-300" />
+                          <path d={rodriguesCoastline.d} fill="#f5c542" stroke="#b8860b" strokeWidth="2" filter="url(#rodShadow)" className="transition-all duration-300" />
                         </g>
                         <g transform={ISLAND_LAYER_TRANSFORM}>
                           {rodriguesSmallIslands.map((island) => (
-                            <path key={island.id} d={island.d} fill="#4ade80" stroke="#166534" strokeWidth="1" opacity="1" className="transition-all duration-300" />
+                            <path key={island.id} d={island.d} fill="#f7d96e" stroke="#b8860b" strokeWidth="1" opacity="1" className="transition-all duration-300" />
                           ))}
                         </g>
                         <g transform={rodriguesRunway.transform}>
@@ -863,7 +852,7 @@ export default function ExploreMap() {
                         </g>
                         {showZones && (
                           <g transform={rodriguesZoneBorders.transform}>
-                            <path d={rodriguesZoneBorders.d} fill="none" stroke="#0f3d1c" strokeWidth="0.8" strokeDasharray="6,4" opacity="0.6" />
+                            <path d={rodriguesZoneBorders.d} fill="none" stroke="#8B6914" strokeWidth="0.8" strokeDasharray="6,4" opacity="0.6" />
                           </g>
                         )}
                         {showZones && rodriguesZones.map((zone) => (
