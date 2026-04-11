@@ -502,7 +502,6 @@ export default function ExploreMap() {
               </div>
               <div>
                 <h1 className="kid-heading text-2xl md:text-3xl font-bold text-white">🗺️ Interactive Map</h1>
-                <p className="text-cyan-300 text-sm">Explore Mauritius &amp; Rodrigues â€” history and geography</p>
               </div>
             </div>
           </div>
