@@ -2,6 +2,10 @@ import { NextResponse } from "next/server"
 import crypto from "crypto"
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit"
 
+// In-memory set of valid admin session tokens (acceptable for single-server kids' app)
+// Tokens expire after 24h via cookie maxAge; server restart clears sessions (also fine)
+const validAdminTokens = new Set<string>()
+
 /**
  * Admin login endpoint
  * Validates credentials stored in environment variables
@@ -65,8 +69,9 @@ export async function POST(request: Request) {
       )
     }
 
-    // Generate a secure admin token (for optional additional validation)
+    // Generate a secure admin token
     const adminToken = crypto.randomBytes(32).toString("hex")
+    validAdminTokens.add(adminToken)
     const displayName = isValidAdmin1 ? adminUsername : adminUsername2
 
     // Set secure httpOnly cookie with token
@@ -106,9 +111,10 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   try {
     const cookieHeader = request.headers.get("cookie")
-    const hasAdminSession = cookieHeader?.includes("admin-session=")
+    const tokenMatch = cookieHeader?.match(/admin-session=([^;]+)/)
+    const token = tokenMatch?.[1]
 
-    if (!hasAdminSession) {
+    if (!token || !validAdminTokens.has(token)) {
       return NextResponse.json(
         { authenticated: false, error: "Not authenticated" },
         { status: 401 }
@@ -127,3 +133,6 @@ export async function GET(request: Request) {
     )
   }
 }
+
+// Export for use by other admin routes
+export { validAdminTokens }

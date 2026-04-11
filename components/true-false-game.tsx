@@ -98,6 +98,7 @@ export default function TrueFalseGame({
     : builtInQuestions[currentQuestionIndex]
 
   const handleAnswer = (answer: boolean) => {
+    if (showResult) return
     playClick()
     setButtonPressed(answer ? "true" : "false")
     setSelectedAnswer(answer)

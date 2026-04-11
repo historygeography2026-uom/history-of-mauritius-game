@@ -86,7 +86,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ data: payload, total: totalCount, page, limit })
   } catch (error: any) {
     console.error("Error fetching leaderboard:", error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 })
   }
 }
 
@@ -98,6 +98,13 @@ export async function POST(request: Request) {
     if (!player_name || !subject || !level) {
       return NextResponse.json({ error: "player_name, subject, and level are required" }, { status: 400 })
     }
+
+    // Sanitize inputs
+    const safeName = String(player_name).trim().slice(0, 50)
+    const safePoints = Math.max(0, Math.min(6000, parseInt(total_points) || 0))
+    const safeStars = Math.max(0, Math.min(60, parseInt(stars_earned) || 0))
+    const safeCompleted = Math.max(0, Math.min(200, parseInt(questions_completed) || 0))
+    const safeTotalQ = Math.max(0, Math.min(200, parseInt(total_questions) || 0))
 
     // Get subject ID
     const subjectResult = await pool.query("SELECT id FROM subjects WHERE name = $1", [subject])
@@ -116,14 +123,14 @@ export async function POST(request: Request) {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
       [
-        player_name,
+        safeName,
         user_id || null,
         subjectResult.rows[0].id,
         levelResult.rows[0].id,
-        total_points || 0,
-        stars_earned || 0,
-        questions_completed || 0,
-        total_questions || 0,
+        safePoints,
+        safeStars,
+        safeCompleted,
+        safeTotalQ,
         timed_out || false,
       ]
     )
@@ -131,6 +138,6 @@ export async function POST(request: Request) {
     return NextResponse.json(result.rows[0])
   } catch (error: any) {
     console.error("Error adding leaderboard entry:", error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 })
   }
 }

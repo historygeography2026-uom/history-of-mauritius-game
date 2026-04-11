@@ -130,6 +130,7 @@ export default function ReorderGame({
     setTouchStartIndex(null)
   }
   const handleCheckOrder = () => {
+    if (showResult) return
     playClick()
     setShowResult(true)
     const isOrderCorrect = items.every((item, index) => item.event === correctOrder[index]?.event)

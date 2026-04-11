@@ -93,6 +93,6 @@ export async function GET(request: Request) {
     })
   } catch (error: any) {
     console.error("Error fetching attempt history:", error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 })
   }
 }

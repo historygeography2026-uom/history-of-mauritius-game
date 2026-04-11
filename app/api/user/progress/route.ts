@@ -66,7 +66,7 @@ export async function GET(request: Request) {
     return NextResponse.json(formatted)
   } catch (error: any) {
     console.error("Error fetching user progress:", error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 })
   }
 }
 
@@ -135,6 +135,6 @@ export async function POST(request: Request) {
     })
   } catch (error: any) {
     console.error("Error saving user progress:", error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 })
   }
 }

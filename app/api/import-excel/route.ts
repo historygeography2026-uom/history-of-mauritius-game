@@ -97,6 +97,12 @@ function createErrorMessage(rowNum: number, questionPreview: string, field: stri
 }
 
 export async function POST(req: NextRequest) {
+  // Admin auth check via cookie
+  const cookieHeader = req.headers.get("cookie")
+  if (!cookieHeader?.includes("admin-session=")) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
   try {
     const formData = await req.formData()
     const questionsJson = formData.get("questions") as string

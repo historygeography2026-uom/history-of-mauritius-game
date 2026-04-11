@@ -8,6 +8,12 @@ const IMAGES_DIR = process.env.RENDER_DISK_PATH
   : path.join(process.cwd(), "public", "uploads")
 
 export async function POST(request: Request) {
+  // Admin auth check via cookie
+  const cookieHeader = request.headers.get("cookie")
+  if (!cookieHeader?.includes("admin-session=")) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
   try {
     const formData = await request.formData()
     const file = formData.get("file") as File | null
@@ -61,12 +67,18 @@ export async function POST(request: Request) {
     })
   } catch (error: any) {
     console.error("Error uploading image:", error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 })
   }
 }
 
 // Delete an image file from disk
 export async function DELETE(request: Request) {
+  // Admin auth check via cookie
+  const cookieHeader = request.headers.get("cookie")
+  if (!cookieHeader?.includes("admin-session=")) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
   try {
     const { searchParams } = new URL(request.url)
     const url = searchParams.get("url")
@@ -82,6 +94,6 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ success: true })
   } catch (error: any) {
     console.error("Error deleting image:", error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 })
   }
 }

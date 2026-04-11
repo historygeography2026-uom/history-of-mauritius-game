@@ -13,7 +13,6 @@ import Link from "next/link"
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState("")
   const [newPassword, setNewPassword] = useState("")
-  const [adminPassword, setAdminPassword] = useState("")
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -24,17 +23,16 @@ export default function ResetPasswordPage() {
     setError(null)
     setMessage(null)
 
-    const validAdmins = [
-      { username: "MES", password: "test123" },
-      { username: "MIE", password: "test123" },
-    ]
-
-    const isValidAdmin = validAdmins.some(
-      (admin) => admin.username === adminPassword.split(":")[0] && admin.password === adminPassword.split(":")[1],
-    )
-
-    if (!isValidAdmin) {
-      setError("Invalid admin credentials")
+    // Verify admin is authenticated via the admin panel session
+    try {
+      const verifyRes = await fetch("/api/admin/login")
+      if (!verifyRes.ok) {
+        setError("Admin session expired. Please log in to the admin panel again.")
+        setIsLoading(false)
+        return
+      }
+    } catch {
+      setError("Failed to verify admin session")
       setIsLoading(false)
       return
     }
@@ -83,17 +81,6 @@ export default function ResetPasswordPage() {
           <CardContent>
             <form onSubmit={handleResetPassword}>
               <div className="flex flex-col gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="adminPassword">Admin Credentials (username:password)</Label>
-                  <Input
-                    id="adminPassword"
-                    type="password"
-                    placeholder="mes:test123"
-                    required
-                    value={adminPassword}
-                    onChange={(e) => setAdminPassword(e.target.value)}
-                  />
-                </div>
                 <div className="grid gap-2">
                   <Label htmlFor="email">User Email</Label>
                   <Input

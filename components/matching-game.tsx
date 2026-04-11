@@ -77,7 +77,7 @@ export default function MatchingGame({
   const [showComplete, setShowComplete] = useState(false)
   const { playCorrect, playWrong, playClick } = useGameSounds()
   const pendingTimeoutsRef = useRef<number[]>([])
-
+  const isProcessingRef = useRef(false)
   useEffect(() => {
     const pairsToUse = question?.pairs && Array.isArray(question.pairs) ? question.pairs : builtInPairs
     setMatchPairs(pairsToUse)
@@ -99,6 +99,8 @@ export default function MatchingGame({
   const handleRightClick = (index: number) => {
     if (selectedLeft === null) return
     if (matchedRight.has(index)) return
+    if (isProcessingRef.current) return
+    isProcessingRef.current = true
     playClick()
     setSelectedRight(index)
 
@@ -141,6 +143,7 @@ export default function MatchingGame({
       setSelectedLeft(null)
       setSelectedRight(null)
       setFeedback({ show: false, correct: false })
+      isProcessingRef.current = false
       if (!correctPair) {
         setMascotMood("idle")
         setMascotMessage("")
