@@ -15,18 +15,21 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { email, password, name } = body
+    const { email: rawEmail, password, name } = body
 
     // Validate input
-    if (!email || !password || !name) {
+    if (!rawEmail || !password || !name) {
       return NextResponse.json(
         { error: "Email, password, and name are required" },
         { status: 400 }
       )
     }
 
+    // Normalize email
+    const email = rawEmail.toString().toLowerCase().trim()
+
     // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
     if (!emailRegex.test(email)) {
       return NextResponse.json(
         { error: "Invalid email format" },

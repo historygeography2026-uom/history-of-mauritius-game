@@ -261,14 +261,17 @@ export async function POST(req: NextRequest) {
               }
             }
 
-            // Tier 3: Partial match (first 10 characters)
+            // Tier 3: Prefix match — only if exactly ONE option matches (avoids ambiguous picks)
             if (foundIndex === -1 && correctAnswerNorm.length > 0) {
               const searchPrefix = correctAnswerNorm.substring(0, Math.min(10, correctAnswerNorm.length))
+              const prefixMatches: number[] = []
               for (let i = 0; i < options.length; i++) {
                 if (options[i].text.toLowerCase().startsWith(searchPrefix)) {
-                  foundIndex = i
-                  break
+                  prefixMatches.push(i)
                 }
+              }
+              if (prefixMatches.length === 1) {
+                foundIndex = prefixMatches[0]
               }
             }
 

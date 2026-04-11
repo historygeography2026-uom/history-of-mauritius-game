@@ -145,10 +145,11 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          // Query user from PostgreSQL
+          // Query user from PostgreSQL (normalize email for case-insensitive match)
+          const normalizedEmail = credentials.email.toString().toLowerCase().trim()
           const result = await pool.query(
-            'SELECT id, email, name, image, password_hash FROM users WHERE email = $1',
-            [credentials.email]
+            'SELECT id, email, name, image, password_hash FROM users WHERE LOWER(email) = $1',
+            [normalizedEmail]
           )
 
           if (result.rows.length === 0) {
@@ -184,14 +185,12 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-      allowDangerousEmailAccountLinking: true,
     }),
 
     // Facebook OAuth
     FacebookProvider({
       clientId: process.env.FACEBOOK_APP_ID || "",
       clientSecret: process.env.FACEBOOK_APP_SECRET || "",
-      allowDangerousEmailAccountLinking: true,
     }),
   ],
 
