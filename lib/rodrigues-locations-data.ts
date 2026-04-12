@@ -24,7 +24,7 @@ export const rodriguesLocations: MapLocation[] = [
   {
     id: "port-mathurin",
     name: "Port Mathurin",
-    x: 318, y: 208,
+    x: 312, y: 178,
     lat: -19.6819, lng: 63.4169,
     category: "history",
     icon: "building",
@@ -39,7 +39,7 @@ export const rodriguesLocations: MapLocation[] = [
   {
     id: "caverne-patate",
     name: "Caverne Patate",
-    x: 238, y: 292,
+    x: 248, y: 272,
     lat: -19.7350, lng: 63.3550,
     category: "geography",
     icon: "mountain",
@@ -53,7 +53,7 @@ export const rodriguesLocations: MapLocation[] = [
   {
     id: "francois-leguat",
     name: "François Leguat Reserve",
-    x: 248, y: 270,
+    x: 252, y: 260,
     lat: -19.7250, lng: 63.3600,
     category: "both",
     icon: "bird",
@@ -68,7 +68,7 @@ export const rodriguesLocations: MapLocation[] = [
   {
     id: "grande-montagne",
     name: "Grande Montagne",
-    x: 295, y: 268,
+    x: 292, y: 260,
     lat: -19.7200, lng: 63.3900,
     category: "geography",
     icon: "tree",
@@ -82,7 +82,7 @@ export const rodriguesLocations: MapLocation[] = [
   {
     id: "trou-dargent",
     name: "Trou d'Argent",
-    x: 340, y: 320,
+    x: 330, y: 298,
     lat: -19.7600, lng: 63.4350,
     category: "geography",
     icon: "waves",
@@ -96,7 +96,7 @@ export const rodriguesLocations: MapLocation[] = [
   {
     id: "saint-gabriel",
     name: "Saint Gabriel Church",
-    x: 270, y: 253,
+    x: 268, y: 240,
     lat: -19.7100, lng: 63.3750,
     category: "history",
     icon: "landmark",
@@ -111,7 +111,7 @@ export const rodriguesLocations: MapLocation[] = [
   {
     id: "ile-aux-cocos",
     name: "Île aux Cocos",
-    x: 66, y: 228,
+    x: 52, y: 215,
     lat: -19.7250, lng: 63.2800,
     category: "geography",
     icon: "bird",
@@ -125,7 +125,7 @@ export const rodriguesLocations: MapLocation[] = [
   {
     id: "mont-limon",
     name: "Mont Limon",
-    x: 286, y: 228,
+    x: 284, y: 225,
     lat: -19.7000, lng: 63.3850,
     category: "geography",
     icon: "mountain",
@@ -139,7 +139,7 @@ export const rodriguesLocations: MapLocation[] = [
   {
     id: "anse-mourouk",
     name: "Anse Mourouk",
-    x: 325, y: 305,
+    x: 318, y: 295,
     lat: -19.7500, lng: 63.4200,
     category: "geography",
     icon: "waves",
@@ -153,7 +153,7 @@ export const rodriguesLocations: MapLocation[] = [
   {
     id: "cotton-bay",
     name: "Cotton Bay",
-    x: 350, y: 248,
+    x: 355, y: 232,
     lat: -19.7050, lng: 63.4400,
     category: "geography",
     icon: "waves",
@@ -167,7 +167,7 @@ export const rodriguesLocations: MapLocation[] = [
   {
     id: "plaine-corail",
     name: "Plaine Corail",
-    x: 248, y: 312,
+    x: 245, y: 290,
     lat: -19.7575, lng: 63.3610,
     category: "both",
     icon: "landmark",
