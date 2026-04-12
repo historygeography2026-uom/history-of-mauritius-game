@@ -1,59 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { pool } from "@/lib/db"
-import { writeFile, mkdir } from "fs/promises"
-import path from "path"
 import { verifyAdminToken } from "@/lib/admin-auth"
 
-// Render persistent disk (or local fallback for dev)
-const IMAGES_DIR = process.env.RENDER_DISK_PATH
-  ? path.join(process.env.RENDER_DISK_PATH, "question-images")
-  : path.join(process.cwd(), "public", "uploads")
-
-// Helper to check if URL is external
-function isExternalUrl(url: string): boolean {
-  if (!url || url.trim() === '') return false
-  if (url.startsWith('data:')) return false
-  if (url.startsWith('/api/images/')) return false
-  if (url.startsWith('/')) return false
-  return url.startsWith('http://') || url.startsWith('https://')
-}
-
-// Download external image and store on Render persistent disk
-async function downloadAndStoreImage(url: string): Promise<string | null> {
-  try {
-    const response = await fetch(url)
-    if (!response.ok) return null
-
-    const buffer = Buffer.from(await response.arrayBuffer())
-    const contentType = response.headers.get('content-type') || 'image/jpeg'
-
-    if (!contentType.startsWith('image/')) {
-      console.error('[import] Invalid content type:', contentType)
-      return null
-    }
-
-    if (buffer.byteLength > 5 * 1024 * 1024) {
-      console.error('[import] Downloaded image exceeds 5MB limit')
-      return null
-    }
-
-    // Determine extension from content type
-    let ext = 'jpg'
-    if (contentType.includes('png')) ext = 'png'
-    else if (contentType.includes('gif')) ext = 'gif'
-    else if (contentType.includes('webp')) ext = 'webp'
-
-    const filename = `imported-${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`
-    const filePath = path.join(IMAGES_DIR, filename)
-
-    await mkdir(IMAGES_DIR, { recursive: true })
-    await writeFile(filePath, buffer)
-
-    return `/api/images/${filename}`
-  } catch (error) {
-    console.error('[import] Error downloading/storing image:', error)
-    return null
-  }
+function isAllowedImportedImageUrl(url: string): boolean {
+  const trimmed = url.trim()
+  return trimmed === "" || trimmed.startsWith("/api/images/")
 }
 
 interface ExcelQuestion {
@@ -180,21 +131,16 @@ export async function POST(req: NextRequest) {
         }
         const typeId = typeResult.rows[0].id
 
-        // Handle image: download external images to Render persistent disk
+        // Only allow locally uploaded image URLs to avoid server-side fetching of arbitrary URLs.
         let finalImageUrl: string | null = null
-        if (q.imageUrl && isExternalUrl(q.imageUrl)) {
-          try {
-            const downloadedUrl = await downloadAndStoreImage(q.imageUrl)
-            finalImageUrl = downloadedUrl
-            if (!downloadedUrl) {
-              console.warn(`[import] Image download failed (non-fatal): ${q.imageUrl}`)
-            }
-          } catch (imgError) {
-            console.error(`[import] Failed to download/store image: ${imgError}`)
-          }
+        if (q.imageUrl && !isAllowedImportedImageUrl(q.imageUrl)) {
+          const reason = `Image URL must be a local uploaded image`
+          const details = `External image URLs are disabled for safety. Upload the image first in the admin panel and use the returned /api/images/... path, or leave imageUrl empty.`
+          errors.push(createErrorMessage(rowNum, questionPreview, "imageUrl", reason, details))
+          errorCount++
+          continue
         } else if (q.imageUrl) {
-          // Already a local URL (e.g. /api/images/...) — keep as-is
-          finalImageUrl = q.imageUrl
+          finalImageUrl = q.imageUrl.trim()
         }
 
         // Insert question using pg pool (Render PostgreSQL)

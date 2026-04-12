@@ -1,4 +1,4 @@
-import * as XLSX from "xlsx"
+import ExcelJS from "exceljs"
 
 export interface ExcelQuestion {
   subject: string
@@ -34,8 +34,60 @@ export interface ExcelQuestion {
   isTrue?: string
 }
 
-export const generateExcelTemplate = () => {
-  const workbook = XLSX.utils.book_new()
+const EXCEL_MIME_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+const addWorksheet = (
+  workbook: ExcelJS.Workbook,
+  name: string,
+  rows: Array<Record<string, string | number>>,
+  widths: number[]
+) => {
+  const headers = Array.from(
+    rows.reduce((keys, row) => {
+      Object.keys(row).forEach((key) => keys.add(key))
+      return keys
+    }, new Set<string>())
+  )
+
+  const worksheet = workbook.addWorksheet(name)
+  worksheet.columns = headers.map((header, index) => ({
+    header,
+    key: header,
+    width: widths[index] ?? 20,
+  }))
+
+  rows.forEach((row) => worksheet.addRow(row))
+  return worksheet
+}
+
+const normalizeCellValue = (value: unknown): string | number | boolean => {
+  if (value === null || value === undefined) return ""
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return value
+  }
+  if (value instanceof Date) {
+    return value.toISOString()
+  }
+  if (typeof value === "object") {
+    if ("richText" in value && Array.isArray(value.richText)) {
+      return value.richText.map((part: { text?: string }) => part.text ?? "").join("")
+    }
+    if ("text" in value && typeof value.text === "string") {
+      return value.text
+    }
+    if ("result" in value) {
+      return normalizeCellValue(value.result)
+    }
+    if ("hyperlink" in value && typeof value.hyperlink === "string") {
+      return value.hyperlink
+    }
+  }
+
+  return String(value)
+}
+
+export const generateExcelTemplate = async () => {
+  const workbook = new ExcelJS.Workbook()
 
   // Instructions Sheet
   const instructionsData = [
@@ -56,7 +108,7 @@ export const generateExcelTemplate = () => {
     { Instructions: "" },
     { Instructions: "OPTIONAL FIELDS:" },
     { Instructions: "• instruction: Custom instruction text displayed to the student (e.g. 'Match each country with its capital')" },
-    { Instructions: "• imageUrl: Direct URL to an image (http/https, will be downloaded and stored on server)" },
+    { Instructions: "• imageUrl: Optional local uploaded image path such as /api/images/your-file.jpg" },
     { Instructions: "" },
     { Instructions: "QUESTION TYPE SPECIFIC FIELDS:" },
     { Instructions: "MCQ: optionA, optionB, optionC, optionD, correctAnswer (must match one option exactly)" },
@@ -67,12 +119,10 @@ export const generateExcelTemplate = () => {
     { Instructions: "" },
     { Instructions: "TIPS:" },
     { Instructions: "• For Fill questions, use _______ (underscores) to mark the blank" },
-    { Instructions: "• Images will be automatically resized to max 800x600 pixels" },
+    { Instructions: "• Upload images in the admin panel first, then paste the returned /api/images/... path" },
     { Instructions: "• You can leave imageUrl empty if no image is needed" },
   ]
-  const instructionsSheet = XLSX.utils.json_to_sheet(instructionsData)
-  instructionsSheet["!cols"] = [{ wch: 80 }]
-  XLSX.utils.book_append_sheet(workbook, instructionsSheet, "Instructions")
+  addWorksheet(workbook, "Instructions", instructionsData, [80])
 
   // MCQ Template
   const mcqData: ExcelQuestion[] = [
@@ -104,22 +154,19 @@ export const generateExcelTemplate = () => {
     },
   ]
 
-  const mcqSheet = XLSX.utils.json_to_sheet(mcqData)
-  mcqSheet["!cols"] = [
-    { wch: 12 }, // subject
-    { wch: 6 },  // level
-    { wch: 8 },  // type
-    { wch: 50 }, // question
-    { wch: 40 }, // imageUrl
-
-    { wch: 6 },  // timer
-    { wch: 20 }, // optionA
-    { wch: 20 }, // optionB
-    { wch: 20 }, // optionC
-    { wch: 20 }, // optionD
-    { wch: 20 }, // correctAnswer
-  ]
-  XLSX.utils.book_append_sheet(workbook, mcqSheet, "MCQ")
+  addWorksheet(workbook, "MCQ", mcqData as Array<Record<string, string | number>>, [
+    12,
+    6,
+    8,
+    50,
+    40,
+    6,
+    20,
+    20,
+    20,
+    20,
+    20,
+  ])
 
   // Matching Template
   const matchingData: ExcelQuestion[] = [
@@ -142,25 +189,22 @@ export const generateExcelTemplate = () => {
     },
   ]
 
-  const matchingSheet = XLSX.utils.json_to_sheet(matchingData)
-  matchingSheet["!cols"] = [
-    { wch: 12 }, // subject
-    { wch: 6 },  // level
-    { wch: 10 }, // type
-    { wch: 40 }, // question
-    { wch: 30 }, // imageUrl
-    { wch: 10 }, // timer
-    { wch: 6 },  // timer
-    { wch: 20 }, // leftItem1
-    { wch: 20 }, // rightItem1
-    { wch: 20 }, // leftItem2
-    { wch: 20 }, // rightItem2
-    { wch: 20 }, // leftItem3
-    { wch: 20 }, // rightItem3
-    { wch: 20 }, // leftItem4
-    { wch: 20 }, // rightItem4
-  ]
-  XLSX.utils.book_append_sheet(workbook, matchingSheet, "Matching")
+  addWorksheet(workbook, "Matching", matchingData as Array<Record<string, string | number>>, [
+    12,
+    6,
+    10,
+    40,
+    30,
+    10,
+    20,
+    20,
+    20,
+    20,
+    20,
+    20,
+    20,
+    20,
+  ])
 
   // Fill in the Blanks Template
   const fillData: ExcelQuestion[] = [
@@ -185,18 +229,15 @@ export const generateExcelTemplate = () => {
     },
   ]
 
-  const fillSheet = XLSX.utils.json_to_sheet(fillData)
-  fillSheet["!cols"] = [
-    { wch: 12 }, // subject
-    { wch: 6 },  // level
-    { wch: 8 },  // type
-    { wch: 50 }, // question
-    { wch: 40 }, // imageUrl
-
-    { wch: 6 },  // timer
-    { wch: 20 }, // answer
-  ]
-  XLSX.utils.book_append_sheet(workbook, fillSheet, "Fill")
+  addWorksheet(workbook, "Fill", fillData as Array<Record<string, string | number>>, [
+    12,
+    6,
+    8,
+    50,
+    40,
+    6,
+    20,
+  ])
 
   // Reorder/Put in Order Template
   const reorderData: ExcelQuestion[] = [
@@ -215,20 +256,18 @@ export const generateExcelTemplate = () => {
     },
   ]
 
-  const reorderSheet = XLSX.utils.json_to_sheet(reorderData)
-  reorderSheet["!cols"] = [
-    { wch: 12 }, // subject
-    { wch: 6 },  // level
-    { wch: 10 }, // type
-    { wch: 50 }, // question
-    { wch: 40 }, // imageUrl
-    { wch: 6 },  // timer
-    { wch: 30 }, // step1
-    { wch: 30 }, // step2
-    { wch: 30 }, // step3
-    { wch: 30 }, // step4
-  ]
-  XLSX.utils.book_append_sheet(workbook, reorderSheet, "Reorder")
+  addWorksheet(workbook, "Reorder", reorderData as Array<Record<string, string | number>>, [
+    12,
+    6,
+    10,
+    50,
+    40,
+    6,
+    30,
+    30,
+    30,
+    30,
+  ])
 
   // True/False Template
   const trueFalseData: ExcelQuestion[] = [
@@ -252,20 +291,18 @@ export const generateExcelTemplate = () => {
     },
   ]
 
-  const trueFalseSheet = XLSX.utils.json_to_sheet(trueFalseData)
-  trueFalseSheet["!cols"] = [
-    { wch: 12 }, // subject
-    { wch: 6 },  // level
-    { wch: 12 }, // type
-    { wch: 50 }, // question
-    { wch: 40 }, // imageUrl
-    { wch: 6 },  // timer
-    { wch: 8 },  // isTrue
-  ]
-  XLSX.utils.book_append_sheet(workbook, trueFalseSheet, "TrueFalse")
+  addWorksheet(workbook, "TrueFalse", trueFalseData as Array<Record<string, string | number>>, [
+    12,
+    6,
+    12,
+    50,
+    40,
+    6,
+    8,
+  ])
 
-  const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" })
-  const blob = new Blob([excelBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
+  const excelBuffer = await workbook.xlsx.writeBuffer()
+  const blob = new Blob([excelBuffer], { type: EXCEL_MIME_TYPE })
   const url = URL.createObjectURL(blob)
   const link = document.createElement("a")
   link.href = url
@@ -277,31 +314,49 @@ export const generateExcelTemplate = () => {
 }
 
 export const parseExcelFile = async (file: File): Promise<ExcelQuestion[]> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      try {
-        const data = e.target?.result
-        const workbook = XLSX.read(data, { type: "binary" })
-        const allQuestions: ExcelQuestion[] = []
+  const workbook = new ExcelJS.Workbook()
+  const data = await file.arrayBuffer()
+  await workbook.xlsx.load(data)
 
-        workbook.SheetNames.forEach((sheetName) => {
-          // Skip the Instructions sheet
-          if (sheetName.toLowerCase() === 'instructions') return
-          
-          const sheet = workbook.Sheets[sheetName]
-          const sheetData = XLSX.utils.sheet_to_json<ExcelQuestion>(sheet)
-          allQuestions.push(...sheetData)
-        })
+  const allQuestions: ExcelQuestion[] = []
 
-        resolve(allQuestions)
-      } catch (error) {
-        reject(error)
+  workbook.worksheets.forEach((worksheet) => {
+    if (worksheet.name.toLowerCase() === "instructions") {
+      return
+    }
+
+    const headerCount = Math.max(worksheet.columnCount, worksheet.getRow(1).cellCount)
+    const headers = Array.from({ length: headerCount }, (_, index) => {
+      const headerValue = normalizeCellValue(worksheet.getRow(1).getCell(index + 1).value)
+      return typeof headerValue === "string" ? headerValue.trim() : String(headerValue).trim()
+    })
+
+    for (let rowIndex = 2; rowIndex <= worksheet.rowCount; rowIndex++) {
+      const row = worksheet.getRow(rowIndex)
+      const rowData: Record<string, string | number | boolean> = {}
+      let hasValues = false
+
+      headers.forEach((header, index) => {
+        if (!header) {
+          return
+        }
+
+        const cellValue = normalizeCellValue(row.getCell(index + 1).value)
+        if (cellValue === "") {
+          return
+        }
+
+        rowData[header] = cellValue
+        hasValues = true
+      })
+
+      if (hasValues) {
+        allQuestions.push(rowData as ExcelQuestion)
       }
     }
-    reader.onerror = (error) => reject(error)
-    reader.readAsBinaryString(file)
   })
+
+  return allQuestions
 }
 
 export interface ValidationError {
@@ -332,6 +387,11 @@ const toStr = (val: any): string => {
 // Helper to check if a value is empty
 const isEmpty = (val: any): boolean => {
   return toStr(val) === ''
+}
+
+const isAllowedImageUrl = (val: any): boolean => {
+  const text = toStr(val)
+  return text === '' || text.startsWith('/api/images/')
 }
 
 export const validateExcelQuestions = (questions: ExcelQuestion[]): ValidationResult => {
@@ -369,6 +429,11 @@ export const validateExcelQuestions = (questions: ExcelQuestion[]): ValidationRe
 
     if (isEmpty(q.question)) {
       errors.push({ row, field: 'question', message: 'Question text field is empty. You must provide the actual question that students will answer. This field cannot be left blank.', question: questionPreview })
+      hasError = true
+    }
+
+    if (!isAllowedImageUrl(q.imageUrl)) {
+      errors.push({ row, field: 'imageUrl', message: 'Image URL must be a local uploaded image path such as /api/images/example.jpg. External http/https image URLs are not allowed.', question: questionPreview })
       hasError = true
     }
 
@@ -467,14 +532,6 @@ export const validateExcelQuestions = (questions: ExcelQuestion[]): ValidationRe
     // Timer validation (warning only)
     if (q.timer && (Number(q.timer) < 10 || Number(q.timer) > 120)) {
       warnings.push({ row, field: 'timer', message: `Timer ${q.timer}s seems unusual (recommended: 10-120 seconds)`, question: questionPreview })
-    }
-
-    // Image URL validation (warning only)
-    const imageUrl = toStr(q.imageUrl)
-    if (imageUrl !== '') {
-      if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
-        warnings.push({ row, field: 'imageUrl', message: 'Image URL should start with http:// or https://', question: questionPreview })
-      }
     }
 
     if (!hasError) {

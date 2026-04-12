@@ -42,11 +42,16 @@ export default function ExcelImportSection({ onImport, isLoading }: ExcelImportS
     }
   }, [])
 
-  const handleDownloadTemplate = () => {
-    generateExcelTemplate()
-    setImportMessage("Template downloaded! Edit and upload back.")
-    const t = window.setTimeout(() => setImportMessage(""), 3000)
-    pendingMessageTimeoutsRef.current.push(t)
+  const handleDownloadTemplate = async () => {
+    try {
+      await generateExcelTemplate()
+      setImportMessage("Template downloaded! Edit and upload back.")
+      const t = window.setTimeout(() => setImportMessage(""), 3000)
+      pendingMessageTimeoutsRef.current.push(t)
+    } catch (error) {
+      console.error("[v0] Error generating template:", error)
+      setImportMessage("❌ Could not generate the Excel template. Please try again.")
+    }
   }
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -249,7 +254,7 @@ export default function ExcelImportSection({ onImport, isLoading }: ExcelImportS
 
       <p className="text-xs text-slate-600 mt-4">
         💡 Download the template, edit with your questions, and upload to populate the question bank.
-        <br />📸 Use <code className="bg-slate-100 px-1 rounded">imageUrl</code> column for direct image links (e.g., https://example.com/image.jpg).
+        <br />📸 Use <code className="bg-slate-100 px-1 rounded">imageUrl</code> only for local uploaded image paths like <code className="bg-slate-100 px-1 rounded">/api/images/example.jpg</code>.
       </p>
     </Card>
   )
