@@ -6,10 +6,13 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ArrowLeft, Plus, Trash2, Edit2, X, LogOut, Search } from "lucide-react"
 import Link from "next/link"
-import AdminLoginModal from "@/components/admin-login-modal"
-import ExcelImportSection from "@/components/excel-import-section"
-import QuestionEditModal from "@/components/question-edit-modal"
+import dynamic from "next/dynamic"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+
+// Dynamically import heavy admin modals and Excel section
+const AdminLoginModal = dynamic(() => import("@/components/admin-login-modal"), { ssr: false })
+const ExcelImportSection = dynamic(() => import("@/components/excel-import-section"), { ssr: false })
+const QuestionEditModal = dynamic(() => import("@/components/question-edit-modal"), { ssr: false })
 
 // Import UI components from shadcn/ui for better control
 import { Input } from "@/components/ui/input"

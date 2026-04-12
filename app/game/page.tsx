@@ -5,14 +5,9 @@ import { useSearchParams, useRouter } from "next/navigation" // Added useRouter
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Trophy, Star, ArrowLeft, CheckCircle, Clock, Zap, LogOut } from "lucide-react"
-import MultipleChoiceGame from "@/components/multiple-choice-game"
-import MatchingGame from "@/components/matching-game"
-import FillInBlanksGame from "@/components/fill-in-blanks-game"
-import ReorderGame from "@/components/reorder-game"
-import TrueFalseGame from "@/components/true-false-game"
+import dynamic from "next/dynamic"
 import { useQuestions } from "@/hooks/use-questions"
 import { GAME_CONFIG } from "@/lib/game-config"
-import { GameConfetti } from "@/components/game-confetti"
 import { DodoMascot, getRandomMessage } from "@/components/dodo-mascot"
 import { SoundToggle } from "@/components/sound-toggle"
 import { useGameSounds, stopAllSounds } from "@/hooks/use-game-sounds"
@@ -21,6 +16,14 @@ import { DodoTimer } from "@/components/dodo-timer"
 import { useAchievements } from "@/hooks/use-achievements"
 import { saveProgress } from "@/components/progress-map"
 import { useSession } from "next-auth/react"
+
+// Dynamically import heavy game components — only the active type loads
+const MultipleChoiceGame = dynamic(() => import("@/components/multiple-choice-game"), { ssr: false })
+const MatchingGame = dynamic(() => import("@/components/matching-game"), { ssr: false })
+const FillInBlanksGame = dynamic(() => import("@/components/fill-in-blanks-game"), { ssr: false })
+const ReorderGame = dynamic(() => import("@/components/reorder-game"), { ssr: false })
+const TrueFalseGame = dynamic(() => import("@/components/true-false-game"), { ssr: false })
+const GameConfetti = dynamic(() => import("@/components/game-confetti").then(m => ({ default: m.GameConfetti })), { ssr: false })
 
 // Declare subjectNames variable
 const subjectNames = {

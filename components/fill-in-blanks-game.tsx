@@ -6,8 +6,9 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Star, Volume2 } from "lucide-react"
 import Image from "next/image"
+import dynamic from "next/dynamic"
 import { DodoMascot, getRandomMessage } from "@/components/dodo-mascot"
-import { GameConfetti } from "@/components/game-confetti"
+const GameConfetti = dynamic(() => import("@/components/game-confetti").then(m => ({ default: m.GameConfetti })), { ssr: false })
 import { useGameSounds, isGameMuted } from "@/hooks/use-game-sounds"
 
 // Text-to-speech function
