@@ -31,14 +31,10 @@ services:
           name: mauritius-game-db
           property: connectionString
       
-      # OAuth Providers (Update with your credentials)
+      # Google OAuth (optional)
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET
-        sync: false
-      - key: FACEBOOK_APP_ID
-        sync: false
-      - key: FACEBOOK_APP_SECRET
         sync: false
       - key: RENDER_DISK_PATH
         value: /var/data

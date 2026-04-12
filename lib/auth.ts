@@ -1,7 +1,6 @@
 import type { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
-import FacebookProvider from "next-auth/providers/facebook"
 import type { Adapter } from "next-auth/adapters"
 import { pool } from "@/lib/db"
 import { verifyPassword } from "./auth-utils"
@@ -185,12 +184,6 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-    }),
-
-    // Facebook OAuth
-    FacebookProvider({
-      clientId: process.env.FACEBOOK_APP_ID || "",
-      clientSecret: process.env.FACEBOOK_APP_SECRET || "",
     }),
   ],
 

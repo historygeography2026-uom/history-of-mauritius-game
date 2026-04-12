@@ -100,7 +100,7 @@ export async function POST(request: Request) {
         (user_id, subject_name, level_number, stars_earned, is_completed, 
          best_score, first_completed_at, last_attempted_at, updated_at)
       VALUES ($1, $2, $3, $4, $5, $6, 
-              CASE WHEN $5 = TRUE AND first_completed_at IS NULL THEN NOW() ELSE first_completed_at END,
+              CASE WHEN $5 = TRUE THEN NOW() ELSE NULL END,
               NOW(), NOW())
       ON CONFLICT (user_id, subject_name, level_number) DO UPDATE SET
         stars_earned = GREATEST(public.user_progress.stars_earned, $4),
