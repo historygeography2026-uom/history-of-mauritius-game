@@ -5,8 +5,8 @@ services:
     env: node
     plan: standard
     branch: main
-    buildCommand: npm run build
-    startCommand: sh scripts/start.sh
+    buildCommand: pnpm install && pnpm build
+    startCommand: pnpm start
     healthCheckPath: /
     
     # Environment variables
