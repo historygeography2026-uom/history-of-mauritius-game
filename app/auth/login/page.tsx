@@ -10,8 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { ArrowLeft, User } from "lucide-react"
-import { GAME_CONFIG } from "@/lib/game-config"
+import { ArrowLeft } from "lucide-react"
 
 export const dynamic = 'force-dynamic'
 
@@ -69,30 +68,6 @@ export default function LoginPage() {
     }
   }
 
-  const handleDemoLogin = async () => {
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      const result = await signIn("credentials", {
-        email: GAME_CONFIG.DEMO_ACCOUNT.EMAIL,
-        password: GAME_CONFIG.DEMO_ACCOUNT.PASSWORD,
-        redirect: false,
-      })
-
-      if (result?.error) {
-        throw new Error(result.error || "Demo account login failed")
-      }
-
-      if (result?.ok) {
-        router.push(redirectTo)
-      }
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "Demo account not available. Please sign up.")
-      setIsLoading(false)
-    }
-  }
-
   return (
     <div className="min-h-screen bg-transparent flex items-center justify-center p-4 relative z-10">
       <div className="w-full max-w-md">
@@ -112,17 +87,6 @@ export default function LoginPage() {
           <CardContent>
             <form onSubmit={handleLogin}>
               <div className="flex flex-col gap-4">
-                {/* Demo Login Button */}
-                <Button
-                  type="button"
-                  className="kid-btn w-full bg-gradient-to-r from-accent to-teal-500 text-white"
-                  onClick={handleDemoLogin}
-                  disabled={isLoading}
-                >
-                  <User className="mr-2 h-4 w-4" />
-                  Quick Demo Login 🎮
-                </Button>
-
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t" />

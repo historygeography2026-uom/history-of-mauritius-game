@@ -23,13 +23,4 @@ export const GAME_CONFIG = {
    * Points awarded per star earned.
    */
   POINTS_PER_STAR: 100,
-
-  /**
-   * Demo/Guest account credentials for quick login.
-   * Uses environment variables so credentials are not exposed in the client bundle.
-   */
-  DEMO_ACCOUNT: {
-    EMAIL: process.env.NEXT_PUBLIC_DEMO_EMAIL || "demo@mauritius-game.com",
-    PASSWORD: process.env.NEXT_PUBLIC_DEMO_PASSWORD || "demo123456",
-  },
 }

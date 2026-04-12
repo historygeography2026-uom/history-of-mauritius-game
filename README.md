@@ -59,7 +59,6 @@ The `scripts/` folder has been trimmed to the files still useful for bootstrap o
 - `create-questions-schema.mjs`
 - `insert-defaults.mjs`
 - `setup-nextauth-schema.mjs`
-- `seed-demo-user.cjs`
 - `fix-constraint.mjs`
 
 These are manual operational helpers. The application runtime does not invoke them automatically.
