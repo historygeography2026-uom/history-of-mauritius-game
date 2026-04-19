@@ -16,6 +16,7 @@ interface AdminUser {
   email: string
   created_at: string
   updated_at: string
+  last_seen: string | null
 }
 
 export default function ResetPasswordPage() {
@@ -65,6 +66,14 @@ export default function ResetPasswordPage() {
       hour: "2-digit",
       minute: "2-digit",
     })
+  }
+
+  const formatLastSeen = (value: string | null) => {
+    if (!value) {
+      return "No activity yet"
+    }
+
+    return formatDateTime(value)
   }
 
   const handleResetPassword = async (user: AdminUser) => {
@@ -157,13 +166,14 @@ export default function ResetPasswordPage() {
                       <TableHead>Name</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Created At</TableHead>
+                      <TableHead>Last Seen</TableHead>
                       <TableHead className="min-w-[280px]">Replace Password</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {users.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={4} className="py-8 text-center text-slate-500">
+                        <TableCell colSpan={5} className="py-8 text-center text-slate-500">
                           No users found.
                         </TableCell>
                       </TableRow>
@@ -175,6 +185,7 @@ export default function ResetPasswordPage() {
                           </TableCell>
                           <TableCell className="text-slate-700">{user.email}</TableCell>
                           <TableCell className="text-slate-600">{formatDateTime(user.created_at)}</TableCell>
+                          <TableCell className="text-slate-600">{formatLastSeen(user.last_seen)}</TableCell>
                           <TableCell>
                             <div className="flex flex-col gap-2 md:flex-row">
                               <Input

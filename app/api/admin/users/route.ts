@@ -9,9 +9,17 @@ export async function GET(request: NextRequest) {
 
   try {
     const result = await pool.query(
-      `SELECT id, name, email, created_at, updated_at
-       FROM users
-       ORDER BY created_at DESC`
+      `SELECT
+         u.id,
+         u.name,
+         u.email,
+         u.created_at,
+         u.updated_at,
+         MAX(up.last_attempted_at) AS last_seen
+       FROM users u
+       LEFT JOIN public.user_progress up ON up.user_id = u.id
+       GROUP BY u.id, u.name, u.email, u.created_at, u.updated_at
+       ORDER BY u.created_at DESC`
     )
 
     return NextResponse.json(result.rows)
