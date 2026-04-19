@@ -47,6 +47,14 @@ Common variables:
 - `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` if Google OAuth is enabled
 - `RENDER_DISK_PATH` on Render for persistent image storage
 
+For Google OAuth, the authorized redirect URI in Google Cloud must match your public app URL exactly:
+
+```text
+<NEXTAUTH_URL>/api/auth/callback/google
+```
+
+If `NEXTAUTH_URL` is not set, the app now falls back to `NEXT_PUBLIC_APP_URL` and then Render's `RENDER_EXTERNAL_URL`, but the Google Cloud OAuth client still needs that final public callback URI registered.
+
 ## Deployment
 
 Render deployment is defined in `render.yaml`. The production container starts through `scripts/start.sh`, and uploaded images are served from `/api/images/...` using Render persistent disk storage when `RENDER_DISK_PATH` is available.

@@ -5,6 +5,31 @@ import type { Adapter } from "next-auth/adapters"
 import { pool } from "@/lib/db"
 import { verifyPassword } from "./auth-utils"
 
+function normalizeUrl(value?: string) {
+  const normalized = value?.trim().replace(/\/+$/, "")
+  return normalized || undefined
+}
+
+const explicitAuthUrl = normalizeUrl(process.env.NEXTAUTH_URL)
+const publicAppUrl = normalizeUrl(process.env.NEXT_PUBLIC_APP_URL)
+const renderExternalUrl = normalizeUrl(process.env.RENDER_EXTERNAL_URL)
+
+const canonicalAuthUrl =
+  explicitAuthUrl ||
+  publicAppUrl ||
+  renderExternalUrl ||
+  (process.env.NODE_ENV === "development" ? "http://localhost:3000" : undefined)
+
+if (canonicalAuthUrl && !process.env.NEXTAUTH_URL) {
+  process.env.NEXTAUTH_URL = canonicalAuthUrl
+}
+
+if (process.env.GOOGLE_CLIENT_ID && !canonicalAuthUrl) {
+  console.warn(
+    "[auth] Google OAuth is enabled but no canonical app URL is configured. Set NEXTAUTH_URL to your public base URL and add <base-url>/api/auth/callback/google as an authorized redirect URI."
+  )
+}
+
 // Extend NextAuth types to include user.id on session
 declare module "next-auth" {
   interface Session {
@@ -20,7 +45,7 @@ declare module "next-auth" {
 // Minimal PostgreSQL adapter for NextAuth
 function PostgresAdapter(client: any): Adapter {
   return {
-    createUser: async (user) => {
+    createUser: async (user: any) => {
       const result = await client.query(
         'INSERT INTO users (name, email, image, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW()) RETURNING *',
         [user.name, user.email, user.image]
@@ -55,7 +80,7 @@ function PostgresAdapter(client: any): Adapter {
     deleteUser: async (id) => {
       await client.query('DELETE FROM users WHERE id = $1', [id])
     },
-    linkAccount: async (account) => {
+    linkAccount: async (account: any) => {
       const result = await client.query(
         'INSERT INTO accounts (user_id, provider, provider_account_id, type, access_token, token_type, scope) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
         [account.userId, account.provider, account.providerAccountId, account.type, account.access_token, account.tokenType, account.scope]

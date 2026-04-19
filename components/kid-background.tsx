@@ -1,11 +1,19 @@
 "use client"
 
+import { usePathname } from "next/navigation"
+
 /**
  * Kid-friendly animated background with Mauritius history & geography themed icons.
  * Renders floating, slowly drifting emoji icons, a decorative wave, and subtle patterns
  * behind the page content at pleasant opacity for a fun kids' game feel.
  */
 export function KidBackground() {
+  const pathname = usePathname()
+
+  if (pathname?.startsWith("/admin")) {
+    return null
+  }
+
   const icons = [
     { emoji: "🦤", size: 3.5, top: 5, left: 8, delay: 0, drift: "drift1" },
     { emoji: "🧭", size: 2.8, top: 12, left: 85, delay: 2, drift: "drift2" },
