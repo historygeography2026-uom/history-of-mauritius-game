@@ -80,6 +80,16 @@ export default function AdminPage() {
     }
   }
 
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/login", { method: "DELETE" })
+    } catch (error) {
+      console.error("Error logging out admin:", error)
+    } finally {
+      resetAdminSession()
+    }
+  }
+
   useEffect(() => {
     const verifyAdminSession = async () => {
       const savedUser = sessionStorage.getItem("adminUser")
@@ -1110,18 +1120,21 @@ ${errorMessages}
               </p>
             </div>
           </div>
-          <Button
-            onClick={() => {
-              sessionStorage.removeItem("adminUser")
-              setCurrentUser(null)
-              setShowLoginModal(true)
-            }}
-            variant="outline"
-            className="gap-2 text-red-600"
-          >
-            <LogOut className="h-4 w-4" />
-            Logout
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link href="/admin/reset-password">
+              <Button variant="outline" className="gap-2 text-slate-700">
+                User Passwords
+              </Button>
+            </Link>
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              className="gap-2 text-red-600"
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </Button>
+          </div>
         </div>
 
         <ExcelImportSection onImport={handleExcelImport} isLoading={loading} />

@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server"
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit"
-import { createAdminSessionToken, verifyAdminToken } from "@/lib/admin-auth"
+import {
+  clearAdminSessionCookie,
+  createAdminSessionToken,
+  getAdminSessionToken,
+  setAdminSessionCookie,
+  verifyAdminToken,
+} from "@/lib/admin-auth"
 
 /**
  * Admin login endpoint
@@ -79,15 +85,7 @@ export async function POST(request: Request) {
     )
 
     // Set secure cookie (httpOnly prevents JavaScript access)
-    response.cookies.set({
-      name: "admin-session",
-      value: adminToken,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 24 * 60 * 60, // 24 hours
-      path: "/",
-    })
+    setAdminSessionCookie(response, adminToken)
 
     return response
   } catch (error) {
@@ -112,10 +110,17 @@ export async function GET(request: Request) {
       )
     }
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       { authenticated: true, message: "Admin session valid" },
       { status: 200 }
     )
+
+    const token = getAdminSessionToken(request)
+    if (token) {
+      setAdminSessionCookie(response, token)
+    }
+
+    return response
   } catch (error) {
     console.error("[admin/verify] Error:", error)
     return NextResponse.json(
@@ -123,4 +128,14 @@ export async function GET(request: Request) {
       { status: 500 }
     )
   }
+}
+
+export async function DELETE() {
+  const response = NextResponse.json(
+    { success: true, message: "Admin logout successful" },
+    { status: 200 }
+  )
+
+  clearAdminSessionCookie(response)
+  return response
 }
