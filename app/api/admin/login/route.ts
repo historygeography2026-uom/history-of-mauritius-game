@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server"
-import crypto from "crypto"
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit"
-
-// In-memory set of valid admin session tokens (acceptable for single-server kids' app)
-// Tokens expire after 24h via cookie maxAge; server restart clears sessions (also fine)
-const validAdminTokens = new Set<string>()
+import { createAdminSessionToken, verifyAdminToken } from "@/lib/admin-auth"
 
 /**
  * Admin login endpoint
@@ -69,10 +65,8 @@ export async function POST(request: Request) {
       )
     }
 
-    // Generate a secure admin token
-    const adminToken = crypto.randomBytes(32).toString("hex")
-    validAdminTokens.add(adminToken)
     const displayName = isValidAdmin1 ? adminUsername : adminUsername2
+    const adminToken = createAdminSessionToken(displayName?.toUpperCase() || username.toUpperCase())
 
     // Set secure httpOnly cookie with token
     const response = NextResponse.json(
@@ -110,14 +104,11 @@ export async function POST(request: Request) {
  */
 export async function GET(request: Request) {
   try {
-    const cookieHeader = request.headers.get("cookie")
-    const tokenMatch = cookieHeader?.match(/admin-session=([^;]+)/)
-    const token = tokenMatch?.[1]
-
-    if (!token || !validAdminTokens.has(token)) {
+    const authError = verifyAdminToken(request)
+    if (authError) {
       return NextResponse.json(
         { authenticated: false, error: "Not authenticated" },
-        { status: 401 }
+        { status: authError.status }
       )
     }
 
@@ -133,6 +124,3 @@ export async function GET(request: Request) {
     )
   }
 }
-
-// Export for use by other admin routes
-export { validAdminTokens }

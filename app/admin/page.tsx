@@ -41,6 +41,7 @@ interface Question {
 
 export default function AdminPage() {
   const [showLoginModal, setShowLoginModal] = useState(true)
+  const [isCheckingAdminSession, setIsCheckingAdminSession] = useState(true)
   const [currentUser, setCurrentUser] = useState<string | null>(null)
   const [selectedSubject, setSelectedSubject] = useState("history")
   const [selectedLevel, setSelectedLevel] = useState(1)
@@ -67,13 +68,47 @@ export default function AdminPage() {
   const levels = [1, 2, 3]
   const questionTypes: QuestionType[] = ["mcq", "matching", "fill", "reorder", "truefalse"]
 
-  useEffect(() => {
-    const savedUser = sessionStorage.getItem("adminUser")
-    if (savedUser) {
-      setCurrentUser(savedUser)
-    } else {
-      setShowLoginModal(true)
+  const resetAdminSession = (message?: string) => {
+    sessionStorage.removeItem("adminUser")
+    setCurrentUser(null)
+    setQuestions([])
+    setAllQuestions([])
+    setShowLoginModal(true)
+
+    if (message) {
+      alert(message)
     }
+  }
+
+  useEffect(() => {
+    const verifyAdminSession = async () => {
+      const savedUser = sessionStorage.getItem("adminUser")
+
+      if (!savedUser) {
+        setShowLoginModal(true)
+        setIsCheckingAdminSession(false)
+        return
+      }
+
+      try {
+        const response = await fetch("/api/admin/login", { cache: "no-store" })
+
+        if (!response.ok) {
+          resetAdminSession("Admin session expired. Please log in again.")
+          setIsCheckingAdminSession(false)
+          return
+        }
+
+        setCurrentUser(savedUser)
+      } catch (error) {
+        console.error("Error verifying admin session:", error)
+        resetAdminSession("Could not verify admin session. Please log in again.")
+      } finally {
+        setIsCheckingAdminSession(false)
+      }
+    }
+
+    verifyAdminSession()
   }, [])
 
   useEffect(() => {
@@ -143,6 +178,12 @@ export default function AdminPage() {
       setLoading(true)
       const params = new URLSearchParams({ subject: selectedSubject, level: String(selectedLevel) })
       const res = await fetch(`/api/admin/questions?${params}`)
+
+      if (res.status === 401 || res.status === 403) {
+        resetAdminSession("Admin session expired. Please log in again.")
+        return
+      }
+
       if (!res.ok) throw new Error("Failed to fetch questions")
       const data = await res.json()
       setQuestions(data.map(transformApiQuestion))
@@ -157,6 +198,12 @@ export default function AdminPage() {
     try {
       setLoading(true)
       const res = await fetch("/api/admin/questions")
+
+      if (res.status === 401 || res.status === 403) {
+        resetAdminSession("Admin session expired. Please log in again.")
+        return
+      }
+
       if (!res.ok) throw new Error("Failed to fetch questions")
       const data = await res.json()
       setAllQuestions(data.map(transformApiQuestion))
@@ -687,6 +734,14 @@ ${errorMessages}
   ])
 
   const filteredQuestions = questions.filter((q) => q.subject === selectedSubject && q.level === selectedLevel)
+
+  if (isCheckingAdminSession) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-teal-50 flex items-center justify-center">
+        <p className="text-sm font-medium text-slate-600">Checking admin session...</p>
+      </div>
+    )
+  }
 
   if (!currentUser) {
     return (
