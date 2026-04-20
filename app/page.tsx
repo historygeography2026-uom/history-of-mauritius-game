@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Sparkles, ArrowLeft, Settings, Trophy, LogOut, Map, Clock } from "lucide-react"
+import { Sparkles, ArrowLeft, Trophy, LogOut, Map, Clock } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
@@ -205,12 +205,6 @@ export default function SubjectSelection() {
               <Button className="kid-btn bg-gradient-to-r from-blue-500 to-cyan-600 text-white flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm md:text-base">
                 <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span className="hidden sm:inline">📊 My Progress</span>
-              </Button>
-            </Link>
-            <Link href="/admin">
-              <Button className="kid-btn bg-gradient-to-r from-purple-500 to-pink-600 text-white flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm md:text-base">
-                <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">⚙️ Admin</span>
               </Button>
             </Link>
             <Link href="/explore-map">
