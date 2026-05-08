@@ -1122,8 +1122,8 @@ ${errorMessages}
           </div>
           <div className="flex items-center gap-2">
             <Link href="/admin/reset-password">
-              <Button variant="outline" className="gap-2 text-slate-700">
-                User Passwords
+              <Button className="kid-btn gap-2 bg-gradient-to-r from-primary via-purple-500 to-secondary hover:shadow-lg hover:shadow-primary/40 text-white font-bold px-5 py-2">
+                🛡️ User Passwords
               </Button>
             </Link>
             <Button
