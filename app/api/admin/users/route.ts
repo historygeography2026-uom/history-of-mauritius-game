@@ -8,27 +8,49 @@ export async function GET(request: NextRequest) {
   if (authError) return authError
 
   try {
-    const result = await pool.query(
-      `SELECT
-         u.id,
-         u.name,
-         u.email,
-         (u.password_hash IS NOT NULL) AS has_password,
-         COALESCE(
-           ARRAY_AGG(DISTINCT a.provider) FILTER (WHERE a.provider IS NOT NULL),
-           ARRAY[]::TEXT[]
-         ) AS providers,
-         u.created_at,
-         u.updated_at,
-         MAX(up.last_attempted_at) AS last_seen
-       FROM users u
-       LEFT JOIN accounts a ON a.user_id = u.id
-       LEFT JOIN user_progress up ON up.user_id = u.id
-       GROUP BY u.id, u.name, u.email, u.password_hash, u.created_at, u.updated_at
-       ORDER BY u.created_at DESC`
+    // Always fetch base users first — this must succeed
+    const usersResult = await pool.query(
+      `SELECT id, name, email, (password_hash IS NOT NULL) AS has_password, created_at, updated_at
+       FROM users ORDER BY created_at DESC`
     )
 
-    return NextResponse.json(result.rows)
+    // Try to load OAuth providers from accounts table.
+    // Handle both snake_case (user_id) and camelCase ("userId") column naming.
+    let providersMap = new Map<number, string[]>()
+    try {
+      const acc = await pool.query(
+        `SELECT user_id, ARRAY_AGG(DISTINCT provider) AS providers FROM accounts GROUP BY user_id`
+      )
+      for (const row of acc.rows) providersMap.set(Number(row.user_id), row.providers ?? [])
+    } catch {
+      try {
+        const acc = await pool.query(
+          `SELECT "userId" AS user_id, ARRAY_AGG(DISTINCT provider) AS providers FROM accounts GROUP BY "userId"`
+        )
+        for (const row of acc.rows) providersMap.set(Number(row.user_id), row.providers ?? [])
+      } catch (e) {
+        console.warn("[admin/users] Could not load providers from accounts table:", e)
+      }
+    }
+
+    // Try to load last activity from user_progress (table may not exist on all deployments)
+    let activityMap = new Map<number, string | null>()
+    try {
+      const act = await pool.query(
+        `SELECT user_id, MAX(last_attempted_at) AS last_seen FROM user_progress GROUP BY user_id`
+      )
+      for (const row of act.rows) activityMap.set(Number(row.user_id), row.last_seen ?? null)
+    } catch (e) {
+      console.warn("[admin/users] Could not load activity from user_progress table:", e)
+    }
+
+    const rows = usersResult.rows.map((u) => ({
+      ...u,
+      providers: providersMap.get(Number(u.id)) ?? [],
+      last_seen: activityMap.get(Number(u.id)) ?? null,
+    }))
+
+    return NextResponse.json(rows)
   } catch (error) {
     console.error("[admin/users] Error fetching users:", error)
     return NextResponse.json({ error: "Failed to fetch users" }, { status: 500 })
