@@ -361,56 +361,69 @@ export default function ExploreMap() {
 
         </div>
 
-        {/* Filters & toggles */}
+        {/* Legend / Filters */}
         <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 items-center">
+            {/* Legend label */}
+            <span className="text-xs font-semibold uppercase tracking-widest text-white/50 mr-1 select-none">Key:</span>
             {activeMap === "mauritius" ? (
               <>
                 {[
-                  { key: "river", label: "Rivers", icon: Waves, color: "from-blue-400 to-blue-600" },
-                  { key: "mountain", label: "Mountains", icon: Mountain, color: "from-amber-600 to-amber-800" },
-                  { key: "plain", label: "Plains", icon: Wheat, color: "from-lime-500 to-green-600" },
-                  { key: "reservoir", label: "Reservoirs", icon: Droplets, color: "from-cyan-500 to-cyan-700" },
-                  { key: "crater", label: "Craters", icon: Flame, color: "from-red-500 to-orange-500" }
-                ].map(({ key, label, icon: Icon, color }) => (
-                  <Button
+                  { key: "river",     label: "Rivers",     icon: Waves,   swatch: "bg-blue-500"  },
+                  { key: "mountain",  label: "Mountains",  icon: Mountain, swatch: "bg-amber-700" },
+                  { key: "plain",     label: "Plains",     icon: Wheat,   swatch: "bg-lime-500"  },
+                  { key: "reservoir", label: "Reservoirs", icon: Droplets, swatch: "bg-cyan-500"  },
+                  { key: "crater",    label: "Craters",    icon: Flame,   swatch: "bg-red-500"   },
+                ].map(({ key, label, icon: Icon, swatch }) => (
+                  <button
                     key={key}
+                    type="button"
                     onClick={() => setFilter(key as typeof filter)}
-                    variant="outline"
-                    className={`border-white/20 transition-all ${
-                      filter === key
-                        ? `bg-gradient-to-r ${color} text-white border-transparent shadow-lg`
-                        : 'bg-white/10 text-white hover:bg-white/20'
-                    }`}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all select-none
+                      ${filter === key
+                        ? "bg-white/20 text-white ring-2 ring-white/50 shadow-md"
+                        : "text-white/70 hover:text-white hover:bg-white/10"
+                      }`}
                   >
-                    <Icon className="w-4 h-4 mr-2" />
+                    {/* colour swatch — this is what makes it look like a legend key */}
+                    <span className={`inline-block w-3 h-3 rounded-sm flex-shrink-0 ${swatch} ${filter === key ? "ring-1 ring-white/60" : "opacity-80"}`} />
+                    <Icon className="w-3.5 h-3.5 flex-shrink-0" />
                     {label}
-                  </Button>
+                  </button>
                 ))}
               </>
             ) : (
               <>
                 {[
-                  { key: "history", label: "History", icon: Landmark, color: "from-amber-500 to-yellow-600" },
-                  { key: "geography", label: "Geography", icon: Mountain, color: "from-green-500 to-emerald-600" },
-                  { key: "both", label: "Both", icon: Compass, color: "from-purple-500 to-indigo-500" }
-                ].map(({ key, label, icon: Icon, color }) => (
-                  <Button
+                  { key: "history",   label: "History",   icon: Landmark, swatch: "bg-amber-500"  },
+                  { key: "geography", label: "Geography", icon: Mountain,  swatch: "bg-green-500"  },
+                  { key: "both",      label: "Both",      icon: Compass,   swatch: "bg-purple-500" },
+                ].map(({ key, label, icon: Icon, swatch }) => (
+                  <button
                     key={key}
+                    type="button"
                     onClick={() => setRodCategory(key as typeof rodCategory)}
-                    variant="outline"
-                    className={`border-white/20 transition-all ${
-                      rodCategory === key
-                        ? `bg-gradient-to-r ${color} text-white border-transparent shadow-lg`
-                        : 'bg-white/10 text-white hover:bg-white/20'
-                    }`}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all select-none
+                      ${rodCategory === key
+                        ? "bg-white/20 text-white ring-2 ring-white/50 shadow-md"
+                        : "text-white/70 hover:text-white hover:bg-white/10"
+                      }`}
                   >
-                    <Icon className="w-4 h-4 mr-2" />
+                    <span className={`inline-block w-3 h-3 rounded-sm flex-shrink-0 ${swatch} ${rodCategory === key ? "ring-1 ring-white/60" : "opacity-80"}`} />
+                    <Icon className="w-3.5 h-3.5 flex-shrink-0" />
                     {label}
-                  </Button>
+                  </button>
                 ))}
               </>
             )}
+
+            {/* Visited legend item — purely informational, no click */}
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium text-white/60 select-none border border-dashed border-white/20 ml-2">
+              <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-emerald-400 text-white flex-shrink-0">
+                <svg viewBox="0 0 10 10" className="w-2 h-2" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg>
+              </span>
+              Visited
+            </span>
           </div>
 
           <div className="flex items-center gap-2">

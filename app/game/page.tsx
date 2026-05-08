@@ -37,7 +37,7 @@ const subjectNames = {
 const GamePage = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { data: session } = useSession()
+  const { data: session, status: sessionStatus } = useSession()
   
   // PERF FIX: Track if component is mounted to prevent state updates after unmount
   const isMountedRef = useRef(true)
@@ -597,11 +597,44 @@ const GamePage = () => {
   }
 
   if (error) {
+    const isNotLoggedIn = sessionStatus === "unauthenticated"
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card className="p-8 text-center border-red-500">
-          <p className="text-red-600 mb-4">{error}</p>
-          <Button onClick={() => router.push("/")}>Back to Home</Button>
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <Card className={`p-8 text-center max-w-md w-full ${isNotLoggedIn ? "border-primary/40" : "border-red-500"}`}>
+          {isNotLoggedIn ? (
+            <>
+              <div className="text-6xl mb-4">🔒</div>
+              <h2 className="text-xl font-bold text-slate-800 mb-2">Login Required</h2>
+              <p className="text-slate-600 mb-6">
+                You need to <span className="font-semibold text-primary">register or log in</span> to attempt questions. Create a free account to start playing and track your progress!
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button
+                  className="bg-gradient-to-r from-primary to-secondary text-white font-bold"
+                  onClick={() => router.push("/auth/sign-up")}
+                >
+                  Register for Free
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => router.push("/auth/login")}
+                >
+                  Log In
+                </Button>
+              </div>
+              <button
+                className="mt-4 text-xs text-slate-400 hover:text-slate-600 underline"
+                onClick={() => router.push("/")}
+              >
+                Back to Home
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="text-red-600 mb-4">{error}</p>
+              <Button onClick={() => router.push("/")}>Back to Home</Button>
+            </>
+          )}
         </Card>
       </div>
     )
