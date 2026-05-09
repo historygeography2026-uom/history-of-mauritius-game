@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Plus, Trash2, RefreshCw, UserPlus } from "lucide-react"
+import { ArrowLeft, Plus, Trash2, RefreshCw, UserPlus, Search } from "lucide-react"
 import Link from "next/link"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
@@ -65,6 +65,7 @@ export default function ResetPasswordPage() {
   const [newEmail, setNewEmail] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [isCreating, setIsCreating] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
 
   const handleSessionError = () => {
     setError("Admin session expired. Please go back to the admin dashboard and log in again.")
@@ -289,25 +290,37 @@ export default function ResetPasswordPage() {
               )}
 
               {/* Toolbar */}
-              <div className="flex items-center justify-between gap-2">
-                <Button
-                  type="button"
-                  onClick={() => setShowAddForm((v) => !v)}
-                  className="kid-btn bg-gradient-to-r from-green-500 to-green-600 text-white gap-2"
-                >
-                  <UserPlus className="h-4 w-4" />
-                  {showAddForm ? "Cancel" : "Add User"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={fetchUsers}
-                  disabled={isLoadingUsers}
-                  className="gap-2"
-                >
-                  <RefreshCw className={`h-4 w-4 ${isLoadingUsers ? "animate-spin" : ""}`} />
-                  Refresh
-                </Button>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    onClick={() => setShowAddForm((v) => !v)}
+                    className="kid-btn bg-gradient-to-r from-green-500 to-green-600 text-white gap-2"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    {showAddForm ? "Cancel" : "Add User"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={fetchUsers}
+                    disabled={isLoadingUsers}
+                    className="gap-2"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${isLoadingUsers ? "animate-spin" : ""}`} />
+                    Refresh
+                  </Button>
+                </div>
+                <div className="relative w-full sm:w-72">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    placeholder="Search by name or email…"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-primary/50 bg-white"
+                  />
+                </div>
               </div>
 
               {/* Add User Form */}
@@ -391,14 +404,27 @@ export default function ResetPasswordPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {users.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={6} className="py-10 text-center text-slate-500">
-                            No users found. Click <strong>Add User</strong> to create the first account.
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        users.map((user) => {
+                      {(() => {
+                        const q = searchQuery.trim().toLowerCase()
+                        const filtered = q
+                          ? users.filter(
+                              (u) =>
+                                u.email.toLowerCase().includes(q) ||
+                                (u.name ?? "").toLowerCase().includes(q)
+                            )
+                          : users
+                        if (filtered.length === 0) {
+                          return (
+                            <TableRow>
+                              <TableCell colSpan={7} className="py-10 text-center text-slate-500">
+                                {users.length === 0
+                                  ? (<>No users found. Click <strong>Add User</strong> to create the first account.</>)
+                                  : "No users match your search."}
+                              </TableCell>
+                            </TableRow>
+                          )
+                        }
+                        return filtered.map((user) => {
                           const isOAuthOnly = !user.has_password
                           return (
                           <TableRow key={user.id} className="hover:bg-slate-50/70">
@@ -454,7 +480,7 @@ export default function ResetPasswordPage() {
                           </TableRow>
                         )
                         })
-                      )}
+                      })()}
                     </TableBody>
                   </Table>
                 </div>

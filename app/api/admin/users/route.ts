@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Try to load last activity from user_progress (table may not exist on all deployments)
+    // Try to load last activity: prefer game activity, fall back to login session time
     let activityMap = new Map<number, string | null>()
     try {
       const act = await pool.query(
@@ -42,6 +42,30 @@ export async function GET(request: NextRequest) {
       for (const row of act.rows) activityMap.set(Number(row.user_id), row.last_seen ?? null)
     } catch (e) {
       console.warn("[admin/users] Could not load activity from user_progress table:", e)
+    }
+
+    // Fill in session-based last_seen for users with no game activity
+    try {
+      // Try snake_case userId first, then camelCase
+      let sessRows: Array<{ user_id: number; last_seen: string | null }> = []
+      try {
+        const sess = await pool.query(
+          `SELECT user_id, MAX(expires) AS last_seen FROM sessions GROUP BY user_id`
+        )
+        sessRows = sess.rows.map((r) => ({ user_id: Number(r.user_id), last_seen: r.last_seen ?? null }))
+      } catch {
+        const sess = await pool.query(
+          `SELECT "userId" AS user_id, MAX(expires) AS last_seen FROM sessions GROUP BY "userId"`
+        )
+        sessRows = sess.rows.map((r) => ({ user_id: Number(r.user_id), last_seen: r.last_seen ?? null }))
+      }
+      for (const row of sessRows) {
+        if (!activityMap.has(row.user_id)) {
+          activityMap.set(row.user_id, row.last_seen)
+        }
+      }
+    } catch (e) {
+      console.warn("[admin/users] Could not load session data:", e)
     }
 
     const rows = usersResult.rows.map((u) => ({
