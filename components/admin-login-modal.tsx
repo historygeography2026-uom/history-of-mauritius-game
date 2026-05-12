@@ -15,7 +15,7 @@ interface AdminLoginModalProps {
 }
 
 export default function AdminLoginModal({ onClose, onLogin, initialError }: AdminLoginModalProps) {
-  const [username, setUsername] = useState("")
+  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState(initialError || "")
   const [loading, setLoading] = useState(false)
@@ -44,7 +44,7 @@ export default function AdminLoginModal({ onClose, onLogin, initialError }: Admi
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
         credentials: "include", // Include cookies
       })
 
@@ -82,12 +82,12 @@ export default function AdminLoginModal({ onClose, onLogin, initialError }: Admi
             )}
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-card-foreground">Username</label>
+              <label className="block text-sm font-semibold mb-2 text-card-foreground">Admin Email</label>
               <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter username"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@example.com"
                 className="w-full px-4 py-2 border-2 border-primary/30 rounded-lg focus:outline-none focus:border-primary bg-background text-foreground"
                 required
               />

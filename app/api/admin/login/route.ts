@@ -27,23 +27,27 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { username, password } = body
+    const { email, password } = body
 
     // Validate input
-    if (!username || !password) {
+    if (!email || !password) {
       return NextResponse.json(
-        { error: "Username and password are required" },
+        { error: "Email and password are required" },
         { status: 400 }
       )
     }
 
     // Get admin credentials from environment variables
-    const adminUsername = process.env.ADMIN_USERNAME
+    const adminEmail1 = process.env.ADMIN_EMAIL_1
     const adminPassword = process.env.ADMIN_PASSWORD
-    const adminUsername2 = process.env.ADMIN_USERNAME_2
+    const adminEmail2 = process.env.ADMIN_EMAIL_2
     const adminPassword2 = process.env.ADMIN_PASSWORD_2
 
-    if (!adminUsername || !adminPassword) {
+    // Fall back to username-based check if ADMIN_EMAIL_1 is not configured
+    const adminUsername = process.env.ADMIN_USERNAME
+    const adminUsername2 = process.env.ADMIN_USERNAME_2
+
+    if (!adminPassword) {
       console.error("[admin/login] Admin credentials not configured in environment")
       return NextResponse.json(
         { error: "Server configuration error" },
@@ -51,29 +55,38 @@ export async function POST(request: Request) {
       )
     }
 
-    // Check against first admin account
-    const isValidAdmin1 =
-      username.toUpperCase() === adminUsername.toUpperCase() &&
-      password === adminPassword
+    const normalizedInput = email.toLowerCase().trim()
 
-    // Check against second admin account (if configured)
+    // If email env vars are configured, match by email
+    // Otherwise fall back to matching the submitted value against usernames (backward compat)
+    const isValidAdmin1 = adminEmail1
+      ? normalizedInput === adminEmail1.toLowerCase().trim() && password === adminPassword
+      : adminUsername
+        ? normalizedInput === adminUsername.toLowerCase() && password === adminPassword
+        : false
+
     const isValidAdmin2 =
-      adminUsername2 && adminPassword2 &&
-      username.toUpperCase() === adminUsername2.toUpperCase() &&
-      password === adminPassword2
+      adminPassword2 &&
+      (adminEmail2
+        ? normalizedInput === adminEmail2.toLowerCase().trim() && password === adminPassword2
+        : adminUsername2
+          ? normalizedInput === adminUsername2.toLowerCase() && password === adminPassword2
+          : false)
 
     if (!isValidAdmin1 && !isValidAdmin2) {
       console.warn(
-        `[admin/login] Failed login attempt for username: ${username.substring(0, 2)}***`
+        `[admin/login] Failed login attempt for email: ${normalizedInput.substring(0, 3)}***`
       )
       return NextResponse.json(
-        { error: "Invalid username or password" },
+        { error: "Invalid email or password" },
         { status: 401 }
       )
     }
 
-    const displayName = isValidAdmin1 ? adminUsername : adminUsername2
-    const adminToken = createAdminSessionToken(displayName?.toUpperCase() || username.toUpperCase())
+    const displayName = isValidAdmin1
+      ? (adminEmail1 || adminUsername || email)
+      : (adminEmail2 || adminUsername2 || email)
+    const adminToken = createAdminSessionToken(displayName?.toUpperCase() || email.toUpperCase())
 
     // Set secure httpOnly cookie with token
     const response = NextResponse.json(
