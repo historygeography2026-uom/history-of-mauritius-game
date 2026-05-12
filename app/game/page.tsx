@@ -420,7 +420,7 @@ const GamePage = () => {
   }, [])
 
   // Confirm exit - save partial score and navigate home
-  const handleExitConfirm = useCallback(async () => {
+  const handleExitConfirm = useCallback(() => {
     if (isUnmountingRef.current) return
     isUnmountingRef.current = true
     isMountedRef.current = false
@@ -428,34 +428,7 @@ const GamePage = () => {
     // Save partial progress to localStorage and database
     saveProgress(subject, parseInt(level), totalStars, false, session?.user?.id)
 
-    // Persist partial results to leaderboard
-    try {
-      const total_points = totalStars * GAME_CONFIG.POINTS_PER_STAR
-      const questionsCompleted = Object.keys(answeredQuestions).length
-      const totalQuestions = mixedQuestions.length
-      const playerName = session?.user?.name || "Guest"
-      const userId = session?.user?.id || null
-
-      await fetch("/api/leaderboard", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          player_name: playerName,
-          user_id: userId,
-          subject,
-          level,
-          stars_earned: totalStars,
-          total_points,
-          questions_completed: questionsCompleted,
-          total_questions: totalQuestions,
-          timed_out: false,
-        }),
-      })
-    } catch (e) {
-      console.error("[v0] Failed to save partial leaderboard entry on exit", e)
-    }
-
-    // Cleanup
+    // Cleanup immediately so navigation is instant
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current)
       timerIntervalRef.current = null
@@ -468,6 +441,31 @@ const GamePage = () => {
     }
     try { stopAllSounds() } catch (e) { /* ignore */ }
     try { clearAllToastsTimeouts() } catch (e) { /* ignore */ }
+
+    // Fire-and-forget leaderboard save — do NOT await so navigation is instant
+    const total_points = totalStars * GAME_CONFIG.POINTS_PER_STAR
+    const questionsCompleted = Object.keys(answeredQuestions).length
+    const totalQuestions = mixedQuestions.length
+    const playerName = session?.user?.name || "Guest"
+    const userId = session?.user?.id || null
+
+    fetch("/api/leaderboard", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        player_name: playerName,
+        user_id: userId,
+        subject,
+        level,
+        stars_earned: totalStars,
+        total_points,
+        questions_completed: questionsCompleted,
+        total_questions: totalQuestions,
+        timed_out: false,
+      }),
+    }).catch((e) => {
+      console.error("[v0] Failed to save partial leaderboard entry on exit", e)
+    })
 
     router.push("/")
   // eslint-disable-next-line react-hooks/exhaustive-deps
