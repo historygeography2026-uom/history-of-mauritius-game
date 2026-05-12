@@ -364,6 +364,85 @@ export default function ExploreMap() {
         {/* Main grid */}
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
+            {/* MAP KEY */}
+            <div className="rounded-xl border border-white/20 bg-black/30 backdrop-blur-sm px-4 py-3">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40 select-none">▬</span>
+                <span className="text-sm font-extrabold uppercase tracking-widest text-white select-none">MAP KEY</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40 select-none">▬</span>
+                <span className="ml-auto text-[11px] text-white/40 italic select-none">click to filter</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {activeMap === "mauritius" ? (
+                  <>
+                    {[
+                      { key: "river",     label: "Rivers",     icon: Waves,    swatch: "bg-blue-500"  },
+                      { key: "mountain",  label: "Mountains",  icon: Mountain,  swatch: "bg-amber-700" },
+                      { key: "plain",     label: "Plains",     icon: Wheat,    swatch: "bg-lime-500"  },
+                      { key: "reservoir", label: "Reservoirs", icon: Droplets, swatch: "bg-cyan-500"  },
+                      { key: "crater",    label: "Craters",    icon: Flame,    swatch: "bg-red-500"   },
+                    ].map(({ key, label, icon: Icon, swatch }) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setFilter(key as typeof filter)}
+                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all select-none
+                          ${filter === key
+                            ? "bg-white text-slate-800 border-white shadow-lg shadow-white/20"
+                            : "bg-white/5 text-white/80 border-white/20 hover:bg-white/15 hover:border-white/40"
+                          }`}
+                      >
+                        <span className={`inline-block w-2.5 h-2.5 rounded-sm flex-shrink-0 ${swatch}`} />
+                        <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+                        {label}
+                      </button>
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    {[
+                      { key: "history",   label: "History",   icon: Landmark, swatch: "bg-amber-500"  },
+                      { key: "geography", label: "Geography", icon: Mountain,  swatch: "bg-green-500"  },
+                      { key: "both",      label: "Both",      icon: Compass,   swatch: "bg-purple-500" },
+                    ].map(({ key, label, icon: Icon, swatch }) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setRodCategory(key as typeof rodCategory)}
+                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all select-none
+                          ${rodCategory === key
+                            ? "bg-white text-slate-800 border-white shadow-lg shadow-white/20"
+                            : "bg-white/5 text-white/80 border-white/20 hover:bg-white/15 hover:border-white/40"
+                          }`}
+                      >
+                        <span className={`inline-block w-2.5 h-2.5 rounded-sm flex-shrink-0 ${swatch}`} />
+                        <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+                        {label}
+                      </button>
+                    ))}
+                  </>
+                )}
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border border-white/20 bg-white/5 text-white/80 select-none">
+                  <span className="inline-flex items-center justify-center w-2.5 h-2.5 rounded-full bg-emerald-400 text-white flex-shrink-0">
+                    <svg viewBox="0 0 10 10" className="w-1.5 h-1.5" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg>
+                  </span>
+                  Visited
+                </span>
+                <div className="ml-auto flex items-center gap-2 flex-shrink-0">
+                  <button type="button" onClick={() => setShowDistricts(!showDistricts)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all select-none
+                      ${showDistricts ? "bg-white text-slate-800 border-white" : "bg-white/5 text-white/60 border-white/20 hover:bg-white/10"}`}>
+                    Districts
+                  </button>
+                  <button type="button" onClick={() => setShowZones(!showZones)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all select-none
+                      ${showZones ? "bg-white text-slate-800 border-white" : "bg-white/5 text-white/60 border-white/20 hover:bg-white/10"}`}>
+                    Zones
+                  </button>
+                </div>
+              </div>
+            </div>
+
             {/* === SINGLE MAP CARD === */}
             <Card className={`relative overflow-hidden border-2 shadow-2xl transition-all duration-700 ease-in-out ${
               activeMap === "mauritius"
@@ -804,85 +883,6 @@ export default function ExploreMap() {
                 </div>
               </div>
             </Card>
-
-            {/* MAP KEY */}
-            <div className="mt-4 rounded-xl border border-white/20 bg-black/30 backdrop-blur-sm px-4 py-3">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40 select-none">▬</span>
-                <span className="text-sm font-extrabold uppercase tracking-widest text-white select-none">MAP KEY</span>
-                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40 select-none">▬</span>
-                <span className="ml-auto text-[11px] text-white/40 italic select-none">click to filter</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {activeMap === "mauritius" ? (
-                  <>
-                    {[
-                      { key: "river",     label: "Rivers",     icon: Waves,    swatch: "bg-blue-500"  },
-                      { key: "mountain",  label: "Mountains",  icon: Mountain,  swatch: "bg-amber-700" },
-                      { key: "plain",     label: "Plains",     icon: Wheat,    swatch: "bg-lime-500"  },
-                      { key: "reservoir", label: "Reservoirs", icon: Droplets, swatch: "bg-cyan-500"  },
-                      { key: "crater",    label: "Craters",    icon: Flame,    swatch: "bg-red-500"   },
-                    ].map(({ key, label, icon: Icon, swatch }) => (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => setFilter(key as typeof filter)}
-                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all select-none
-                          ${filter === key
-                            ? "bg-white text-slate-800 border-white shadow-lg shadow-white/20"
-                            : "bg-white/5 text-white/80 border-white/20 hover:bg-white/15 hover:border-white/40"
-                          }`}
-                      >
-                        <span className={`inline-block w-2.5 h-2.5 rounded-sm flex-shrink-0 ${swatch}`} />
-                        <Icon className="w-3.5 h-3.5 flex-shrink-0" />
-                        {label}
-                      </button>
-                    ))}
-                  </>
-                ) : (
-                  <>
-                    {[
-                      { key: "history",   label: "History",   icon: Landmark, swatch: "bg-amber-500"  },
-                      { key: "geography", label: "Geography", icon: Mountain,  swatch: "bg-green-500"  },
-                      { key: "both",      label: "Both",      icon: Compass,   swatch: "bg-purple-500" },
-                    ].map(({ key, label, icon: Icon, swatch }) => (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => setRodCategory(key as typeof rodCategory)}
-                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all select-none
-                          ${rodCategory === key
-                            ? "bg-white text-slate-800 border-white shadow-lg shadow-white/20"
-                            : "bg-white/5 text-white/80 border-white/20 hover:bg-white/15 hover:border-white/40"
-                          }`}
-                      >
-                        <span className={`inline-block w-2.5 h-2.5 rounded-sm flex-shrink-0 ${swatch}`} />
-                        <Icon className="w-3.5 h-3.5 flex-shrink-0" />
-                        {label}
-                      </button>
-                    ))}
-                  </>
-                )}
-                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border border-white/20 bg-white/5 text-white/80 select-none">
-                  <span className="inline-flex items-center justify-center w-2.5 h-2.5 rounded-full bg-emerald-400 text-white flex-shrink-0">
-                    <svg viewBox="0 0 10 10" className="w-1.5 h-1.5" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg>
-                  </span>
-                  Visited
-                </span>
-                <div className="ml-auto flex items-center gap-2 flex-shrink-0">
-                  <button type="button" onClick={() => setShowDistricts(!showDistricts)}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all select-none
-                      ${showDistricts ? "bg-white text-slate-800 border-white" : "bg-white/5 text-white/60 border-white/20 hover:bg-white/10"}`}>
-                    Districts
-                  </button>
-                  <button type="button" onClick={() => setShowZones(!showZones)}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all select-none
-                      ${showZones ? "bg-white text-slate-800 border-white" : "bg-white/5 text-white/60 border-white/20 hover:bg-white/10"}`}>
-                    Zones
-                  </button>
-                </div>
-              </div>
-            </div>
 
             {/* Quick location lists */}
             <div className="grid xl:grid-cols-2 gap-4 mt-4">
