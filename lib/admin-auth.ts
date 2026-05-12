@@ -132,3 +132,26 @@ export function verifyAdminToken(request: Request): NextResponse | null {
 
   return null
 }
+
+/**
+ * Extract and verify the admin session payload from request cookies.
+ * Returns the payload (including username) if valid, or null.
+ */
+export function getAdminSessionPayload(request: Request): AdminSessionPayload | null {
+  const token = getAdminSessionToken(request)
+  if (!token) return null
+
+  const secret = getAdminSessionSecret()
+  if (!secret) return null
+
+  const [encodedPayload, signature] = token.split(".")
+  if (!encodedPayload || !signature) return null
+
+  const expectedSignature = signPayload(encodedPayload, secret)
+  const sigBuf = Buffer.from(signature)
+  const expBuf = Buffer.from(expectedSignature)
+
+  if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) return null
+
+  return decodePayload(encodedPayload)
+}

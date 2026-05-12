@@ -63,6 +63,7 @@ export default function AdminPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [questionToEdit, setQuestionToEdit] = useState<Question | null>(null)
+  const [googleLoginError, setGoogleLoginError] = useState<string | undefined>(undefined)
 
   const subjects = ["history", "geography"]
   const levels = [1, 2, 3]
@@ -92,9 +93,30 @@ export default function AdminPage() {
 
   useEffect(() => {
     const verifyAdminSession = async () => {
+      const searchParams = new URLSearchParams(window.location.search)
+      const googleLogin = searchParams.get("google_login")
+      const googleError = searchParams.get("error")
+
+      // Handle Google auth errors — show modal with appropriate message
+      if (googleError === "google_not_admin") {
+        window.history.replaceState({}, "", "/admin")
+        setGoogleLoginError("Your Google account is not authorised as an admin.")
+        setShowLoginModal(true)
+        setIsCheckingAdminSession(false)
+        return
+      }
+      if (googleError === "google_no_session") {
+        window.history.replaceState({}, "", "/admin")
+        setGoogleLoginError("Google sign-in failed. Please try again.")
+        setShowLoginModal(true)
+        setIsCheckingAdminSession(false)
+        return
+      }
+
       const savedUser = sessionStorage.getItem("adminUser")
 
-      if (!savedUser) {
+      // No stored session and not coming from Google OAuth — show login modal
+      if (!savedUser && !googleLogin) {
         setShowLoginModal(true)
         setIsCheckingAdminSession(false)
         return
@@ -109,7 +131,19 @@ export default function AdminPage() {
           return
         }
 
-        setCurrentUser(savedUser)
+        const data = await response.json()
+        const username = savedUser || data.username || "ADMIN"
+
+        if (!savedUser) {
+          sessionStorage.setItem("adminUser", username)
+        }
+
+        setCurrentUser(username)
+        setShowLoginModal(false)
+
+        if (googleLogin) {
+          window.history.replaceState({}, "", "/admin")
+        }
       } catch (error) {
         console.error("Error verifying admin session:", error)
         resetAdminSession("Could not verify admin session. Please log in again.")
@@ -757,7 +791,9 @@ ${errorMessages}
     return (
       <AdminLoginModal
         onClose={() => setShowLoginModal(false)}
+        initialError={googleLoginError}
         onLogin={(username) => {
+          setGoogleLoginError(undefined)
           sessionStorage.setItem("adminUser", username)
           setCurrentUser(username)
           setShowLoginModal(false)

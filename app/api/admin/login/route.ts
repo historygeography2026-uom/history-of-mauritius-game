@@ -4,6 +4,7 @@ import {
   clearAdminSessionCookie,
   createAdminSessionToken,
   getAdminSessionToken,
+  getAdminSessionPayload,
   setAdminSessionCookie,
   verifyAdminToken,
 } from "@/lib/admin-auth"
@@ -110,8 +111,10 @@ export async function GET(request: Request) {
       )
     }
 
+    const payload = getAdminSessionPayload(request)
+
     const response = NextResponse.json(
-      { authenticated: true, message: "Admin session valid" },
+      { authenticated: true, username: payload?.username ?? null, message: "Admin session valid" },
       { status: 200 }
     )
 
