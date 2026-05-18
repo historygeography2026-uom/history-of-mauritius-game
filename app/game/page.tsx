@@ -246,8 +246,38 @@ const GamePage = () => {
         }
         return shuffled
       }
-      // Randomly select questions from the whole bank for this level
-      const shuffled = shuffleArray(questions).slice(0, GAME_CONFIG.QUESTIONS_PER_LEVEL)
+
+      // Type-balanced selection: distribute slots evenly across all available question types
+      // so every type present in the DB is represented, not just the majority type.
+      const byType: Record<string, any[]> = {}
+      for (const q of questions) {
+        const t = q.type || "unknown"
+        if (!byType[t]) byType[t] = []
+        byType[t].push(q)
+      }
+      const types = Object.keys(byType)
+      // Shuffle within each type pool
+      types.forEach(t => { byType[t] = shuffleArray(byType[t]) })
+
+      const selected: any[] = []
+      const limit = GAME_CONFIG.QUESTIONS_PER_LEVEL
+      // Round-robin across types until we reach the limit or exhaust all pools
+      const indices: Record<string, number> = {}
+      types.forEach(t => { indices[t] = 0 })
+      let added = true
+      while (selected.length < limit && added) {
+        added = false
+        for (const t of shuffleArray(types)) {
+          if (selected.length >= limit) break
+          if (indices[t] < byType[t].length) {
+            selected.push(byType[t][indices[t]++])
+            added = true
+          }
+        }
+      }
+      // Final shuffle so types aren't always in the same cycling order
+      const shuffled = shuffleArray(selected)
+      console.log("[v0] Type distribution:", types.map(t => `${t}:${Math.min(indices[t], byType[t].length)}`).join(", "))
       console.log("[v0] Setting mixed questions:", shuffled.length)
       if (isUnmountingRef.current || !isMountedRef.current) return
       setMixedQuestions(shuffled)
