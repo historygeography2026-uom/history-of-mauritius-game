@@ -55,7 +55,6 @@ export async function GET(request: NextRequest) {
 
     // Batch fetch all type-specific data in 5 queries (one per type) instead of N queries
     const ids = questions.map((q: any) => q.id)
-    const idList = ids.join(",")
 
     const [mcqRows, matchingRows, fillRows, reorderRows, tfRows] = await Promise.all([
       pool.query(

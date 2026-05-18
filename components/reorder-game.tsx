@@ -298,18 +298,24 @@ export default function ReorderGame({
         </Button>
       ) : (
         <div className="space-y-3">
-          <div className={`rounded-2xl p-3 text-center ${isCorrect ? "bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-400" : "bg-gradient-to-br from-orange-100 to-orange-200 border-2 border-orange-400"}`}>
+          <div className={`rounded-2xl p-3 text-center ${
+            showAnswer
+              ? "bg-gradient-to-br from-blue-100 to-blue-200 border-2 border-blue-400"
+              : isCorrect
+                ? "bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-400"
+                : "bg-gradient-to-br from-orange-100 to-orange-200 border-2 border-orange-400"
+          }`}>
             <p className="text-2xl md:text-3xl font-bold text-card-foreground">
-              {isCorrect ? "🎉 Perfect Timeline!" : "💪 Not quite right!"}
+              {showAnswer ? "📖 Here is the correct order!" : isCorrect ? "🎉 Perfect Timeline!" : "💪 Not quite right!"}
             </p>
-            {!isCorrect && (
+            {!isCorrect && !showAnswer && (
               <p className="mt-1 text-base text-card-foreground">Rearrange and check again!</p>
             )}
           </div>
 
           {isCorrect || showAnswer ? (
             <Button
-              onClick={() => onComplete(isCorrect ? 1 : 0)}
+              onClick={() => onComplete(showAnswer ? 0 : 1)}
               className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-3 rounded-xl shadow-lg font-bold"
             >
               Continue →
