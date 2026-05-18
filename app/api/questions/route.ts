@@ -30,9 +30,9 @@ export async function GET(request: NextRequest) {
     const params: any[] = []
 
     if (!all) {
-      // Handle combined subject: fetch from history, geography AND dedicated combined questions
+      // Combined mode mixes questions from history and geography subjects
       if (subject === "combined") {
-        query += ` AND s.name IN ('history', 'geography', 'combined')`
+        query += ` AND s.name IN ('history', 'geography')`
       } else {
         query += ` AND s.name = $${params.length + 1}`
         params.push(subject)
