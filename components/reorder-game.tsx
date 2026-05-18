@@ -58,7 +58,6 @@ export default function ReorderGame({
   const [showConfetti, setShowConfetti] = useState(false)
   const { playCorrect, playWrong, playClick } = useGameSounds()
   const pendingTimeoutsRef = useRef<number[]>([])
-  const touchStartYRef = useRef<number>(0)
 
   const isSingleMode = !!question
 
@@ -108,27 +107,34 @@ export default function ReorderGame({
   const handleTouchStart = (index: number, e: React.TouchEvent) => {
     if (showResult) return
     setTouchStartIndex(index)
-    touchStartYRef.current = e.touches[0].clientY
   }
 
-  const handleTouchMove = (index: number, e: React.TouchEvent) => {
+  const handleTouchMove = (e: React.TouchEvent) => {
     if (showResult || touchStartIndex === null) return
-    
-    e.preventDefault()
-    const currentY = e.touches[0].clientY
-    const deltaY = currentY - touchStartYRef.current
-    
-    // Only swap if moved more than 30px vertically
-    if (Math.abs(deltaY) > 30 && touchStartIndex !== index) {
-      const newItems = [...items]
-      const touchedItem = newItems[touchStartIndex]
-      newItems.splice(touchStartIndex, 1)
-      newItems.splice(index, 0, touchedItem)
-      
-      setItems(newItems)
-      setTouchStartIndex(index)
-      touchStartYRef.current = currentY
+    const touch = e.touches[0]
+
+    // Touch events always fire on the element where touchstart occurred.
+    // Use elementFromPoint to discover which item is actually under the finger.
+    const el = document.elementFromPoint(touch.clientX, touch.clientY)
+    if (!el) return
+
+    // Walk up the DOM to find the container that carries data-drag-index
+    let target: Element | null = el
+    while (target && !target.hasAttribute('data-drag-index')) {
+      target = target.parentElement
     }
+    if (!target) return
+
+    const targetIndex = parseInt(target.getAttribute('data-drag-index') as string, 10)
+    if (isNaN(targetIndex) || targetIndex === touchStartIndex) return
+
+    const newItems = [...items]
+    const draggedItem = newItems[touchStartIndex]
+    newItems.splice(touchStartIndex, 1)
+    newItems.splice(targetIndex, 0, draggedItem)
+
+    setItems(newItems)
+    setTouchStartIndex(targetIndex)
   }
 
   const handleTouchEnd = () => {
@@ -262,19 +268,21 @@ export default function ReorderGame({
       <div className="mb-2 space-y-1.5">
         {items.map((item, index) => (
           <div
-            key={`${item.event}-${index}`}
+            key={item.event}
+            data-drag-index={String(index)}
             draggable={!showResult}
             onDragStart={() => handleDragStart(index)}
             onDragOver={(e) => handleDragOver(e, index)}
             onTouchStart={(e) => handleTouchStart(index, e)}
-            onTouchMove={(e) => handleTouchMove(index, e)}
+            onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
+            style={!showResult ? { touchAction: 'none' } : undefined}
             className={`flex cursor-move items-center gap-3 rounded-xl border-2 p-2.5 md:p-3 transition-all ${
               touchStartIndex === index && !showResult
-                ? "border-blue-500 bg-gradient-to-r from-blue-200 to-blue-100 scale-102 ring-2 ring-blue-400"
-                : showResult && isCorrect
+                ? "border-blue-500 bg-gradient-to-r from-blue-200 to-blue-100 scale-[1.03] shadow-xl ring-2 ring-blue-400 relative z-10"
+                : showResult && (isCorrect || showAnswer)
                   ? "border-green-400 bg-gradient-to-r from-green-100 to-green-200"
-                  : showResult && !isCorrect
+                  : showResult && !isCorrect && !showAnswer
                     ? "border-orange-300 bg-gradient-to-r from-orange-50 to-yellow-50"
                     : "border-primary/30 bg-gradient-to-r from-blue-50 to-purple-50 hover:border-primary"
             }`}
