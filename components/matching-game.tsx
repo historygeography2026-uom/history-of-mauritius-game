@@ -322,8 +322,6 @@ export default function MatchingGame({
         </div>
       </div>
 
-      </div>
-
       {/* Feedback Message */}
       {!gaveUp && feedback.show && (
         <div
