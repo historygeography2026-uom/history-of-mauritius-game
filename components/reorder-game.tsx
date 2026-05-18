@@ -51,6 +51,8 @@ export default function ReorderGame({
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const [touchStartIndex, setTouchStartIndex] = useState<number | null>(null)
   const [showResult, setShowResult] = useState(false)
+  const [attemptCount, setAttemptCount] = useState(0)
+  const [showAnswer, setShowAnswer] = useState(false)
   const [mascotMood, setMascotMood] = useState<"idle" | "happy" | "sad" | "thinking" | "celebrating" | "encouraging">("idle")
   const [mascotMessage, setMascotMessage] = useState("")
   const [showConfetti, setShowConfetti] = useState(false)
@@ -76,6 +78,8 @@ export default function ReorderGame({
       setCorrectOrder(dbCorrect)
       setItems([...dbItems].sort(() => Math.random() - 0.5))
       setShowResult(false)
+      setAttemptCount(0)
+      setShowAnswer(false)
       setMascotMood("idle")
       setMascotMessage("")
     } else {
@@ -144,6 +148,8 @@ export default function ReorderGame({
       pendingTimeoutsRef.current.push(confettiTimer)
       // Don't auto-advance — let the user click Continue
     } else {
+      const newAttempts = attemptCount + 1
+      setAttemptCount(newAttempts)
       setMascotMood("encouraging")
       setMascotMessage(getRandomMessage("wrong"))
       playWrong()
@@ -155,6 +161,15 @@ export default function ReorderGame({
     setShowResult(false)
     setMascotMood("idle")
     setMascotMessage("")
+  }
+
+  const handleShowAnswer = () => {
+    playClick()
+    setShowAnswer(true)
+    setItems([...correctOrder])
+    setShowResult(true)
+    setMascotMood("thinking")
+    setMascotMessage("Here is the correct order — study it!")
   }
 
   useEffect(() => {
@@ -292,20 +307,31 @@ export default function ReorderGame({
             )}
           </div>
 
-          {isCorrect ? (
+          {isCorrect || showAnswer ? (
             <Button
-              onClick={() => onComplete(1)}
+              onClick={() => onComplete(isCorrect ? 1 : 0)}
               className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-3 rounded-xl shadow-lg font-bold"
             >
               Continue →
             </Button>
           ) : (
-            <Button
-              onClick={() => setShowResult(false)}
-              className="w-full bg-gradient-to-r from-primary to-secondary text-white hover:opacity-90 text-lg py-3 rounded-xl shadow-lg font-bold"
-            >
-              Check My Order! ✓
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button
+                onClick={handleTryAgain}
+                className="w-full bg-gradient-to-r from-primary to-secondary text-white hover:opacity-90 text-lg py-3 rounded-xl shadow-lg font-bold"
+              >
+                Try Again! 🔄
+              </Button>
+              {attemptCount >= 3 && (
+                <Button
+                  onClick={handleShowAnswer}
+                  variant="outline"
+                  className="w-full border-2 border-orange-400 text-orange-600 hover:bg-orange-50 text-base py-2 rounded-xl font-semibold"
+                >
+                  Show Answer & Continue 👁️
+                </Button>
+              )}
+            </div>
           )}
         </div>
       )}
