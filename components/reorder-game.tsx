@@ -51,8 +51,7 @@ export default function ReorderGame({
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const [touchStartIndex, setTouchStartIndex] = useState<number | null>(null)
   const [showResult, setShowResult] = useState(false)
-  const [attemptCount, setAttemptCount] = useState(0)
-  const [showAnswer, setShowAnswer] = useState(false)
+  const [wasCorrect, setWasCorrect] = useState(false)
   const [mascotMood, setMascotMood] = useState<"idle" | "happy" | "sad" | "thinking" | "celebrating" | "encouraging">("idle")
   const [mascotMessage, setMascotMessage] = useState("")
   const [showConfetti, setShowConfetti] = useState(false)
@@ -77,8 +76,7 @@ export default function ReorderGame({
       setCorrectOrder(dbCorrect)
       setItems([...dbItems].sort(() => Math.random() - 0.5))
       setShowResult(false)
-      setAttemptCount(0)
-      setShowAnswer(false)
+      setWasCorrect(false)
       setMascotMood("idle")
       setMascotMessage("")
     } else {
@@ -143,8 +141,9 @@ export default function ReorderGame({
   const handleCheckOrder = () => {
     if (showResult) return
     playClick()
-    setShowResult(true)
     const isOrderCorrect = items.every((item, index) => item.event === correctOrder[index]?.event)
+    setWasCorrect(isOrderCorrect)
+    setShowResult(true)
     if (isOrderCorrect) {
       setMascotMood("celebrating")
       setMascotMessage(getRandomMessage("levelComplete"))
@@ -152,30 +151,12 @@ export default function ReorderGame({
       playCorrect()
       const confettiTimer = window.setTimeout(() => setShowConfetti(false), 3000)
       pendingTimeoutsRef.current.push(confettiTimer)
-      // Don't auto-advance — let the user click Continue
     } else {
-      const newAttempts = attemptCount + 1
-      setAttemptCount(newAttempts)
+      setItems([...correctOrder])
       setMascotMood("encouraging")
       setMascotMessage(getRandomMessage("wrong"))
       playWrong()
     }
-  }
-
-  const handleTryAgain = () => {
-    playClick()
-    setShowResult(false)
-    setMascotMood("idle")
-    setMascotMessage("")
-  }
-
-  const handleShowAnswer = () => {
-    playClick()
-    setShowAnswer(true)
-    setItems([...correctOrder])
-    setShowResult(true)
-    setMascotMood("thinking")
-    setMascotMessage("Here is the correct order — study it!")
   }
 
   useEffect(() => {
@@ -192,7 +173,7 @@ export default function ReorderGame({
     }
   }, [])
 
-  const isCorrect = items.every((item, index) => item.event === correctOrder[index]?.event)
+  const isCorrect = wasCorrect
 
   return (
     <>
@@ -280,15 +261,16 @@ export default function ReorderGame({
             className={`flex cursor-move items-center gap-3 rounded-xl border-2 p-2.5 md:p-3 transition-all ${
               touchStartIndex === index && !showResult
                 ? "border-blue-500 bg-gradient-to-r from-blue-200 to-blue-100 scale-[1.03] shadow-xl ring-2 ring-blue-400 relative z-10"
-                : showResult && (isCorrect || showAnswer)
+                : showResult && wasCorrect
                   ? "border-green-400 bg-gradient-to-r from-green-100 to-green-200"
-                  : showResult && !isCorrect && !showAnswer
-                    ? "border-orange-300 bg-gradient-to-r from-orange-50 to-yellow-50"
+                  : showResult && !wasCorrect
+                    ? "border-blue-300 bg-gradient-to-r from-blue-50 to-blue-100"
                     : "border-primary/30 bg-gradient-to-r from-blue-50 to-purple-50 hover:border-primary"
             }`}
           >
             {!showResult && <GripVertical className="h-6 w-6 text-muted-foreground" />}
-            {showResult && isCorrect && <span className="text-xl">✓</span>}
+            {showResult && wasCorrect && <span className="text-xl">✓</span>}
+            {showResult && !wasCorrect && <span className="text-sm font-bold text-blue-500 w-5 text-center">{index + 1}</span>}
             <div className="flex-1">
               {item.year && <p className="text-lg font-bold text-primary">{item.year}</p>}
               <p className="text-base text-card-foreground break-words">{item.event || "Event"}</p>
@@ -307,46 +289,24 @@ export default function ReorderGame({
       ) : (
         <div className="space-y-3">
           <div className={`rounded-2xl p-3 text-center ${
-            showAnswer
-              ? "bg-gradient-to-br from-blue-100 to-blue-200 border-2 border-blue-400"
-              : isCorrect
-                ? "bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-400"
-                : "bg-gradient-to-br from-orange-100 to-orange-200 border-2 border-orange-400"
+            wasCorrect
+              ? "bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-400"
+              : "bg-gradient-to-br from-blue-100 to-blue-200 border-2 border-blue-400"
           }`}>
             <p className="text-2xl md:text-3xl font-bold text-card-foreground">
-              {showAnswer ? "📖 Here is the correct order!" : isCorrect ? "🎉 Perfect Timeline!" : "💪 Not quite right!"}
+              {wasCorrect ? "🎉 Perfect Timeline!" : "📖 Here is the correct order!"}
             </p>
-            {!isCorrect && !showAnswer && (
-              <p className="mt-1 text-base text-card-foreground">Rearrange and check again!</p>
+            {!wasCorrect && (
+              <p className="mt-1 text-base text-card-foreground">Study the numbered order above!</p>
             )}
           </div>
 
-          {isCorrect || showAnswer ? (
-            <Button
-              onClick={() => onComplete(showAnswer ? 0 : 1)}
-              className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-3 rounded-xl shadow-lg font-bold"
-            >
-              Continue →
-            </Button>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <Button
-                onClick={handleTryAgain}
-                className="w-full bg-gradient-to-r from-primary to-secondary text-white hover:opacity-90 text-lg py-3 rounded-xl shadow-lg font-bold"
-              >
-                Try Again! 🔄
-              </Button>
-              {attemptCount >= 3 && (
-                <Button
-                  onClick={handleShowAnswer}
-                  variant="outline"
-                  className="w-full border-2 border-orange-400 text-orange-600 hover:bg-orange-50 text-base py-2 rounded-xl font-semibold"
-                >
-                  Show Answer & Continue 👁️
-                </Button>
-              )}
-            </div>
-          )}
+          <Button
+            onClick={() => onComplete(wasCorrect ? 1 : 0)}
+            className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-3 rounded-xl shadow-lg font-bold"
+          >
+            Continue →
+          </Button>
         </div>
       )}
     </Card>
