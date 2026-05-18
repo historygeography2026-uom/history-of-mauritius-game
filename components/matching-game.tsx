@@ -70,12 +70,13 @@ export default function MatchingGame({
   const [matched, setMatched] = useState<Set<number>>(new Set())
   const [matchedRight, setMatchedRight] = useState<Set<number>>(new Set())
   const [score, setScore] = useState(0)
+  const [wrongAttempts, setWrongAttempts] = useState(0)
+  const [gaveUp, setGaveUp] = useState(false)
   const [wrongMatch, setWrongMatch] = useState(false)
   const [feedback, setFeedback] = useState<{ show: boolean; correct: boolean }>({ show: false, correct: false })
   const [mascotMood, setMascotMood] = useState<"idle" | "happy" | "sad" | "thinking" | "celebrating" | "encouraging">("idle")
   const [mascotMessage, setMascotMessage] = useState("")
   const [showConfetti, setShowConfetti] = useState(false)
-  const [showComplete, setShowComplete] = useState(false)
   const { playCorrect, playWrong, playClick } = useGameSounds()
   const pendingTimeoutsRef = useRef<number[]>([])
   const isProcessingRef = useRef(false)
@@ -88,7 +89,16 @@ export default function MatchingGame({
     setFeedback({ show: false, correct: false })
     setSelectedLeft(null)
     setSelectedRight(null)
+    setWrongAttempts(0)
+    setGaveUp(false)
   }, [question])
+
+  const handleGiveUp = () => {
+    setGaveUp(true)
+    setFeedback({ show: false, correct: false })
+    setMascotMood("encouraging")
+    setMascotMessage("No worries! Study the correct pairs and try again next time! 💪")
+  }
 
   const handleLeftClick = (index: number) => {
     if (matched.has(index)) return
@@ -128,11 +138,11 @@ export default function MatchingGame({
       if (newMatched.size === matchPairs.length) {
         setMascotMood("celebrating")
         setMascotMessage(getRandomMessage("levelComplete"))
-        setShowComplete(true) // Show Continue button instead of auto-advancing
       }
     } else {
       setFeedback({ show: true, correct: false })
       setWrongMatch(true)
+      setWrongAttempts(prev => prev + 1)
       setMascotMood("encouraging")
       setMascotMessage(getRandomMessage("wrong"))
       playWrong()
@@ -239,7 +249,7 @@ export default function MatchingGame({
         </div>
       )}
 
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className={`grid gap-3 md:grid-cols-2${gaveUp ? " hidden" : ""}`}>
         {/* Left Column */}
         <div className="space-y-1.5">
           <h3 className="text-sm font-bold text-primary mb-1">🎯 Choose one:</h3>
@@ -312,8 +322,10 @@ export default function MatchingGame({
         </div>
       </div>
 
+      </div>
+
       {/* Feedback Message */}
-      {feedback.show && (
+      {!gaveUp && feedback.show && (
         <div
           className={`mt-2 rounded-xl p-2 text-center text-sm font-bold ${
             feedback.correct
@@ -329,7 +341,43 @@ export default function MatchingGame({
         </div>
       )}
 
-      {matched.size === matchPairs.length && matchPairs.length > 0 && (
+      {!gaveUp && wrongAttempts >= 5 && matched.size < matchPairs.length && matchPairs.length > 0 && (
+        <div className="mt-2">
+          <Button
+            onClick={handleGiveUp}
+            variant="outline"
+            className="w-full border-2 border-orange-400 text-orange-600 hover:bg-orange-50 rounded-xl py-2 font-bold"
+          >
+            📖 Show Me the Answers
+          </Button>
+        </div>
+      )}
+
+      {gaveUp && (
+        <div className="mt-3 space-y-3">
+          <div className="rounded-2xl bg-blue-100 p-4 border-2 border-blue-400">
+            <p className="text-xl font-bold text-blue-700 mb-3">📖 Here are the correct pairs:</p>
+            <div className="space-y-2">
+              {matchPairs.map((pair, i) => (
+                <div key={i} className="flex items-center gap-2 bg-white rounded-xl p-2 text-sm font-semibold text-card-foreground border border-blue-200">
+                  <span className="font-bold text-blue-700 w-6 text-center shrink-0">{i + 1}.</span>
+                  <span className="flex-1 break-words">{pair.left}</span>
+                  <span className="text-blue-500 font-bold shrink-0">→</span>
+                  <span className="flex-1 break-words">{pair.right}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <Button
+            onClick={() => onComplete(0)}
+            className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-3 rounded-xl shadow-lg font-bold"
+          >
+            Continue →
+          </Button>
+        </div>
+      )}
+
+      {!gaveUp && matched.size === matchPairs.length && matchPairs.length > 0 && (
         <div className="mt-3 space-y-3">
           <div className="rounded-2xl bg-gradient-to-r from-yellow-100 to-green-100 p-4 text-center border-2 border-green-500 shadow-lg">
             <p className="text-2xl font-black text-green-600 mb-1">🏆 Amazing!</p>

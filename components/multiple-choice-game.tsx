@@ -110,7 +110,11 @@ export default function MultipleChoiceGame({
     return {
       question: singleQuestion.question || singleQuestion.title || "Question",
       options: shuffled,
-      correctAnswer: shuffled.indexOf(correctOptionText),
+      correctAnswer: (() => {
+        const idx = shuffled.indexOf(correctOptionText)
+        if (idx === -1) console.warn("[MCQ] correct option not found in shuffled list:", correctOptionText, shuffled)
+        return idx >= 0 ? idx : 0
+      })(),
       funFact: "Great job!",
       image: singleQuestion.image,
       imageAlt: singleQuestion.imageAlt,

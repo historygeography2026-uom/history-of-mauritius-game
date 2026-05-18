@@ -92,7 +92,7 @@ export default function TrueFalseGame({
     ? {
         statement: singleQuestion.question || singleQuestion.title || "True or False?",
         isTrue: singleQuestion.correct === true || singleQuestion.correct === "true",
-        explanation: "That's the answer!",
+        explanation: singleQuestion.explanation || "That's the answer!",
         image: singleQuestion.image,
         imageAlt: singleQuestion.imageAlt,
       }
