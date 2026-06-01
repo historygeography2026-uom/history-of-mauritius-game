@@ -248,6 +248,14 @@ export const authOptions: NextAuthOptions = {
   events: {
     async signIn({ user }: any) {
       console.log(`[auth] User ${user?.email} signed in`)
+      // Update updated_at on every sign-in so admin "Last Seen" stays current
+      try {
+        if (user?.id) {
+          await pool.query('UPDATE users SET updated_at = NOW() WHERE id = $1', [user.id])
+        }
+      } catch (e) {
+        console.warn('[auth] Could not update last_seen on sign in:', e)
+      }
     },
     async signOut() {
       console.log(`[auth] User signed out`)

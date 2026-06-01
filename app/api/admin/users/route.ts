@@ -71,7 +71,8 @@ export async function GET(request: NextRequest) {
     const rows = usersResult.rows.map((u) => ({
       ...u,
       providers: providersMap.get(Number(u.id)) ?? [],
-      last_seen: activityMap.get(Number(u.id)) ?? null,
+      // Priority: game activity > session expiry approximation > last users.updated_at (set on sign-in)
+      last_seen: activityMap.get(Number(u.id)) ?? u.updated_at ?? null,
     }))
 
     return NextResponse.json(rows)

@@ -390,100 +390,162 @@ export default function ResetPasswordPage() {
                   Loading users...
                 </div>
               ) : (
-                <div className="overflow-x-auto rounded-xl border border-slate-200">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-slate-50">
-                        <TableHead>Name</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Sign-in Method</TableHead>
-                        <TableHead>Created At</TableHead>
-                        <TableHead>Last Seen</TableHead>
-                        <TableHead className="min-w-[260px]">Replace Password</TableHead>
-                        <TableHead className="w-[80px]">Delete</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {(() => {
-                        const q = searchQuery.trim().toLowerCase()
-                        const filtered = q
-                          ? users.filter(
-                              (u) =>
-                                u.email.toLowerCase().includes(q) ||
-                                (u.name ?? "").toLowerCase().includes(q)
-                            )
-                          : users
-                        if (filtered.length === 0) {
-                          return (
-                            <TableRow>
-                              <TableCell colSpan={7} className="py-10 text-center text-slate-500">
-                                {users.length === 0
-                                  ? (<>No users found. Click <strong>Add User</strong> to create the first account.</>)
-                                  : "No users match your search."}
-                              </TableCell>
-                            </TableRow>
-                          )
-                        }
-                        return filtered.map((user) => {
+                (() => {
+                  const q = searchQuery.trim().toLowerCase()
+                  const filtered = q
+                    ? users.filter(
+                        (u) =>
+                          u.email.toLowerCase().includes(q) ||
+                          (u.name ?? "").toLowerCase().includes(q)
+                      )
+                    : users
+
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
+                        {users.length === 0
+                          ? <><strong>No users found.</strong> Click <strong>Add User</strong> to create the first account.</>
+                          : "No users match your search."}
+                      </div>
+                    )
+                  }
+
+                  return (
+                    <>
+                      {/* Mobile: card list (hidden on sm+) */}
+                      <div className="sm:hidden flex flex-col gap-3">
+                        {filtered.map((user) => {
                           const isOAuthOnly = !user.has_password
                           return (
-                          <TableRow key={user.id} className="hover:bg-slate-50/70">
-                            <TableCell className="font-medium text-slate-900">
-                              {user.name?.trim() || <span className="text-slate-400 italic">Unnamed</span>}
-                            </TableCell>
-                            <TableCell className="text-slate-700">{user.email}</TableCell>
-                            <TableCell>
-                              <ProviderBadges providers={user.providers} hasPassword={user.has_password} />
-                            </TableCell>
-                            <TableCell className="text-slate-600 whitespace-nowrap">{formatDateTime(user.created_at)}</TableCell>
-                            <TableCell className="text-slate-600 whitespace-nowrap">{formatLastSeen(user.last_seen)}</TableCell>
-                            <TableCell>
-                              {isOAuthOnly ? (
-                                <span className="text-xs text-slate-400 italic">N/A — uses Google sign-in</span>
-                              ) : (
-                                <div className="flex flex-col gap-2 md:flex-row">
+                            <div key={user.id} className="rounded-xl border border-slate-200 bg-white p-4 flex flex-col gap-3">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="min-w-0">
+                                  <div className="font-semibold text-slate-900 truncate">
+                                    {user.name?.trim() || <span className="text-slate-400 italic">Unnamed</span>}
+                                  </div>
+                                  <div className="text-sm text-slate-500 break-all">{user.email}</div>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="shrink-0 text-red-600 border-red-200 hover:bg-red-50"
+                                  onClick={() => handleDeleteUser(user)}
+                                  disabled={deletingUserId === user.id}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                              <div className="flex flex-col gap-1 text-xs text-slate-500">
+                                <div><ProviderBadges providers={user.providers} hasPassword={user.has_password} /></div>
+                                <div>Last seen: <span className="text-slate-700 font-medium">{formatLastSeen(user.last_seen)}</span></div>
+                                <div>Joined: <span className="text-slate-700">{formatDateTime(user.created_at)}</span></div>
+                              </div>
+                              {!isOAuthOnly && (
+                                <div className="flex gap-2 pt-2 border-t border-slate-100">
                                   <Input
                                     type="password"
                                     placeholder="New password"
                                     value={passwordDrafts[user.id] || ""}
-                                    onChange={(e) =>
-                                      setPasswordDrafts((current) => ({
-                                        ...current,
-                                        [user.id]: e.target.value,
-                                      }))
-                                    }
+                                    onChange={(e) => setPasswordDrafts((c) => ({ ...c, [user.id]: e.target.value }))}
+                                    className="flex-1"
                                   />
                                   <Button
                                     type="button"
-                                    className="kid-btn whitespace-nowrap bg-gradient-to-r from-primary to-blue-600 text-white"
+                                    size="sm"
+                                    className="kid-btn shrink-0 bg-gradient-to-r from-primary to-blue-600 text-white"
                                     onClick={() => handleResetPassword(user)}
                                     disabled={updatingUserId === user.id}
                                   >
-                                    {updatingUserId === user.id ? "Saving..." : "Reset"}
+                                    {updatingUserId === user.id ? "…" : "Reset"}
                                   </Button>
                                 </div>
                               )}
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="text-red-600 border-red-200 hover:bg-red-50 gap-1"
-                                onClick={() => handleDeleteUser(user)}
-                                disabled={deletingUserId === user.id}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                {deletingUserId === user.id ? "..." : ""}
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        )
-                        })
-                      })()}
-                    </TableBody>
-                  </Table>
-                </div>
+                              {isOAuthOnly && (
+                                <div className="pt-2 border-t border-slate-100 text-xs text-slate-400 italic">N/A — uses Google sign-in</div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+
+                      {/* Desktop: table (hidden below sm) */}
+                      <div className="hidden sm:block rounded-xl border border-slate-200">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-slate-50">
+                              <TableHead>Name</TableHead>
+                              <TableHead>Email</TableHead>
+                              <TableHead>Sign-in Method</TableHead>
+                              <TableHead>Created At</TableHead>
+                              <TableHead>Last Seen</TableHead>
+                              <TableHead className="min-w-[260px]">Replace Password</TableHead>
+                              <TableHead className="w-[80px]">Delete</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {filtered.map((user) => {
+                              const isOAuthOnly = !user.has_password
+                              return (
+                                <TableRow key={user.id} className="hover:bg-slate-50/70">
+                                  <TableCell className="font-medium text-slate-900">
+                                    {user.name?.trim() || <span className="text-slate-400 italic">Unnamed</span>}
+                                  </TableCell>
+                                  <TableCell className="text-slate-700">{user.email}</TableCell>
+                                  <TableCell>
+                                    <ProviderBadges providers={user.providers} hasPassword={user.has_password} />
+                                  </TableCell>
+                                  <TableCell className="text-slate-600 whitespace-nowrap">{formatDateTime(user.created_at)}</TableCell>
+                                  <TableCell className="text-slate-600 whitespace-nowrap">{formatLastSeen(user.last_seen)}</TableCell>
+                                  <TableCell>
+                                    {isOAuthOnly ? (
+                                      <span className="text-xs text-slate-400 italic">N/A — uses Google sign-in</span>
+                                    ) : (
+                                      <div className="flex flex-col gap-2 md:flex-row">
+                                        <Input
+                                          type="password"
+                                          placeholder="New password"
+                                          value={passwordDrafts[user.id] || ""}
+                                          onChange={(e) =>
+                                            setPasswordDrafts((current) => ({
+                                              ...current,
+                                              [user.id]: e.target.value,
+                                            }))
+                                          }
+                                        />
+                                        <Button
+                                          type="button"
+                                          className="kid-btn whitespace-nowrap bg-gradient-to-r from-primary to-blue-600 text-white"
+                                          onClick={() => handleResetPassword(user)}
+                                          disabled={updatingUserId === user.id}
+                                        >
+                                          {updatingUserId === user.id ? "Saving..." : "Reset"}
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </TableCell>
+                                  <TableCell>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="text-red-600 border-red-200 hover:bg-red-50 gap-1"
+                                      onClick={() => handleDeleteUser(user)}
+                                      disabled={deletingUserId === user.id}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                      {deletingUserId === user.id ? "..." : ""}
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              )
+                            })}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </>
+                  )
+                })()
               )}
             </div>
           </CardContent>
