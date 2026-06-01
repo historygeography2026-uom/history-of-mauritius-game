@@ -39,13 +39,13 @@ export const SoundToggle = memo(function SoundToggle({ onToggle, className = "" 
       variant="ghost"
       size="icon"
       onClick={handleToggle}
-      className={`h-12 w-12 rounded-full bg-white/80 hover:bg-white shadow-md ${className}`}
+      className={`h-8 w-8 sm:h-12 sm:w-12 rounded-full bg-white/80 hover:bg-white shadow-md ${className}`}
       title={isMuted ? "Unmute sounds" : "Mute sounds"}
     >
       {isMuted ? (
-        <VolumeX className="h-6 w-6 text-gray-500" />
+        <VolumeX className="h-4 w-4 sm:h-6 sm:w-6 text-gray-500" />
       ) : (
-        <Volume2 className="h-6 w-6 text-primary" />
+        <Volume2 className="h-4 w-4 sm:h-6 sm:w-6 text-primary" />
       )}
     </Button>
   )

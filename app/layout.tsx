@@ -22,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${baloo.className} antialiased`}>
+      <body className={`${baloo.className} antialiased overflow-x-hidden`}>
         <NextAuthProvider>
           <KidBackground />
           {children}

@@ -37,12 +37,12 @@ export const DodoTimer = memo(function DodoTimer({ timeLeft, initialTime, onTime
   const mood = getDodoMood()
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-1.5 sm:gap-3">
       {/* Animated Dodo running - PERF FIX: reduced animation count */}
       <div className="relative">
         <svg
           viewBox="0 0 80 80"
-          className={`w-16 h-16 ${isCritical ? "animate-wiggle" : ""}`}
+          className={`w-10 h-10 sm:w-16 sm:h-16 ${isCritical ? "animate-wiggle" : ""}`}
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
@@ -192,7 +192,7 @@ export const DodoTimer = memo(function DodoTimer({ timeLeft, initialTime, onTime
       {/* Timer display */}
       <div className="flex flex-col items-center">
         {/* Time remaining bar */}
-        <div className="w-24 h-3 bg-gray-200 rounded-full overflow-hidden shadow-inner">
+        <div className="w-14 h-2.5 sm:w-24 sm:h-3 bg-gray-200 rounded-full overflow-hidden shadow-inner">
           <div
             className={`h-full transition-all duration-500 rounded-full ${
               isCritical
@@ -207,7 +207,7 @@ export const DodoTimer = memo(function DodoTimer({ timeLeft, initialTime, onTime
 
         {/* Time text */}
         <div
-          className={`mt-1 font-bold text-lg ${
+          className={`mt-0.5 sm:mt-1 font-bold text-xs sm:text-lg ${
             isCritical ? "text-red-500 animate-pulse" : isWarning ? "text-orange-500" : "text-blue-600"
           }`}
         >

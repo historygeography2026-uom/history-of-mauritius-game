@@ -831,39 +831,39 @@ const GamePage = () => {
           that caused browser freeze when combined with timer re-renders every second */}
 
       <div className="relative z-10">
-        <div className="bg-white/90 backdrop-blur-sm sticky top-0 p-4 border-b-4 border-dashed border-primary/20 shadow-md">
+        <div className="bg-white/90 backdrop-blur-sm sticky top-0 p-2 sm:p-4 border-b-4 border-dashed border-primary/20 shadow-md">
           <div className="mx-auto max-w-6xl">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <p className="text-lg font-bold text-primary">
-                  📝 Question {currentQuestionIndex + 1} of {mixedQuestions.length}
+            <div className="mb-2 sm:mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2 sm:gap-4">
+                <p className="text-sm sm:text-lg font-bold text-primary">
+                  📝 Q {currentQuestionIndex + 1}/{mixedQuestions.length}
                 </p>
                 {/* Sound Toggle */}
                 <SoundToggle onToggle={setMuted} />
               </div>
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
                 <Button
                   onClick={handleExitRequest}
                   variant="outline"
                   size="sm"
-                  className="kid-btn border-2 border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
+                  className="kid-btn border-2 border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 px-2 sm:px-3"
                 >
-                  <LogOut className="mr-1 h-4 w-4" />
-                  Exit
+                  <LogOut className="h-4 w-4 sm:mr-1" />
+                  <span className="hidden sm:inline">Exit</span>
                 </Button>
                 <DodoTimer
                   timeLeft={levelTimeLeft}
                   initialTime={levelInitialTime}
                   onTimeUp={noopCallback}
                 />
-                <div className="flex items-center gap-2 rounded-full bg-gradient-to-r from-amber-100 to-yellow-100 border-2 border-amber-300 px-4 py-2.5">
-                  <Star className="h-6 w-6 fill-amber-500 text-amber-500" />
-                  <span className="text-xl font-bold text-amber-700">{totalStars}</span>
+                <div className="flex items-center gap-1 sm:gap-2 rounded-full bg-gradient-to-r from-amber-100 to-yellow-100 border-2 border-amber-300 px-2 py-1.5 sm:px-4 sm:py-2.5">
+                  <Star className="h-4 w-4 sm:h-6 sm:w-6 fill-amber-500 text-amber-500" />
+                  <span className="text-base sm:text-xl font-bold text-amber-700">{totalStars}</span>
                 </div>
               </div>
             </div>
 
-            <div className="h-4 bg-gray-200 rounded-full overflow-hidden shadow-inner border-2 border-gray-300">
+            <div className="h-3 sm:h-4 bg-gray-200 rounded-full overflow-hidden shadow-inner border-2 border-gray-300">
               <div
                 className="h-full bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 transition-all duration-500 rounded-full"
                 style={{ width: `${progressPercent}%` }}
