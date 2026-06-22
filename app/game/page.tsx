@@ -473,7 +473,15 @@ const GamePage = () => {
     try { clearAllToastsTimeouts() } catch (e) { /* ignore */ }
 
     // Fire-and-forget leaderboard save — do NOT await so navigation is instant
-    const total_points = totalStars * GAME_CONFIG.POINTS_PER_STAR
+    // Scoring: base × level multiplier × time bonus
+    const basePoints = totalStars * GAME_CONFIG.POINTS_PER_STAR
+    const levelNum = parseInt(level)
+    const multiplier = GAME_CONFIG.LEVEL_MULTIPLIERS[levelNum] || 1.0
+    const timeRemainingFraction = levelInitialTimeRef.current > 0
+      ? levelTimeLeftRef.current / levelInitialTimeRef.current
+      : 0
+    const timeBonusMultiplier = 1 + (timeRemainingFraction * GAME_CONFIG.TIME_BONUS_MAX_PERCENT / 100)
+    const total_points = Math.round(basePoints * multiplier * timeBonusMultiplier)
     const questionsCompleted = Object.keys(answeredQuestions).length
     const totalQuestions = mixedQuestions.length
     const playerName = session?.user?.name || "Guest"
@@ -516,8 +524,15 @@ const GamePage = () => {
         const controller = new AbortController()
         abortControllerRef.current = controller
         
-        // Points model: configurable points per star
-        const total_points = totalStars * GAME_CONFIG.POINTS_PER_STAR
+        // Scoring: base × level multiplier × time bonus
+        const basePoints = totalStars * GAME_CONFIG.POINTS_PER_STAR
+        const levelNum = parseInt(level)
+        const multiplier = GAME_CONFIG.LEVEL_MULTIPLIERS[levelNum] || 1.0
+        const timeRemainingFraction = levelInitialTimeRef.current > 0
+          ? levelTimeLeftRef.current / levelInitialTimeRef.current
+          : 0
+        const timeBonusMultiplier = 1 + (timeRemainingFraction * GAME_CONFIG.TIME_BONUS_MAX_PERCENT / 100)
+        const total_points = Math.round(basePoints * multiplier * timeBonusMultiplier)
         const questionsCompleted = Object.keys(answeredQuestions).length
         const totalQuestions = mixedQuestions.length
         const playerName = session?.user?.name || "Guest"
@@ -679,6 +694,20 @@ const GamePage = () => {
     const currentLevelBestStars = Math.max(progress[level]?.stars || 0, totalStars)
     const totalAccumulatedStars = previousAccumulatedStars + currentLevelBestStars
 
+    // Score breakdown for display
+    const basePoints = totalStars * GAME_CONFIG.POINTS_PER_STAR
+    const levelNum = parseInt(level)
+    const multiplier = GAME_CONFIG.LEVEL_MULTIPLIERS[levelNum] || 1.0
+    const afterMultiplier = Math.round(basePoints * multiplier)
+    const timeRemainingFraction = levelInitialTimeRef.current > 0
+      ? levelTimeLeftRef.current / levelInitialTimeRef.current
+      : 0
+    // Use raw fraction for score calculation (matches persist path exactly)
+    const timeBonusMultiplier = 1 + (timeRemainingFraction * GAME_CONFIG.TIME_BONUS_MAX_PERCENT / 100)
+    const finalScore = Math.round(basePoints * multiplier * timeBonusMultiplier)
+    // Only round the percent for display purposes
+    const timeBonusPercent = Math.round(timeRemainingFraction * GAME_CONFIG.TIME_BONUS_MAX_PERCENT)
+
     return (
       <>
         <GameConfetti trigger={showLevelCompleteConfetti} type="levelComplete" duration={5000} />
@@ -754,12 +783,26 @@ const GamePage = () => {
               ))}
             </div>
 
-            {/* This Level Stars */}
+            {/* Score Breakdown */}
             <div className="mb-4 rounded-xl bg-gradient-to-r from-secondary to-primary p-6">
-              <p className="mb-2 text-sm text-secondary-foreground">Stars Earned This Level</p>
-              <div className="flex items-center justify-center gap-3">
-                <Star className="h-10 w-10 fill-secondary text-secondary animate-wiggle" />
-                <span className="text-5xl font-bold text-white">{totalStars}</span>
+              <p className="mb-3 text-sm font-semibold text-secondary-foreground">📊 Score Breakdown</p>
+              <div className="space-y-2 text-left text-white">
+                <div className="flex justify-between items-center bg-white/10 rounded-lg px-4 py-2">
+                  <span className="text-sm">⭐ Stars × {GAME_CONFIG.POINTS_PER_STAR} pts</span>
+                  <span className="font-bold">{totalStars} × {GAME_CONFIG.POINTS_PER_STAR} = {basePoints}</span>
+                </div>
+                <div className="flex justify-between items-center bg-white/10 rounded-lg px-4 py-2">
+                  <span className="text-sm">🔥 Level {level} Multiplier</span>
+                  <span className="font-bold">× {multiplier.toFixed(1)} = {afterMultiplier.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center bg-white/10 rounded-lg px-4 py-2">
+                  <span className="text-sm">⚡ Time Bonus</span>
+                  <span className="font-bold">+{timeBonusPercent}% = {finalScore.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center bg-white/20 rounded-lg px-4 py-3 border-2 border-white/30">
+                  <span className="text-lg font-bold">🏆 Final Score</span>
+                  <span className="text-3xl font-extrabold">{finalScore.toLocaleString()}</span>
+                </div>
               </div>
             </div>
 

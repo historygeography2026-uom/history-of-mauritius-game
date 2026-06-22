@@ -10,13 +10,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Trophy, ArrowLeft, Search, ArrowUpDown, ArrowUp, ArrowDown,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Flame, Sparkles,
+  Layers, List,
 } from "lucide-react"
 import { useSession } from "next-auth/react"
 
 export const dynamic = "force-dynamic"
 
 type LeaderboardRow = {
-  id: number
+  id: number | null
   user_id: string | null
   display_name: string
   avatar_url: string | null
@@ -25,9 +26,15 @@ type LeaderboardRow = {
   played_at: string
   subject: string | null
   level: number | null
+  levels_completed: number | null
+  questions_completed?: number
+  total_questions?: number
+  timed_out?: boolean
 }
 
-type SortField = "total_points" | "stars_earned" | "played_at" | "display_name" | "level"
+type SortField = "total_points" | "stars_earned" | "played_at" | "display_name" | "level" | "levels_completed"
+
+type ViewMode = "cumulated" | "level"
 
 const ROWS_PER_PAGE = 20
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
@@ -57,6 +64,7 @@ export default function Leaderboard() {
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [sortBy, setSortBy] = useState<SortField>("total_points")
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc")
+  const [viewMode, setViewMode] = useState<ViewMode>("cumulated")
   const { data: session } = useSession()
   const [encouragement] = useState(() => encouragements[Math.floor(Math.random() * encouragements.length)])
 
@@ -71,7 +79,7 @@ export default function Leaderboard() {
 
   const apiUrl =
     `/api/leaderboard?subject=${selectedCategory}&page=${page}&limit=${ROWS_PER_PAGE}` +
-    `&sortBy=${sortBy}&sortOrder=${sortOrder}` +
+    `&sortBy=${sortBy}&sortOrder=${sortOrder}&view=${viewMode}` +
     (debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : "")
 
   const { data, isLoading, error } = useSWR<{
@@ -79,10 +87,11 @@ export default function Leaderboard() {
     total: number
     page: number
     limit: number
+    view: ViewMode
   }>(apiUrl, fetcher, { refreshInterval: 30000 })
 
-  // Reset page on category or sort change
-  useEffect(() => { setPage(1) }, [selectedCategory, sortBy, sortOrder])
+  // Reset page on category, sort, or view change
+  useEffect(() => { setPage(1) }, [selectedCategory, sortBy, sortOrder, viewMode])
 
   const toggleSort = useCallback((field: SortField) => {
     if (sortBy === field) {
@@ -182,44 +191,95 @@ export default function Leaderboard() {
           ))}
         </div>
 
-        {/* Search */}
-        <div className="relative mb-6">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input
-            placeholder="🔍 Search for a player..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-12 h-12 text-base rounded-xl border-2 border-gray-200 focus:border-amber-400 focus:ring-amber-200 bg-white/90 shadow-sm"
-          />
-          {search && (
+        {/* View toggle + Search */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          {/* View Mode Toggle */}
+          <div className="flex rounded-xl overflow-hidden border-2 border-gray-200 bg-white/90 shadow-sm shrink-0">
             <button
-              onClick={() => setSearch("")}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm font-medium"
+              onClick={() => setViewMode("cumulated")}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-bold transition-all ${
+                viewMode === "cumulated"
+                  ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-inner"
+                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+              }`}
             >
-              Clear
+              <Layers className="h-4 w-4" />
+              Cumulated
             </button>
-          )}
+            <button
+              onClick={() => setViewMode("level")}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-bold transition-all ${
+                viewMode === "level"
+                  ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-inner"
+                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              <List className="h-4 w-4" />
+              Per Level
+            </button>
+          </div>
+
+          {/* Search */}
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+              placeholder="🔍 Search for a player..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-12 h-12 text-base rounded-xl border-2 border-gray-200 focus:border-amber-400 focus:ring-amber-200 bg-white/90 shadow-sm"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm font-medium"
+              >
+                Clear
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Leaderboard table */}
         <Card className="kid-card overflow-hidden bg-white/95 backdrop-blur-sm shadow-xl border-2 border-white/60">
-          {/* Sort header */}
-          <div className="hidden md:grid grid-cols-[60px_1fr_120px_80px_80px_130px] gap-2 px-4 py-3 bg-gradient-to-r from-gray-50 to-gray-100 border-b text-xs font-bold text-gray-500 uppercase tracking-wider">
-            <div className="text-center">Rank</div>
-            <button onClick={() => toggleSort("display_name")} className="flex items-center gap-1 hover:text-gray-800 transition-colors">
-              Player <SortIcon field="display_name" />
-            </button>
-            <div className="text-center">Subject</div>
-            <button onClick={() => toggleSort("level")} className="flex items-center gap-1 justify-center hover:text-gray-800 transition-colors">
-              Level <SortIcon field="level" />
-            </button>
-            <button onClick={() => toggleSort("total_points")} className="flex items-center gap-1 justify-end hover:text-gray-800 transition-colors">
-              Points <SortIcon field="total_points" />
-            </button>
-            <button onClick={() => toggleSort("played_at")} className="flex items-center gap-1 justify-end hover:text-gray-800 transition-colors">
-              Date <SortIcon field="played_at" />
-            </button>
-          </div>
+          {/* Sort header — CUMULATED VIEW */}
+          {viewMode === "cumulated" && (
+            <div className="hidden md:grid grid-cols-[60px_1fr_120px_100px_80px_130px] gap-2 px-4 py-3 bg-gradient-to-r from-gray-50 to-gray-100 border-b text-xs font-bold text-gray-500 uppercase tracking-wider">
+              <div className="text-center">Rank</div>
+              <button onClick={() => toggleSort("display_name")} className="flex items-center gap-1 hover:text-gray-800 transition-colors">
+                Player <SortIcon field="display_name" />
+              </button>
+              <div className="text-center">Subject</div>
+              <button onClick={() => toggleSort("levels_completed")} className="flex items-center gap-1 justify-center hover:text-gray-800 transition-colors">
+                Levels <SortIcon field="levels_completed" />
+              </button>
+              <button onClick={() => toggleSort("total_points")} className="flex items-center gap-1 justify-end hover:text-gray-800 transition-colors">
+                Points <SortIcon field="total_points" />
+              </button>
+              <button onClick={() => toggleSort("played_at")} className="flex items-center gap-1 justify-end hover:text-gray-800 transition-colors">
+                Last Played <SortIcon field="played_at" />
+              </button>
+            </div>
+          )}
+
+          {/* Sort header — PER-LEVEL VIEW */}
+          {viewMode === "level" && (
+            <div className="hidden md:grid grid-cols-[60px_1fr_120px_80px_80px_130px] gap-2 px-4 py-3 bg-gradient-to-r from-gray-50 to-gray-100 border-b text-xs font-bold text-gray-500 uppercase tracking-wider">
+              <div className="text-center">Rank</div>
+              <button onClick={() => toggleSort("display_name")} className="flex items-center gap-1 hover:text-gray-800 transition-colors">
+                Player <SortIcon field="display_name" />
+              </button>
+              <div className="text-center">Subject</div>
+              <button onClick={() => toggleSort("level")} className="flex items-center gap-1 justify-center hover:text-gray-800 transition-colors">
+                Level <SortIcon field="level" />
+              </button>
+              <button onClick={() => toggleSort("total_points")} className="flex items-center gap-1 justify-end hover:text-gray-800 transition-colors">
+                Points <SortIcon field="total_points" />
+              </button>
+              <button onClick={() => toggleSort("played_at")} className="flex items-center gap-1 justify-end hover:text-gray-800 transition-colors">
+                Date <SortIcon field="played_at" />
+              </button>
+            </div>
+          )}
 
           {/* Loading state */}
           {isLoading && (
@@ -271,7 +331,7 @@ export default function Leaderboard() {
 
                 return (
                   <div
-                    key={r.id}
+                    key={`${r.display_name}-${r.subject}-${r.level}-${i}`}
                     className={`
                       group transition-all duration-200
                       ${isCurrentUser
@@ -283,51 +343,101 @@ export default function Leaderboard() {
                       hover:bg-amber-50/80 hover:shadow-sm
                     `}
                   >
-                    {/* Desktop row */}
-                    <div className="hidden md:grid grid-cols-[60px_1fr_120px_80px_80px_130px] gap-2 items-center px-4 py-3">
-                      <div className="flex justify-center">{rankBadge(rank)}</div>
-                      <div className="flex items-center gap-3 min-w-0">
-                        <Avatar className={`h-9 w-9 shrink-0 ring-2 ${isTop3 ? "ring-amber-300" : isCurrentUser ? "ring-blue-300" : "ring-gray-200"}`}>
-                          <AvatarImage src={r.avatar_url ?? undefined} alt={r.display_name} />
-                          <AvatarFallback className={`text-xs font-bold ${isTop3 ? "bg-amber-100 text-amber-700" : "bg-gray-100"}`}>
-                            {r.display_name?.slice(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0">
-                          <span className={`font-bold text-sm truncate block ${isCurrentUser ? "text-blue-700" : ""}`}>
-                            {r.display_name}
-                          </span>
-                          {isCurrentUser && (
-                            <span className="text-[10px] font-semibold bg-blue-500 text-white px-2 py-0.5 rounded-full">
-                              ⭐ That&apos;s You!
+                    {/* Desktop row — CUMULATED VIEW */}
+                    {viewMode === "cumulated" && (
+                      <div className="hidden md:grid grid-cols-[60px_1fr_120px_100px_80px_130px] gap-2 items-center px-4 py-3">
+                        <div className="flex justify-center">{rankBadge(rank)}</div>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <Avatar className={`h-9 w-9 shrink-0 ring-2 ${isTop3 ? "ring-amber-300" : isCurrentUser ? "ring-blue-300" : "ring-gray-200"}`}>
+                            <AvatarImage src={r.avatar_url ?? undefined} alt={r.display_name} />
+                            <AvatarFallback className={`text-xs font-bold ${isTop3 ? "bg-amber-100 text-amber-700" : "bg-gray-100"}`}>
+                              {r.display_name?.slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <span className={`font-bold text-sm truncate block ${isCurrentUser ? "text-blue-700" : ""}`}>
+                              {r.display_name}
                             </span>
-                          )}
+                            {isCurrentUser && (
+                              <span className="text-[10px] font-semibold bg-blue-500 text-white px-2 py-0.5 rounded-full">
+                                ⭐ That&apos;s You!
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex justify-center">{subjectBadge(r.subject)}</div>
+                        <div className="text-center">
+                          <span className="inline-flex items-center gap-1 text-sm font-bold bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 px-2.5 py-1 rounded-lg">
+                            <Flame className="h-3.5 w-3.5 text-green-600" />
+                            {r.levels_completed ?? 0}/3
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <span className={`text-sm font-extrabold ${isTop3 ? "text-amber-600" : "text-gray-800"}`}>
+                            {r.total_points.toLocaleString()}
+                          </span>
+                          <span className="text-xs text-muted-foreground ml-0.5">pts</span>
+                          <div className="flex items-center justify-end gap-0.5 mt-0.5">
+                            {Array.from({ length: Math.min(r.stars_earned, 5) }).map((_, si) => (
+                              <Star key={si} className="h-3 w-3 fill-amber-400 text-amber-400" />
+                            ))}
+                            {r.stars_earned > 5 && <span className="text-[10px] text-amber-600 font-bold">+{r.stars_earned - 5}</span>}
+                          </div>
+                        </div>
+                        <div className="text-right text-xs text-muted-foreground leading-tight">
+                          <div className="font-medium">{formatDate(r.played_at)}</div>
+                          <div>{formatTime(r.played_at)}</div>
                         </div>
                       </div>
-                      <div className="flex justify-center">{subjectBadge(r.subject)}</div>
-                      <div className="text-center">
-                        <span className="inline-flex items-center gap-1 text-sm font-bold bg-gray-100 px-2 py-1 rounded-lg">
-                          <Flame className="h-3.5 w-3.5 text-orange-500" />
-                          {r.level ?? "-"}
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <span className={`text-sm font-extrabold ${isTop3 ? "text-amber-600" : "text-gray-800"}`}>
-                          {r.total_points.toLocaleString()}
-                        </span>
-                        <span className="text-xs text-muted-foreground ml-0.5">pts</span>
-                        <div className="flex items-center justify-end gap-0.5 mt-0.5">
-                          {Array.from({ length: Math.min(r.stars_earned, 5) }).map((_, si) => (
-                            <Star key={si} className="h-3 w-3 fill-amber-400 text-amber-400" />
-                          ))}
-                          {r.stars_earned > 5 && <span className="text-[10px] text-amber-600 font-bold">+{r.stars_earned - 5}</span>}
+                    )}
+
+                    {/* Desktop row — PER-LEVEL VIEW */}
+                    {viewMode === "level" && (
+                      <div className="hidden md:grid grid-cols-[60px_1fr_120px_80px_80px_130px] gap-2 items-center px-4 py-3">
+                        <div className="flex justify-center">{rankBadge(rank)}</div>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <Avatar className={`h-9 w-9 shrink-0 ring-2 ${isTop3 ? "ring-amber-300" : isCurrentUser ? "ring-blue-300" : "ring-gray-200"}`}>
+                            <AvatarImage src={r.avatar_url ?? undefined} alt={r.display_name} />
+                            <AvatarFallback className={`text-xs font-bold ${isTop3 ? "bg-amber-100 text-amber-700" : "bg-gray-100"}`}>
+                              {r.display_name?.slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <span className={`font-bold text-sm truncate block ${isCurrentUser ? "text-blue-700" : ""}`}>
+                              {r.display_name}
+                            </span>
+                            {isCurrentUser && (
+                              <span className="text-[10px] font-semibold bg-blue-500 text-white px-2 py-0.5 rounded-full">
+                                ⭐ That&apos;s You!
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex justify-center">{subjectBadge(r.subject)}</div>
+                        <div className="text-center">
+                          <span className="inline-flex items-center gap-1 text-sm font-bold bg-gray-100 px-2 py-1 rounded-lg">
+                            <Flame className="h-3.5 w-3.5 text-orange-500" />
+                            {r.level ?? "-"}
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <span className={`text-sm font-extrabold ${isTop3 ? "text-amber-600" : "text-gray-800"}`}>
+                            {r.total_points.toLocaleString()}
+                          </span>
+                          <span className="text-xs text-muted-foreground ml-0.5">pts</span>
+                          <div className="flex items-center justify-end gap-0.5 mt-0.5">
+                            {Array.from({ length: Math.min(r.stars_earned, 5) }).map((_, si) => (
+                              <Star key={si} className="h-3 w-3 fill-amber-400 text-amber-400" />
+                            ))}
+                            {r.stars_earned > 5 && <span className="text-[10px] text-amber-600 font-bold">+{r.stars_earned - 5}</span>}
+                          </div>
+                        </div>
+                        <div className="text-right text-xs text-muted-foreground leading-tight">
+                          <div className="font-medium">{formatDate(r.played_at)}</div>
+                          <div>{formatTime(r.played_at)}</div>
                         </div>
                       </div>
-                      <div className="text-right text-xs text-muted-foreground leading-tight">
-                        <div className="font-medium">{formatDate(r.played_at)}</div>
-                        <div>{formatTime(r.played_at)}</div>
-                      </div>
-                    </div>
+                    )}
 
                     {/* Mobile row */}
                     <div className="md:hidden flex items-center gap-3 px-3 py-3">
@@ -351,7 +461,11 @@ export default function Leaderboard() {
                         </div>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           {subjectBadge(r.subject)}
-                          <span className="text-xs text-muted-foreground">Lv {r.level ?? "-"}</span>
+                          {viewMode === "level" ? (
+                            <span className="text-xs text-muted-foreground">Lv {r.level ?? "-"}</span>
+                          ) : (
+                            <span className="text-xs text-green-600 font-medium">{r.levels_completed ?? 0}/3 levels</span>
+                          )}
                         </div>
                         <div className="text-[11px] text-muted-foreground mt-0.5">
                           {formatDate(r.played_at)} · {formatTime(r.played_at)}

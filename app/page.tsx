@@ -301,6 +301,10 @@ export default function SubjectSelection() {
               Pick a subject above to begin! Each one has 3 exciting levels with fun games, 
               pictures, and amazing facts about our beautiful island. Collect ⭐ stars and become a Mauritius expert!
             </p>
+            <div className="mt-5 text-sm text-card-foreground/80 font-medium italic space-y-1">
+              <p>This learning platform was developed at the University of Mauritius by Abdallah Peerally and Sameerchand Pudaruth.</p>
+              <p>This work is supported by the Higher Education Commission (HEC) of Mauritius under the award number INT-2025-00135.</p>
+            </div>
           </div>
         </Card>
       </div>
