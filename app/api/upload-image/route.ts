@@ -3,13 +3,7 @@ import { writeFile, mkdir, unlink } from "fs/promises"
 import path from "path"
 import { verifyAdminToken } from "@/lib/admin-auth"
 
-// Render persistent disk mount point (or local fallback for dev)
-const IMAGES_DIR = process.env.RENDER_DISK_PATH
-  ? path.join(process.env.RENDER_DISK_PATH, "question-images")
-  : path.join(process.cwd(), "public", "uploads")
-
 export async function POST(request: Request) {
-  // Admin auth check via token validation
   const authError = verifyAdminToken(request)
   if (authError) return authError
 
@@ -23,10 +17,10 @@ export async function POST(request: Request) {
     }
 
     // Validate file type
-    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"]
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
-        { error: "Invalid file type. Allowed: JPG, PNG, GIF, WebP" },
+        { error: "Invalid file type. Allowed: JPG, PNG, GIF, WebP, SVG" },
         { status: 400 }
       )
     }
@@ -40,24 +34,35 @@ export async function POST(request: Request) {
       )
     }
 
-    // Generate unique filename
-    const fileExt = file.name.split(".").pop() || "jpg"
+    // Generate clean filename
+    const fileExt = file.name.split(".").pop()?.toLowerCase() || "jpg"
     const timestamp = Date.now()
     const randomId = Math.random().toString(36).substring(2, 8)
     const fileName = questionId
       ? `question-${questionId}-${timestamp}.${fileExt}`
-      : `temp-${timestamp}-${randomId}.${fileExt}`
-    const filePath = path.join(IMAGES_DIR, fileName)
+      : `upload-${timestamp}-${randomId}.${fileExt}`
 
-    // Create directory if it doesn't exist
-    await mkdir(IMAGES_DIR, { recursive: true })
-
-    // Convert file to buffer and write to disk
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
-    await writeFile(filePath, buffer)
 
-    // Return the URL path — stored in questions.image_url by the admin
+    // Save to all candidate locations to ensure persistence
+    const targetDirs: string[] = []
+
+    if (process.env.RENDER_DISK_PATH) {
+      targetDirs.push(path.join(process.env.RENDER_DISK_PATH, "question-images"))
+    }
+    targetDirs.push(path.join(process.cwd(), "public", "uploads"))
+
+    for (const dir of targetDirs) {
+      try {
+        await mkdir(dir, { recursive: true })
+        await writeFile(path.join(dir, fileName), buffer)
+      } catch (err) {
+        console.warn(`[upload-image] Warning writing to ${dir}:`, err)
+      }
+    }
+
+    // Standardized URL format
     const imageUrl = `/api/images/${fileName}`
 
     return NextResponse.json({
@@ -65,14 +70,12 @@ export async function POST(request: Request) {
       url: imageUrl,
     })
   } catch (error: any) {
-    console.error("Error uploading image:", error)
+    console.error("[upload-image] Error uploading image:", error)
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 })
   }
 }
 
-// Delete an image file from disk
 export async function DELETE(request: Request) {
-  // Admin auth check via token validation
   const authError = verifyAdminToken(request)
   if (authError) return authError
 
@@ -81,16 +84,27 @@ export async function DELETE(request: Request) {
     const url = searchParams.get("url")
 
     if (url) {
-      const fileName = url.split("/").pop()
+      const fileName = path.basename(url)
       if (fileName) {
-        const filePath = path.join(IMAGES_DIR, fileName)
-        try { await unlink(filePath) } catch { /* file may already be gone */ }
+        const targetDirs: string[] = []
+        if (process.env.RENDER_DISK_PATH) {
+          targetDirs.push(path.join(process.env.RENDER_DISK_PATH, "question-images"))
+        }
+        targetDirs.push(path.join(process.cwd(), "public", "uploads"))
+
+        for (const dir of targetDirs) {
+          try {
+            await unlink(path.join(dir, fileName))
+          } catch {
+            // ignore if not present in that folder
+          }
+        }
       }
     }
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error("Error deleting image:", error)
+    console.error("[upload-image] Error deleting image:", error)
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 })
   }
 }

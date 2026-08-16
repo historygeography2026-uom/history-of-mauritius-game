@@ -7,14 +7,13 @@ import { Star, Volume2 } from "lucide-react"
 import Image from "next/image"
 import dynamic from "next/dynamic"
 import { DodoMascot, getRandomMessage } from "@/components/dodo-mascot"
-const GameConfetti = dynamic(() => import("@/components/game-confetti").then(m => ({ default: m.GameConfetti })), { ssr: false })
+const GameConfetti = dynamic(() => import("@/components/game-confetti").then((m) => ({ default: m.GameConfetti })), { ssr: false })
 import { useGameSounds, isGameMuted } from "@/hooks/use-game-sounds"
 
 // Text-to-speech function
 const speakText = (text: string) => {
   if (isGameMuted()) return
   if (typeof window !== "undefined" && "speechSynthesis" in window) {
-    // Cancel any ongoing speech
     window.speechSynthesis.cancel()
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.rate = 0.9
@@ -79,7 +78,7 @@ export default function MatchingGame({
   const [showConfetti, setShowConfetti] = useState(false)
   const { playCorrect, playWrong, playClick } = useGameSounds()
   const pendingTimeoutsRef = useRef<number[]>([])
-  const isProcessingRef = useRef(false)
+
   useEffect(() => {
     const pairsToUse = question?.pairs && Array.isArray(question.pairs) ? question.pairs : builtInPairs
     setMatchPairs(pairsToUse)
@@ -100,39 +99,32 @@ export default function MatchingGame({
     setMascotMessage("No worries! Study the correct pairs and try again next time! 💪")
   }
 
-  const handleLeftClick = (index: number) => {
-    if (matched.has(index)) return
-    playClick()
-    setSelectedLeft(index)
-    setFeedback({ show: false, correct: false })
-  }
-
-  const handleRightClick = (index: number) => {
-    if (selectedLeft === null) return
-    if (matchedRight.has(index)) return
-    if (isProcessingRef.current) return
-    isProcessingRef.current = true
-    playClick()
-    setSelectedRight(index)
-
-    const leftValue = matchPairs[selectedLeft]?.left
-    const rightValue = rightItems[index]
+  // Instant evaluation function when both sides are picked
+  const evaluateMatch = (leftIdx: number, rightIdx: number) => {
+    const leftValue = matchPairs[leftIdx]?.left
+    const rightValue = rightItems[rightIdx]
     const correctPair = matchPairs.find((p: MatchPair) => p.left === leftValue && p.right === rightValue)
 
     if (correctPair) {
+      // Correct match: instant registration, 0ms delay!
       const newMatched = new Set(matched)
-      newMatched.add(selectedLeft)
+      newMatched.add(leftIdx)
       setMatched(newMatched)
+
       const newMatchedRight = new Set(matchedRight)
-      newMatchedRight.add(index)
+      newMatchedRight.add(rightIdx)
       setMatchedRight(newMatchedRight)
-      setScore(score + 1)
+
+      setSelectedLeft(null)
+      setSelectedRight(null)
+      setScore((prev) => prev + 1)
       setFeedback({ show: true, correct: true })
       setMascotMood("happy")
       setMascotMessage(getRandomMessage("correct"))
       setShowConfetti(true)
       playCorrect()
-      const confettiTimer = window.setTimeout(() => setShowConfetti(false), 2000)
+
+      const confettiTimer = window.setTimeout(() => setShowConfetti(false), 1500)
       pendingTimeoutsRef.current.push(confettiTimer)
 
       if (newMatched.size === matchPairs.length) {
@@ -140,36 +132,57 @@ export default function MatchingGame({
         setMascotMessage(getRandomMessage("levelComplete"))
       }
     } else {
+      // Incorrect match: show quick 300ms feedback and unlock immediately
       setFeedback({ show: true, correct: false })
       setWrongMatch(true)
-      setWrongAttempts(prev => prev + 1)
+      setWrongAttempts((prev) => prev + 1)
       setMascotMood("encouraging")
       setMascotMessage(getRandomMessage("wrong"))
       playWrong()
-      const wrongTimer = window.setTimeout(() => setWrongMatch(false), 600)
+
+      const wrongTimer = window.setTimeout(() => {
+        setWrongMatch(false)
+        setSelectedLeft(null)
+        setSelectedRight(null)
+        setFeedback({ show: false, correct: false })
+      }, 350)
       pendingTimeoutsRef.current.push(wrongTimer)
     }
+  }
 
-    const resetTimer = window.setTimeout(() => {
-      setSelectedLeft(null)
-      setSelectedRight(null)
+  const handleLeftClick = (index: number) => {
+    if (matched.has(index)) return
+    playClick()
+
+    if (selectedRight !== null) {
+      // Right was already selected -> complete the match immediately!
+      setSelectedLeft(index)
+      evaluateMatch(index, selectedRight)
+    } else {
+      // Toggle or select left item
+      setSelectedLeft(selectedLeft === index ? null : index)
       setFeedback({ show: false, correct: false })
-      isProcessingRef.current = false
-      if (!correctPair) {
-        setMascotMood("idle")
-        setMascotMessage("")
-      }
-    }, 1200)
-    pendingTimeoutsRef.current.push(resetTimer)
+    }
+  }
+
+  const handleRightClick = (index: number) => {
+    if (matchedRight.has(index)) return
+    playClick()
+
+    if (selectedLeft !== null) {
+      // Left was already selected -> complete the match immediately!
+      setSelectedRight(index)
+      evaluateMatch(selectedLeft, index)
+    } else {
+      // Toggle or select right item
+      setSelectedRight(selectedRight === index ? null : index)
+      setFeedback({ show: false, correct: false })
+    }
   }
 
   useEffect(() => {
     return () => {
-      try {
-        pendingTimeoutsRef.current.forEach((t) => clearTimeout(t))
-      } catch (e) {
-        // ignore
-      }
+      pendingTimeoutsRef.current.forEach((t) => clearTimeout(t))
       pendingTimeoutsRef.current = []
       if (typeof window !== "undefined" && "speechSynthesis" in window) {
         window.speechSynthesis.cancel()
@@ -177,219 +190,188 @@ export default function MatchingGame({
     }
   }, [])
 
+  const handleNext = () => {
+    playClick()
+    const finalScore = gaveUp ? Math.max(0, score - 1) : score
+    onComplete(finalScore)
+  }
+
   return (
     <>
-      <GameConfetti trigger={showConfetti} type={matched.size === matchPairs.length ? "levelComplete" : "correct"} />
+      <GameConfetti trigger={showConfetti} type="correct" />
       <Card className="border-4 border-primary/30 bg-card p-3 md:p-4 relative overflow-visible">
         <div className="mb-2 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-card-foreground md:text-2xl">
-              Match the Pairs! 🔗
-            </h2>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => speakText("Match the Pairs! Click a picture or word on the left, then click what it matches on the right!")}
-              className="shrink-0 h-10 w-10 rounded-full bg-primary/10 hover:bg-primary/20 text-primary"
-              title="Listen to instructions"
-            >
-              <Volume2 className="h-5 w-5" />
-            </Button>
-          </div>
-          <div className="flex items-center gap-4">
-            {/* Mascot */}
-            <DodoMascot 
-              mood={mascotMood} 
-              size="sm" 
+          <span className="text-sm font-bold text-muted-foreground">
+            Matching Challenge ({matched.size}/{matchPairs.length} paired)
+          </span>
+          <div className="flex items-center gap-3">
+            <DodoMascot
+              mood={mascotMood}
+              size="sm"
               showSpeechBubble={!!mascotMessage}
               speechText={mascotMessage}
             />
-            <div className="flex items-center gap-2 bg-secondary/20 px-4 py-2 rounded-full">
-              <Star className="h-6 w-6 fill-secondary text-secondary" />
-              <span className="text-xl font-bold text-secondary">{score}</span>
+            <div className="flex items-center gap-2 bg-secondary/20 px-4 py-1.5 rounded-full">
+              <Star className="h-5 w-5 fill-secondary text-secondary" />
+              <span className="text-lg font-bold text-secondary">{score}</span>
             </div>
           </div>
         </div>
 
-      <div className="mb-2 rounded-lg bg-blue-50 p-2 border border-blue-200">
-        <p className="text-sm text-blue-900 font-semibold">📌 {question?.instruction || "Click a picture or word on the left, then click what it matches on the right!"}</p>
-      </div>
-
-      {/* Show question title if provided from DB */}
-      {question?.question && (
-        <div className="mb-3 flex items-start gap-2">
-          <h3 className="text-lg font-bold leading-snug text-card-foreground md:text-xl flex-1">
-            {question.question}
-          </h3>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => speakText(question.question)}
-            className="shrink-0 h-10 w-10 rounded-full bg-primary/10 hover:bg-primary/20 text-primary"
-            title="Listen to question"
-          >
-            <Volume2 className="h-5 w-5" />
-          </Button>
+        <div className="mb-2 rounded-xl bg-blue-50 p-2.5 border border-blue-200">
+          <p className="text-xs sm:text-sm text-blue-900 font-bold">
+            📌 {question?.instruction || "Tap any card on the left or right, then tap its match! Pairs connect instantly ⚡"}
+          </p>
         </div>
-      )}
 
-      {/* Show question image if provided from DB */}
-      {question?.image && (
-        <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 bg-white flex items-center justify-center">
-          <Image
-            src={question.image}
-            alt="Question image"
-            width={1200}
-            height={800}
-            className="w-full h-auto object-contain max-h-[25vh] sm:max-h-[28vh] md:max-h-[30vh]"
-            quality={100}
-            unoptimized
-            priority
-          />
-        </div>
-      )}
+        {question?.question && (
+          <div className="mb-3 flex items-start gap-2">
+            <h3 className="text-base font-bold leading-snug text-card-foreground md:text-lg flex-1">
+              {question.question}
+            </h3>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => speakText(question.question)}
+              className="shrink-0 h-9 w-9 rounded-full bg-primary/10 hover:bg-primary/20 text-primary"
+              title="Listen to question"
+            >
+              <Volume2 className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
 
-      <div className={`grid gap-3 md:grid-cols-2${gaveUp ? " hidden" : ""}`}>
-        {/* Left Column */}
-        <div className="space-y-1.5">
-          <h3 className="text-sm font-bold text-primary mb-1">🎯 Choose one:</h3>
-          {matchPairs.map((item, index) => (
-            <div key={index} className="relative">
-              <Button
-                onClick={() => handleLeftClick(index)}
-                disabled={matched.has(index)}
-                className={`h-auto w-full p-3 text-base transition-all flex flex-col items-center gap-2 rounded-xl ${
-                  matched.has(index)
-                    ? "bg-green-500 text-white border-4 border-green-600 opacity-70 cursor-default"
-                    : selectedLeft === index
-                      ? "bg-yellow-400 text-gray-900 border-4 border-yellow-500 scale-105 shadow-lg"
-                      : "bg-gradient-to-br from-blue-400 to-blue-500 text-white hover:from-blue-500 hover:to-blue-600 hover:shadow-lg"
-                } ${wrongMatch && selectedLeft === index ? "animate-shake" : ""}`}
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                {item.leftImage && (
-                  <div className="overflow-hidden rounded-lg border-2 border-white">
-                    <Image
-                      src={item.leftImage || "/placeholder.svg"}
-                      alt={item.left || "Item"}
-                      width={200}
-                      height={120}
-                      className="object-cover"
-                      quality={100}
-                      unoptimized
-                    />
-                  </div>
-                )}
-                <span className="font-bold text-sm break-words whitespace-normal text-center w-full">{item.left || "Item"}</span>
-              </Button>
-              {matched.has(index) && (
-                <div className="absolute -top-3 -right-3 bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-2xl">
-                  ✓
+        {question?.image && (
+          <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 bg-white flex items-center justify-center">
+            <Image
+              src={question.image}
+              alt="Question image"
+              width={1200}
+              height={800}
+              className="w-full h-auto object-contain max-h-[20vh] sm:max-h-[24vh]"
+              quality={100}
+              unoptimized
+              priority
+            />
+          </div>
+        )}
+
+        <div className={`grid gap-3 md:grid-cols-2${gaveUp ? " hidden" : ""}`}>
+          {/* Left Column */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-extrabold uppercase tracking-wide text-primary mb-1">🎯 Left Items:</h3>
+            {matchPairs.map((item, index) => {
+              const isMatched = matched.has(index)
+              const isSelected = selectedLeft === index
+              return (
+                <div key={index} className="relative">
+                  <Button
+                    onClick={() => handleLeftClick(index)}
+                    disabled={isMatched}
+                    className={`h-auto w-full p-3 text-sm font-bold transition-all flex flex-col items-center gap-1.5 rounded-2xl ${
+                      isMatched
+                        ? "bg-emerald-500 text-white border-4 border-emerald-600 opacity-80 cursor-default"
+                        : isSelected
+                          ? "bg-amber-400 text-gray-900 border-4 border-amber-500 scale-102 shadow-lg ring-4 ring-amber-300"
+                          : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 shadow-md hover:scale-[1.01]"
+                    } ${wrongMatch && isSelected ? "animate-shake" : ""}`}
+                  >
+                    {item.leftImage && (
+                      <div className="overflow-hidden rounded-lg border-2 border-white/80 max-h-24">
+                        <Image
+                          src={item.leftImage || "/placeholder.svg"}
+                          alt={item.left || "Item"}
+                          width={200}
+                          height={120}
+                          className="object-cover"
+                          quality={100}
+                          unoptimized
+                        />
+                      </div>
+                    )}
+                    <span className="break-words whitespace-normal text-center w-full">{item.left || "Item"}</span>
+                  </Button>
+                  {isMatched && (
+                    <div className="absolute -top-2 -right-2 bg-emerald-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm font-black shadow-md">
+                      ✓
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
+              )
+            })}
+          </div>
 
-        {/* Right Column */}
-        <div className="space-y-1.5">
-          <h3 className="text-sm font-bold text-primary mb-1">🎯 Pick a match:</h3>
-          {rightItems.map((item, index) => (
-            <div key={index} className="relative">
-              <Button
-                onClick={() => handleRightClick(index)}
-                disabled={selectedLeft === null || matchedRight.has(index)}
-                className={`h-auto w-full p-3 text-sm transition-all rounded-xl font-semibold ${
-                  matchedRight.has(index)
-                    ? "bg-green-500 text-white border-4 border-green-600 opacity-70 cursor-default"
-                    : selectedRight === index
-                      ? "bg-yellow-400 text-gray-900 border-4 border-yellow-500 scale-105 shadow-lg"
-                      : selectedLeft !== null
-                        ? "bg-gradient-to-br from-orange-400 to-orange-500 text-white hover:from-orange-500 hover:to-orange-600 hover:shadow-lg cursor-pointer"
-                        : "bg-gray-300 text-gray-600 cursor-not-allowed"
-                }`}
-                style={{ animationDelay: `${index * 0.1 + 0.2}s` }}
-              >
-                <span className="break-words whitespace-normal text-center w-full">{item || "Match"}</span>
-              </Button>
-              {matchedRight.has(index) && (
-                <div className="absolute -top-3 -right-3 bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-2xl">
-                  ✓
+          {/* Right Column */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-extrabold uppercase tracking-wide text-primary mb-1">🎯 Right Matches:</h3>
+            {rightItems.map((item, index) => {
+              const isMatched = matchedRight.has(index)
+              const isSelected = selectedRight === index
+              return (
+                <div key={index} className="relative">
+                  <Button
+                    onClick={() => handleRightClick(index)}
+                    disabled={isMatched}
+                    className={`h-auto w-full p-3.5 text-sm font-bold transition-all rounded-2xl ${
+                      isMatched
+                        ? "bg-emerald-500 text-white border-4 border-emerald-600 opacity-80 cursor-default"
+                        : isSelected
+                          ? "bg-amber-400 text-gray-900 border-4 border-amber-500 scale-102 shadow-lg ring-4 ring-amber-300"
+                          : "bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 shadow-md hover:scale-[1.01]"
+                    } ${wrongMatch && isSelected ? "animate-shake" : ""}`}
+                  >
+                    <span className="break-words whitespace-normal text-center w-full">{item || "Match"}</span>
+                  </Button>
+                  {isMatched && (
+                    <div className="absolute -top-2 -right-2 bg-emerald-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm font-black shadow-md">
+                      ✓
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          ))}
+              )
+            })}
+          </div>
         </div>
-      </div>
 
-      {/* Feedback Message */}
-      {!gaveUp && feedback.show && (
-        <div
-          className={`mt-2 rounded-xl p-2 text-center text-sm font-bold ${
-            feedback.correct
-              ? "bg-green-100 text-green-700 border-2 border-green-500"
-              : "bg-red-100 text-red-700 border-2 border-red-500"
-          }`}
-        >
-          {feedback.correct ? (
-            <span>✨ Perfect Match! Well done! 🎉</span>
-          ) : (
-            <span>❌ Try again! That&apos;s not the right match.</span>
-          )}
-        </div>
-      )}
-
-      {!gaveUp && wrongAttempts >= 5 && matched.size < matchPairs.length && matchPairs.length > 0 && (
-        <div className="mt-2">
-          <Button
-            onClick={handleGiveUp}
-            variant="outline"
-            className="w-full border-2 border-orange-400 text-orange-600 hover:bg-orange-50 rounded-xl py-2 font-bold"
-          >
-            📖 Show Me the Answers
-          </Button>
-        </div>
-      )}
-
-      {gaveUp && (
-        <div className="mt-3 space-y-3">
-          <div className="rounded-2xl bg-blue-100 p-4 border-2 border-blue-400">
-            <p className="text-xl font-bold text-blue-700 mb-3">📖 Here are the correct pairs:</p>
+        {/* Give up review mode */}
+        {gaveUp && (
+          <div className="mt-4 p-4 rounded-2xl bg-amber-50 border-2 border-amber-300">
+            <h4 className="font-extrabold text-amber-900 mb-3 text-center text-base">📖 Study the Correct Pairs:</h4>
             <div className="space-y-2">
-              {matchPairs.map((pair, i) => (
-                <div key={i} className="flex items-center gap-2 bg-white rounded-xl p-2 text-sm font-semibold text-card-foreground border border-blue-200">
-                  <span className="font-bold text-blue-700 w-6 text-center shrink-0">{i + 1}.</span>
-                  <span className="flex-1 break-words">{pair.left}</span>
-                  <span className="text-blue-500 font-bold shrink-0">→</span>
-                  <span className="flex-1 break-words">{pair.right}</span>
+              {matchPairs.map((p, i) => (
+                <div key={i} className="flex items-center justify-between p-2.5 rounded-xl bg-white border border-amber-200 text-sm font-bold">
+                  <span className="text-blue-700">{p.left}</span>
+                  <span className="text-amber-600 font-black">➔</span>
+                  <span className="text-emerald-700">{p.right}</span>
                 </div>
               ))}
             </div>
           </div>
-          <Button
-            onClick={() => onComplete(0)}
-            className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-3 rounded-xl shadow-lg font-bold"
-          >
-            Continue →
-          </Button>
-        </div>
-      )}
+        )}
 
-      {!gaveUp && matched.size === matchPairs.length && matchPairs.length > 0 && (
-        <div className="mt-3 space-y-3">
-          <div className="rounded-2xl bg-gradient-to-r from-yellow-100 to-green-100 p-4 text-center border-2 border-green-500 shadow-lg">
-            <p className="text-2xl font-black text-green-600 mb-1">🏆 Amazing!</p>
-            <p className="text-lg font-bold text-green-700">All pairs matched perfectly!</p>
-          </div>
-          <Button
-            onClick={() => onComplete(1)}
-            className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-3 rounded-xl shadow-lg font-bold"
-          >
-            Continue →
-          </Button>
+        {/* Action Controls */}
+        <div className="mt-4 flex items-center justify-between pt-3 border-t border-slate-200">
+          {!gaveUp && matched.size < matchPairs.length && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleGiveUp}
+              className="text-xs text-slate-500 hover:text-red-600 border-slate-300 rounded-full font-bold"
+            >
+              Show Answers
+            </Button>
+          )}
+
+          {(matched.size === matchPairs.length || gaveUp) && (
+            <Button
+              onClick={handleNext}
+              className="ml-auto rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold px-8 py-3 shadow-lg hover:scale-105"
+            >
+              Continue 🚀
+            </Button>
+          )}
         </div>
-      )}
-    </Card>
+      </Card>
     </>
   )
 }

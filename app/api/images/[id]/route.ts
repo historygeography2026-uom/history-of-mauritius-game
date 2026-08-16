@@ -2,25 +2,49 @@ import { NextResponse } from "next/server"
 import { readFile, access } from "fs/promises"
 import path from "path"
 
-// Render persistent disk mount point (or local fallback for dev)
-const IMAGES_DIR = process.env.RENDER_DISK_PATH
-  ? path.join(process.env.RENDER_DISK_PATH, "question-images")
-  : path.join(process.cwd(), "public", "uploads")
-
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const id = (await params).id
-
-    if (!id) {
+    const rawId = (await params).id
+    if (!rawId) {
       return NextResponse.json({ error: "Image filename required" }, { status: 400 })
     }
 
-    // Sanitize: only allow filenames, no path traversal
-    const fileName = path.basename(id)
-    const filePath = path.join(IMAGES_DIR, fileName)
+    // Decode URL component in case of encoded characters
+    const decodedId = decodeURIComponent(rawId)
+    const fileName = path.basename(decodedId)
+
+    // Check multiple candidate storage directories so images are NEVER lost:
+    const candidateDirs: string[] = []
+
+    if (process.env.RENDER_DISK_PATH) {
+      candidateDirs.push(path.join(process.env.RENDER_DISK_PATH, "question-images"))
+      candidateDirs.push(process.env.RENDER_DISK_PATH)
+    }
+
+    candidateDirs.push(path.join(process.cwd(), "public", "uploads"))
+    candidateDirs.push(path.join(process.cwd(), "public"))
+    candidateDirs.push(path.join(process.cwd(), "uploads"))
+
+    let foundFilePath: string | null = null
+
+    for (const dir of candidateDirs) {
+      const candidatePath = path.join(dir, fileName)
+      try {
+        await access(candidatePath)
+        foundFilePath = candidatePath
+        break
+      } catch {
+        // Continue searching other directories
+      }
+    }
+
+    if (!foundFilePath) {
+      console.warn(`[images API] Image "${fileName}" not found in any candidate directories:`, candidateDirs)
+      return NextResponse.json({ error: "Image not found" }, { status: 404 })
+    }
 
     // Infer content type from extension
     const ext = path.extname(fileName).toLowerCase()
@@ -31,18 +55,12 @@ export async function GET(
       ".gif": "image/gif",
       ".webp": "image/webp",
       ".svg": "image/svg+xml",
+      ".ico": "image/x-icon",
     }
     const fileType = mimeMap[ext] || "image/jpeg"
 
-    // Verify file exists
-    try {
-      await access(filePath)
-    } catch {
-      return NextResponse.json({ error: "Image not found" }, { status: 404 })
-    }
-
-    // Read file from disk and serve it
-    const imageData = await readFile(filePath)
+    // Read file and serve with caching
+    const imageData = await readFile(foundFilePath)
 
     return new NextResponse(imageData, {
       headers: {
@@ -51,7 +69,7 @@ export async function GET(
       },
     })
   } catch (error: any) {
-    console.error("Error retrieving image:", error)
+    console.error("[images API] Error retrieving image:", error)
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 })
   }
 }

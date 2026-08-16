@@ -1,8 +1,21 @@
-// MCQQuestionScreen.tsx — Fable design, wired to server-side answer checking
+// MCQQuestionScreen.tsx — Vibrant, high-contrast, playful practice screen with sound
 "use client"
 
 import { useState } from "react"
-import { Check, X } from "lucide-react"
+import { Check, X, Volume2 } from "lucide-react"
+import { useGameSounds, isGameMuted } from "@/hooks/use-game-sounds"
+
+const speakText = (text: string) => {
+  if (isGameMuted()) return
+  if (typeof window !== "undefined" && "speechSynthesis" in window) {
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.rate = 0.9
+    utterance.pitch = 1
+    utterance.lang = "en-US"
+    window.speechSynthesis.speak(utterance)
+  }
+}
 
 interface MCQQuestion {
   id: number
@@ -22,83 +35,135 @@ interface MCQQuestionScreenProps {
   onNext: () => void
 }
 
-export default function MCQQuestionScreen({ question, questionNumber, totalQuestions, onExit, onAnswer, onNext }: MCQQuestionScreenProps) {
+export default function MCQQuestionScreen({
+  question,
+  questionNumber,
+  totalQuestions,
+  onExit,
+  onAnswer,
+  onNext,
+}: MCQQuestionScreenProps) {
   const [selected, setSelected] = useState<number | null>(null)
   const [checked, setChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
   const [correctIndex, setCorrectIndex] = useState<number | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const { playCorrect, playWrong, playClick } = useGameSounds()
+
+  const handleSelect = (idx: number) => {
+    if (checked) return
+    playClick()
+    setSelected(idx)
+  }
 
   const handleCheck = async () => {
     if (checked) {
+      playClick()
       onNext()
       return
     }
-    if (selected === null) return
+    if (selected === null || submitting) return
     setSubmitting(true)
+
     try {
       const result = await onAnswer(question.options[selected])
-      setIsCorrect(result.is_correct)
-      // Find the correct option index from the server response
+      const correct = Boolean(result.is_correct)
+      setIsCorrect(correct)
+
       const cIdx = question.options.findIndex(
         (o) => o.toLowerCase().trim() === String(result.correct_answer).toLowerCase().trim()
       )
       setCorrectIndex(cIdx >= 0 ? cIdx : null)
       setChecked(true)
+
+      if (correct) {
+        playCorrect()
+      } else {
+        playWrong()
+      }
     } finally {
       setSubmitting(false)
     }
   }
 
   return (
-    <main className="min-h-screen px-4 py-6 font-sans" style={{ background: "linear-gradient(to bottom, #dbeafe, #ffffff, #ede9fe)" }}>
+    <main className="min-h-screen bg-gradient-to-b from-sky-100 via-blue-50 to-indigo-100 px-4 py-6 font-sans">
       <div className="mx-auto max-w-2xl">
-        <header className="mb-8 flex items-center justify-between">
+        {/* Header */}
+        <header className="mb-6 flex items-center justify-between">
           <button
             type="button"
             onClick={onExit}
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-5 py-2.5 text-sm font-extrabold text-white shadow-lg transition-transform hover:scale-105"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-5 py-2.5 text-sm font-extrabold text-white shadow-md transition-all hover:scale-105 hover:shadow-lg"
           >
-            {"🚪 Exit"}
+            🚪 Exit
           </button>
-          <span className="rounded-full border-2 border-dashed border-gray-800 px-4 py-2 text-sm font-extrabold text-gray-900" style={{ backgroundColor: "#93c5fd" }}>
-            {"⭐ Question "}{questionNumber}{" of "}{totalQuestions}
+          <span className="rounded-full border-2 border-indigo-300 bg-white px-5 py-2 text-sm font-black text-indigo-900 shadow-sm">
+            ⭐ Question {questionNumber} of {totalQuestions}
           </span>
         </header>
 
-        <section aria-labelledby="question-prompt" className="rounded-3xl border-2 border-dashed border-gray-800 p-6 shadow-[3px_3px_0_rgba(0,0,0,0.15)] sm:p-8" style={{ backgroundColor: "#bfdbfe" }}>
+        {/* Question Card */}
+        <section
+          aria-labelledby="question-prompt"
+          className="rounded-3xl border-4 border-indigo-200 bg-white p-6 shadow-2xl sm:p-8"
+        >
+          {/* Question text & speech button */}
           <div className="mb-6 flex items-start gap-3">
-            <span className="text-3xl" aria-hidden="true">{"🤔"}</span>
-            <h1 id="question-prompt" className="text-balance text-xl font-extrabold leading-relaxed text-gray-900 sm:text-2xl">
-              {question.question_text}
-            </h1>
+            <span className="text-3xl sm:text-4xl" aria-hidden="true">
+              🤔
+            </span>
+            <div className="flex-1">
+              <div className="flex items-start justify-between gap-2">
+                <h1 id="question-prompt" className="text-xl font-black leading-snug text-slate-900 sm:text-2xl">
+                  {question.question_text}
+                </h1>
+                <button
+                  type="button"
+                  onClick={() => speakText(question.question_text)}
+                  className="shrink-0 rounded-full bg-blue-100 p-2 text-blue-700 hover:bg-blue-200 transition-colors"
+                  title="Listen to question"
+                >
+                  <Volume2 className="h-5 w-5" />
+                </button>
+              </div>
+              {question.instruction && (
+                <p className="mt-2 inline-block rounded-full bg-amber-100 px-3.5 py-1 text-xs font-extrabold text-amber-900 border border-amber-300">
+                  💡 {question.instruction}
+                </p>
+              )}
+            </div>
           </div>
 
+          {/* Question Image */}
           {question.image_url && (
-            <div className="mb-4 flex justify-center">
-              <img src={question.image_url} alt="" className="max-h-48 rounded-lg object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} />
+            <div className="mb-6 flex justify-center overflow-hidden rounded-2xl border-2 border-indigo-100 bg-slate-50 p-2">
+              <img
+                src={question.image_url}
+                alt="Question visual"
+                className="max-h-56 w-auto rounded-xl object-contain shadow-sm"
+                onError={(e) => {
+                  ;(e.target as HTMLImageElement).style.display = "none"
+                }}
+              />
             </div>
           )}
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Answer options">
+          {/* Answer Options Grid */}
+          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2" role="radiogroup" aria-label="Answer options">
             {question.options.map((option, i) => {
               const isSelected = selected === i
-              let borderColor = "#d1d5db"
-              let bgColor = "#ffffff"
-              let extraClasses = "hover:shadow-md"
+              const isRightAnswer = checked && correctIndex !== null && i === correctIndex
+              const isWrongSelection = checked && isSelected && !isCorrect
 
-              if (checked && correctIndex !== null && i === correctIndex) {
-                borderColor = "#22c55e"
-                bgColor = "#bbf7d0"
-                extraClasses = "shadow-md"
-              } else if (checked && isSelected && !isCorrect) {
-                borderColor = "#f87171"
-                bgColor = "#fecaca"
-                extraClasses = ""
+              let cardStyle = "border-slate-300 bg-slate-50 text-slate-900 hover:border-blue-500 hover:bg-blue-50/80 shadow-sm"
+
+              if (isRightAnswer) {
+                cardStyle = "border-emerald-500 bg-emerald-100 text-emerald-950 ring-4 ring-emerald-300 shadow-lg scale-[1.02]"
+              } else if (isWrongSelection) {
+                cardStyle = "border-rose-500 bg-rose-100 text-rose-950 ring-4 ring-rose-300 shadow-md"
               } else if (isSelected) {
-                borderColor = "#3b82f6"
-                bgColor = "#93c5fd"
-                extraClasses = "shadow-md ring-2 ring-blue-400"
+                cardStyle = "border-blue-600 bg-blue-100 text-blue-950 ring-4 ring-blue-300 shadow-lg scale-[1.02]"
               }
 
               return (
@@ -108,36 +173,48 @@ export default function MCQQuestionScreen({ question, questionNumber, totalQuest
                   role="radio"
                   aria-checked={isSelected}
                   disabled={checked}
-                  onClick={() => setSelected(i)}
-                  className={`flex min-h-16 items-center justify-between gap-2 rounded-2xl border-2 px-5 py-4 text-left text-base font-bold text-gray-900 shadow-sm transition-all disabled:cursor-default ${extraClasses}`}
-                  style={{ borderColor, backgroundColor: bgColor }}
+                  onClick={() => handleSelect(i)}
+                  className={`flex min-h-[4.25rem] items-center justify-between gap-3 rounded-2xl border-3 px-5 py-3.5 text-left text-base font-extrabold transition-all ${cardStyle} disabled:cursor-default`}
                 >
-                  {option}
-                  {checked && correctIndex !== null && i === correctIndex && <Check className="h-5 w-5 shrink-0 text-green-700" aria-label="Correct answer" />}
-                  {checked && isSelected && correctIndex !== null && i !== correctIndex && <X className="h-5 w-5 shrink-0 text-red-600" aria-label="Your answer" />}
+                  <span className="flex-1 leading-snug">{option}</span>
+                  {isRightAnswer && (
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white shadow-sm">
+                      <Check className="h-4 w-4 stroke-[3]" />
+                    </span>
+                  )}
+                  {isWrongSelection && (
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-rose-600 text-white shadow-sm">
+                      <X className="h-4 w-4 stroke-[3]" />
+                    </span>
+                  )}
                 </button>
               )
             })}
           </div>
 
+          {/* Feedback banner */}
           {checked && (
-            <p
-              className="mt-5 rounded-2xl border-2 border-dashed px-4 py-3 text-center text-base font-extrabold"
-              style={{
-                borderColor: isCorrect ? "#22c55e" : "#f97316",
-                backgroundColor: isCorrect ? "#bbf7d0" : "#fed7aa",
-                color: isCorrect ? "#166534" : "#9a3412",
-              }}
+            <div
+              className={`mt-6 rounded-2xl border-3 p-4 text-center text-base font-black shadow-md ${
+                isCorrect
+                  ? "border-emerald-500 bg-emerald-100 text-emerald-900"
+                  : "border-amber-500 bg-amber-100 text-amber-900"
+              }`}
             >
-              {isCorrect ? "Awesome! You got it! 🎉⭐" : "Good try! Now you know the answer! 💪"}
-            </p>
+              {isCorrect ? "🎉 Awesome! You got it right! ⭐" : "💪 Good try! Look at the green box for the right answer!"}
+            </div>
           )}
 
+          {/* Action button */}
           <button
             type="button"
             disabled={selected === null || submitting}
             onClick={handleCheck}
-            className="mt-6 w-full rounded-full bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4 text-lg font-extrabold text-white shadow-lg transition-transform hover:scale-[1.02] hover:shadow-xl disabled:cursor-not-allowed disabled:from-gray-300 disabled:to-gray-300 disabled:text-gray-500 disabled:shadow-none"
+            className={`mt-6 w-full rounded-full py-4 text-lg font-black text-white shadow-xl transition-all ${
+              checked
+                ? "bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 hover:scale-[1.02]"
+                : "bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:scale-[1.02]"
+            } disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100`}
           >
             {submitting ? "Checking... ⏳" : checked ? "Next Question! 🚀" : "Check My Answer! ✅"}
           </button>
