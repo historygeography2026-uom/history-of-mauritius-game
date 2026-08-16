@@ -23,11 +23,11 @@ interface MatchingQuestionScreenProps {
   onNext: () => void
 }
 
-const PAIR_COLORS = [
-  "border-blue-500 bg-blue-200 text-blue-900",
-  "border-orange-500 bg-orange-200 text-orange-900",
-  "border-emerald-500 bg-emerald-200 text-emerald-900",
-  "border-teal-500 bg-teal-200 text-teal-900",
+const PAIR_STYLES = [
+  { border: "#3b82f6", bg: "#93c5fd", text: "#1e3a5f" },
+  { border: "#f97316", bg: "#fdba74", text: "#7c2d12" },
+  { border: "#10b981", bg: "#6ee7b7", text: "#064e3b" },
+  { border: "#14b8a6", bg: "#5eead4", text: "#134e4a" },
 ]
 
 export default function MatchingQuestionScreen({ question, questionNumber, totalQuestions, onExit, onAnswer, onNext }: MatchingQuestionScreenProps) {
@@ -87,39 +87,46 @@ export default function MatchingQuestionScreen({ question, questionNumber, total
   const correctMap: Record<string, string> = {}
   correctPairs.forEach((p) => { correctMap[p.left] = p.right })
 
-  const itemClasses = (pairIndex: number, isSelected: boolean, isCorrectPair: boolean) => {
+  const getItemStyle = (pairIndex: number, isSelected: boolean, isCorrectPair: boolean) => {
     if (checked && pairIndex >= 0) {
-      return isCorrectPair ? "border-green-500 bg-green-100 text-green-900" : "border-red-400 bg-red-100 text-red-800"
+      return isCorrectPair
+        ? { borderColor: "#22c55e", backgroundColor: "#bbf7d0", color: "#166534" }
+        : { borderColor: "#f87171", backgroundColor: "#fecaca", color: "#991b1b" }
     }
-    if (pairIndex >= 0) return PAIR_COLORS[pairIndex % PAIR_COLORS.length]
-    if (isSelected) return "border-purple-500 bg-purple-200 text-purple-900 ring-2 ring-purple-300"
-    return "border-gray-300 bg-white text-gray-900 hover:border-purple-400 hover:bg-purple-50"
+    if (pairIndex >= 0) {
+      const style = PAIR_STYLES[pairIndex % PAIR_STYLES.length]
+      return { borderColor: style.border, backgroundColor: style.bg, color: style.text }
+    }
+    if (isSelected) {
+      return { borderColor: "#a855f7", backgroundColor: "#c084fc", color: "#581c87" }
+    }
+    return { borderColor: "#d1d5db", backgroundColor: "#ffffff", color: "#111827" }
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-rose-50 via-white to-pink-50 px-4 py-6 font-sans">
+    <main className="min-h-screen px-4 py-6 font-sans" style={{ background: "linear-gradient(to bottom, #fce7f3, #ffffff, #fce4ec)" }}>
       <div className="mx-auto max-w-2xl">
         <header className="mb-8 flex items-center justify-between">
           <button
             type="button"
             onClick={onExit}
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-5 py-2.5 text-sm font-extrabold text-white shadow-lg transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-800"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-5 py-2.5 text-sm font-extrabold text-white shadow-lg transition-transform hover:scale-105"
           >
             {"🚪 Exit"}
           </button>
-          <span className="rounded-full border-2 border-dashed border-gray-800 bg-rose-100 px-4 py-2 text-sm font-extrabold text-gray-900">
+          <span className="rounded-full border-2 border-dashed border-gray-800 px-4 py-2 text-sm font-extrabold text-gray-900" style={{ backgroundColor: "#fda4af" }}>
             {"⭐ Question "}{questionNumber}{" of "}{totalQuestions}
           </span>
         </header>
 
-        <section aria-labelledby="match-prompt" className="rounded-3xl border-2 border-dashed border-gray-800 bg-rose-100 p-6 shadow-[3px_3px_0_rgba(0,0,0,0.15)] sm:p-8">
+        <section aria-labelledby="match-prompt" className="rounded-3xl border-2 border-dashed border-gray-800 p-6 shadow-[3px_3px_0_rgba(0,0,0,0.15)] sm:p-8" style={{ backgroundColor: "#fecdd3" }}>
           <div className="mb-2 flex items-start gap-3">
             <span className="text-3xl" aria-hidden="true">{"🔗"}</span>
             <h1 id="match-prompt" className="text-balance text-xl font-extrabold leading-relaxed text-gray-900 sm:text-2xl">
               {question.question_text}
             </h1>
           </div>
-          <p className="mb-6 text-sm font-bold leading-relaxed text-gray-600">
+          <p className="mb-6 text-sm font-bold leading-relaxed text-gray-700">
             {"Tap an item, then tap its match. Matching pairs get the same colour! 🎨"}
           </p>
 
@@ -134,16 +141,18 @@ export default function MatchingQuestionScreen({ question, questionNumber, total
               {left_items.map((item) => {
                 const pairIndex = pairIndexForLeft(item)
                 const isCorrectPair = checked && correctMap[item] === matches[item]
+                const style = getItemStyle(pairIndex, selectedLeft === item, isCorrectPair)
                 return (
                   <button
                     key={item}
                     type="button"
                     onClick={() => handleLeftClick(item)}
                     aria-pressed={selectedLeft === item}
-                    className={`flex min-h-14 items-center justify-between gap-2 rounded-2xl border-2 px-4 py-3 text-base font-bold shadow-sm transition-all ${itemClasses(pairIndex, selectedLeft === item, isCorrectPair)}`}
+                    className="flex min-h-14 items-center justify-between gap-2 rounded-2xl border-2 px-4 py-3 text-base font-bold shadow-sm transition-all"
+                    style={style}
                   >
                     {item}
-                    {!checked && pairIndex >= 0 && <X className="h-4 w-4 shrink-0 text-gray-500" aria-label="Remove match" />}
+                    {!checked && pairIndex >= 0 && <X className="h-4 w-4 shrink-0 opacity-70" aria-label="Remove match" />}
                   </button>
                 )
               })}
@@ -153,13 +162,15 @@ export default function MatchingQuestionScreen({ question, questionNumber, total
                 const pairIndex = pairIndexForRight(item)
                 const leftKey = Object.keys(matches).find((k) => matches[k] === item)
                 const isCorrectPair = leftKey ? correctMap[leftKey] === item : false
+                const style = getItemStyle(pairIndex, false, isCorrectPair)
                 return (
                   <button
                     key={item}
                     type="button"
                     onClick={() => handleRightClick(item)}
                     disabled={checked || (!selectedLeft && !matchedRightValues.has(item))}
-                    className={`flex min-h-14 items-center rounded-2xl border-2 px-4 py-3 text-base font-bold shadow-sm transition-all disabled:cursor-default ${itemClasses(pairIndex, false, isCorrectPair)}`}
+                    className="flex min-h-14 items-center rounded-2xl border-2 px-4 py-3 text-base font-bold shadow-sm transition-all disabled:cursor-default"
+                    style={style}
                   >
                     {item}
                   </button>
@@ -169,7 +180,14 @@ export default function MatchingQuestionScreen({ question, questionNumber, total
           </div>
 
           {checked && (
-            <p className={`mt-5 rounded-2xl border-2 border-dashed px-4 py-3 text-center text-base font-extrabold ${allCorrect ? "border-green-500 bg-green-100 text-green-800" : "border-orange-400 bg-orange-100 text-orange-800"}`}>
+            <p
+              className="mt-5 rounded-2xl border-2 border-dashed px-4 py-3 text-center text-base font-extrabold"
+              style={{
+                borderColor: allCorrect ? "#22c55e" : "#f97316",
+                backgroundColor: allCorrect ? "#bbf7d0" : "#fed7aa",
+                color: allCorrect ? "#166534" : "#9a3412",
+              }}
+            >
               {allCorrect ? "All matched! You're a superstar! 🎉⭐" : "Great effort! The green pairs are correct! 💪"}
             </p>
           )}
@@ -178,7 +196,7 @@ export default function MatchingQuestionScreen({ question, questionNumber, total
             type="button"
             disabled={!allMatched || submitting}
             onClick={handleCheck}
-            className="mt-6 w-full rounded-full bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4 text-lg font-extrabold text-white shadow-lg transition-transform hover:scale-[1.02] hover:shadow-xl disabled:cursor-not-allowed disabled:from-gray-300 disabled:to-gray-300 disabled:text-gray-500 disabled:shadow-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-800"
+            className="mt-6 w-full rounded-full bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4 text-lg font-extrabold text-white shadow-lg transition-transform hover:scale-[1.02] hover:shadow-xl disabled:cursor-not-allowed disabled:from-gray-300 disabled:to-gray-300 disabled:text-gray-500 disabled:shadow-none"
           >
             {submitting ? "Checking... ⏳" : checked ? "Next Question! 🚀" : "Check My Answer! ✅"}
           </button>

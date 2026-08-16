@@ -1,6 +1,9 @@
 // PracticeUnitSelector.tsx — Fable design, wired to real API
 "use client"
 
+import Link from "next/link"
+import { Home } from "lucide-react"
+
 interface PracticeUnit {
   id: number
   unit_no: number
@@ -23,6 +26,17 @@ export default function PracticeUnitSelector({ units, onStart }: { units: Practi
   return (
     <main className="relative min-h-screen bg-gradient-to-b from-sky-50 via-white to-amber-50 px-4 py-10 font-sans">
       <div className="mx-auto max-w-4xl">
+        {/* Navigation bar */}
+        <nav className="mb-6 flex items-center justify-between">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-extrabold text-gray-700 ring-2 ring-gray-300 shadow-sm transition-all hover:bg-gray-50 hover:shadow-md hover:scale-105"
+          >
+            <Home className="h-4 w-4" />
+            Home
+          </Link>
+        </nav>
+
         <header className="mb-10 text-center">
           <p className="mb-2 text-4xl" aria-hidden="true">
             {"🏝️ 🦤 🌺"}

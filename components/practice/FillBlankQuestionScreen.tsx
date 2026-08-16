@@ -62,22 +62,22 @@ export default function FillBlankQuestionScreen({ question, questionNumber, tota
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-teal-50 px-4 py-6 font-sans">
+    <main className="min-h-screen px-4 py-6 font-sans" style={{ background: "linear-gradient(to bottom, #d1fae5, #ffffff, #ccfbf1)" }}>
       <div className="mx-auto max-w-2xl">
         <header className="mb-8 flex items-center justify-between">
           <button
             type="button"
             onClick={onExit}
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-5 py-2.5 text-sm font-extrabold text-white shadow-lg transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-800"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-5 py-2.5 text-sm font-extrabold text-white shadow-lg transition-transform hover:scale-105"
           >
             {"🚪 Exit"}
           </button>
-          <span className="rounded-full border-2 border-dashed border-gray-800 bg-emerald-100 px-4 py-2 text-sm font-extrabold text-gray-900">
+          <span className="rounded-full border-2 border-dashed border-gray-800 px-4 py-2 text-sm font-extrabold text-gray-900" style={{ backgroundColor: "#6ee7b7" }}>
             {"⭐ Question "}{questionNumber}{" of "}{totalQuestions}
           </span>
         </header>
 
-        <section aria-labelledby="fb-prompt" className="rounded-3xl border-2 border-dashed border-gray-800 bg-emerald-100 p-6 shadow-[3px_3px_0_rgba(0,0,0,0.15)] sm:p-8">
+        <section aria-labelledby="fb-prompt" className="rounded-3xl border-2 border-dashed border-gray-800 p-6 shadow-[3px_3px_0_rgba(0,0,0,0.15)] sm:p-8" style={{ backgroundColor: "#a7f3d0" }}>
           <div className="mb-6 flex items-start gap-3">
             <span className="text-3xl" aria-hidden="true">{"✏️"}</span>
             <h1 id="fb-prompt" className="text-xl font-extrabold text-gray-900 sm:text-2xl">
@@ -91,7 +91,7 @@ export default function FillBlankQuestionScreen({ question, questionNumber, tota
             </div>
           )}
 
-          <p className="flex flex-wrap items-center gap-x-2 gap-y-3 rounded-2xl border-2 border-gray-400 bg-white px-5 py-4 text-xl font-bold leading-relaxed text-gray-900">
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-3 rounded-2xl border-2 px-5 py-4 text-xl font-bold leading-relaxed text-gray-900" style={{ borderColor: "#9ca3af", backgroundColor: "#ffffff" }}>
             <span>{before}</span>
             <input
               type="text"
@@ -103,21 +103,30 @@ export default function FillBlankQuestionScreen({ question, questionNumber, tota
               }}
               aria-label="Your answer for the blank"
               placeholder="type here"
-              className={`w-36 rounded-2xl border-2 border-dashed px-4 py-2 text-center text-xl font-bold text-gray-900 outline-none transition-colors placeholder:text-gray-400 ${
-                checked ? (isCorrect ? "border-green-500 bg-green-100" : "border-red-400 bg-red-100") : "border-gray-800 bg-emerald-50 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-300"
-              }`}
+              className="w-36 rounded-2xl border-2 border-dashed px-4 py-2 text-center text-xl font-bold text-gray-900 outline-none transition-colors placeholder:text-gray-400"
+              style={{
+                borderColor: checked ? (isCorrect ? "#22c55e" : "#f87171") : "#1f2937",
+                backgroundColor: checked ? (isCorrect ? "#bbf7d0" : "#fecaca") : "#d1fae5",
+              }}
             />
             {after && <span>{after}</span>}
           </p>
 
           {question.instruction && (
-            <p className="mt-4 inline-flex rounded-full border-2 border-dashed border-gray-800 bg-amber-100 px-4 py-1.5 text-sm font-extrabold text-gray-900">
+            <p className="mt-4 inline-flex rounded-full border-2 border-dashed border-gray-800 px-4 py-1.5 text-sm font-extrabold text-gray-900" style={{ backgroundColor: "#fde68a" }}>
               {"💡 Hint: "}{question.instruction}
             </p>
           )}
 
           {checked && (
-            <p className={`mt-5 rounded-2xl border-2 border-dashed px-4 py-3 text-center text-base font-extrabold ${isCorrect ? "border-green-500 bg-green-100 text-green-800" : "border-orange-400 bg-orange-100 text-orange-800"}`}>
+            <p
+              className="mt-5 rounded-2xl border-2 border-dashed px-4 py-3 text-center text-base font-extrabold"
+              style={{
+                borderColor: isCorrect ? "#22c55e" : "#f97316",
+                backgroundColor: isCorrect ? "#bbf7d0" : "#fed7aa",
+                color: isCorrect ? "#166534" : "#9a3412",
+              }}
+            >
               {isCorrect
                 ? "Fantastic! That's the word! 🎉⭐"
                 : `Nice try! The word was "${correctAnswer}". 💪`}
@@ -128,7 +137,7 @@ export default function FillBlankQuestionScreen({ question, questionNumber, tota
             type="button"
             disabled={!value.trim() || submitting}
             onClick={handleCheck}
-            className="mt-6 w-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-4 text-lg font-extrabold text-white shadow-lg transition-transform hover:scale-[1.02] hover:shadow-xl disabled:cursor-not-allowed disabled:from-gray-300 disabled:to-gray-300 disabled:text-gray-500 disabled:shadow-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-800"
+            className="mt-6 w-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-4 text-lg font-extrabold text-white shadow-lg transition-transform hover:scale-[1.02] hover:shadow-xl disabled:cursor-not-allowed disabled:from-gray-300 disabled:to-gray-300 disabled:text-gray-500 disabled:shadow-none"
           >
             {submitting ? "Checking... ⏳" : checked ? "Next Question! 🚀" : "Check My Answer! ✅"}
           </button>
