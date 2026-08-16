@@ -13,10 +13,25 @@ export async function GET(request: Request) {
   const sortBy = searchParams.get("sortBy") || "total_points" // sort field
   const sortOrder = searchParams.get("sortOrder") === "asc" ? "ASC" : "DESC"
   const viewParam = searchParams.get("view") || "cumulated" // "cumulated" (default) or "level"
+  const yearParam = searchParams.get("year") // optional year filter (e.g. "2026")
+  const availableYears = searchParams.get("availableYears") // if "true", return distinct years only
   const limit = limitParam ? Math.min(Number.parseInt(limitParam), 200) : 20
   const page = pageParam ? Math.max(1, Number.parseInt(pageParam)) : 1
 
   try {
+    // Short-circuit: return available years for the dropdown
+    if (availableYears === "true") {
+      const yearsResult = await pool.query(
+        `SELECT DISTINCT EXTRACT(YEAR FROM created_at)::int AS year 
+         FROM leaderboard ORDER BY year DESC`
+      )
+      const years = yearsResult.rows.map((r: any) => r.year)
+      // Always include the current year even if no data yet
+      const currentYear = new Date().getFullYear()
+      if (!years.includes(currentYear)) years.unshift(currentYear)
+      return NextResponse.json({ years })
+    }
+
     // Build WHERE conditions for the inner query
     const conditions: string[] = []
     const params: any[] = []
@@ -34,6 +49,14 @@ export async function GET(request: Request) {
     if (search) {
       params.push(`%${search}%`)
       conditions.push(`lb.player_name ILIKE $${params.length}`)
+    }
+
+    if (yearParam) {
+      const year = Number.parseInt(yearParam)
+      if (!isNaN(year) && year >= 2020 && year <= 2100) {
+        params.push(year)
+        conditions.push(`EXTRACT(YEAR FROM lb.created_at) = $${params.length}`)
+      }
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : ""

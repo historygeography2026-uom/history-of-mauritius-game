@@ -69,6 +69,7 @@ export function createAdminSessionToken(username: string) {
 
   const payload: AdminSessionPayload = {
     username,
+    exp: Math.floor(Date.now() / 1000) + (8 * 60 * 60), // Expires in 8 hours
   }
 
   const encodedPayload = Buffer.from(JSON.stringify(payload)).toString("base64url")
@@ -126,6 +127,14 @@ export function verifyAdminToken(request: Request): NextResponse | null {
   if (!payload) {
     return NextResponse.json(
       { error: "Unauthorized" },
+      { status: 401 }
+    )
+  }
+
+  // Check token expiry
+  if (payload.exp && Date.now() / 1000 > payload.exp) {
+    return NextResponse.json(
+      { error: "Session expired. Please log in again." },
       { status: 401 }
     )
   }

@@ -4,7 +4,7 @@ import type React from "react"
 import { useState, useEffect, useRef, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { ArrowLeft, Plus, Trash2, Edit2, X, LogOut, Search } from "lucide-react"
+import { ArrowLeft, Plus, Trash2, Edit2, X, LogOut, Search, Database, FileSpreadsheet } from "lucide-react"
 import Link from "next/link"
 import dynamic from "next/dynamic"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -13,6 +13,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 const AdminLoginModal = dynamic(() => import("@/components/admin-login-modal"), { ssr: false })
 const ExcelImportSection = dynamic(() => import("@/components/excel-import-section"), { ssr: false })
 const QuestionEditModal = dynamic(() => import("@/components/question-edit-modal"), { ssr: false })
+
+// Practice Mode admin components
+const AdminTabNav = dynamic(() => import("@/components/admin/admin-tab-nav"), { ssr: false })
+const PracticeQuestionManagement = dynamic(() => import("@/components/admin/PracticeQuestionManagement"), { ssr: false })
+const PracticeLearnerStatsDashboard = dynamic(() => import("@/components/admin/PracticeLearnerStatsDashboard"), { ssr: false })
+const PracticeImportModal = dynamic(() => import("@/components/admin/PracticeImportModal"), { ssr: false })
 
 // Import UI components from shadcn/ui for better control
 import { Input } from "@/components/ui/input"
@@ -64,6 +70,10 @@ export default function AdminPage() {
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [questionToEdit, setQuestionToEdit] = useState<Question | null>(null)
   const [googleLoginError, setGoogleLoginError] = useState<string | undefined>(undefined)
+  const [activeAdminTab, setActiveAdminTab] = useState<string>("game")
+  const [showPracticeImport, setShowPracticeImport] = useState(false)
+  const [exportingSql, setExportingSql] = useState(false)
+  const [exportingCsv, setExportingCsv] = useState(false)
 
   const subjects = ["history", "geography"]
   const levels = [1, 2, 3]
@@ -1157,6 +1167,54 @@ ${errorMessages}
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              onClick={async () => {
+                setExportingSql(true)
+                try {
+                  const res = await fetch("/api/admin/export-sql")
+                  if (!res.ok) throw new Error("Export failed")
+                  const blob = await res.blob()
+                  const disposition = res.headers.get("Content-Disposition") || ""
+                  const match = disposition.match(/filename="(.+?)"/) 
+                  const fname = match ? match[1] : `backup_${Date.now()}.sql`
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement("a")
+                  a.href = url; a.download = fname; a.click()
+                  URL.revokeObjectURL(url)
+                } catch { alert("SQL export failed") }
+                setExportingSql(false)
+              }}
+              disabled={exportingSql}
+              className="kid-btn gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:shadow-lg hover:shadow-blue-400/40 text-white font-bold px-4 py-2"
+              title="Export Database Backup (SQL)"
+            >
+              <Database className="h-4 w-4" />
+              {exportingSql ? "Exporting..." : "💾 SQL Backup"}
+            </Button>
+            <Button
+              onClick={async () => {
+                setExportingCsv(true)
+                try {
+                  const res = await fetch("/api/admin/export-csv?type=all")
+                  if (!res.ok) throw new Error("Export failed")
+                  const blob = await res.blob()
+                  const disposition = res.headers.get("Content-Disposition") || ""
+                  const match = disposition.match(/filename="(.+?)"/) 
+                  const fname = match ? match[1] : `student_data_${Date.now()}.csv`
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement("a")
+                  a.href = url; a.download = fname; a.click()
+                  URL.revokeObjectURL(url)
+                } catch { alert("CSV export failed") }
+                setExportingCsv(false)
+              }}
+              disabled={exportingCsv}
+              className="kid-btn gap-2 bg-gradient-to-r from-emerald-600 to-green-600 hover:shadow-lg hover:shadow-emerald-400/40 text-white font-bold px-4 py-2"
+              title="Export All Student Data (CSV)"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              {exportingCsv ? "Exporting..." : "📊 CSV Export"}
+            </Button>
             <Link href="/admin/reset-password">
               <Button className="kid-btn gap-2 bg-gradient-to-r from-primary via-purple-500 to-secondary hover:shadow-lg hover:shadow-primary/40 text-white font-bold px-5 py-2">
                 🛡️ User Passwords
@@ -1173,6 +1231,37 @@ ${errorMessages}
           </div>
         </div>
 
+        <AdminTabNav
+          tabs={[
+            { id: "game", label: "Game Questions", icon: "📝" },
+            { id: "practice", label: "Practice Questions", icon: "📚" },
+            { id: "stats", label: "Learner Stats", icon: "📊" },
+          ]}
+          activeTab={activeAdminTab}
+          onTabChange={setActiveAdminTab}
+        />
+
+        {activeAdminTab === "practice" && (
+          <>
+            <PracticeQuestionManagement
+              onImport={() => setShowPracticeImport(true)}
+            />
+            <PracticeImportModal
+              open={showPracticeImport}
+              onClose={() => setShowPracticeImport(false)}
+              onImportComplete={() => {
+                setShowPracticeImport(false)
+                // Force re-render of question management
+                setActiveAdminTab("game")
+                setTimeout(() => setActiveAdminTab("practice"), 50)
+              }}
+            />
+          </>
+        )}
+        {activeAdminTab === "stats" && <PracticeLearnerStatsDashboard />}
+
+        {activeAdminTab === "game" && (
+        <>
         <ExcelImportSection onImport={handleExcelImport} isLoading={loading} />
 
         <Card className="p-6 mb-6">
@@ -1570,6 +1659,8 @@ ${errorMessages}
             </div>
           )}
         </Card>
+        </>
+        )}
       </div>
       <QuestionEditModal
         question={questionToEdit}

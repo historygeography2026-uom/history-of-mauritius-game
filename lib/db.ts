@@ -26,7 +26,9 @@ export async function query<T = any>(
   try {
     const result = await pool.query(text, params)
     const duration = Date.now() - start
-    console.log('Executed query', { text, duration, rows: result.rowCount })
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Executed query', { text, duration, rows: result.rowCount })
+    }
     return result.rows as T[]
   } catch (error) {
     console.error('Database query error:', error)
@@ -46,70 +48,6 @@ export async function queryOne<T = any>(
 }
 
 /**
- * Execute insert and return the inserted row
- */
-export async function insert<T = any>(
-  table: string,
-  data: Record<string, any>
-): Promise<T> {
-  const keys = Object.keys(data)
-  const values = Object.values(data)
-  const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ')
-  
-  const text = `
-    INSERT INTO ${table} (${keys.join(', ')})
-    VALUES (${placeholders})
-    RETURNING *
-  `
-  
-  const result = await queryOne<T>(text, values)
-  return result as T
-}
-
-/**
- * Execute update query
- */
-export async function update<T = any>(
-  table: string,
-  data: Record<string, any>,
-  where: Record<string, any>
-): Promise<T[]> {
-  const setClause = Object.keys(data)
-    .map((key, i) => `${key} = $${i + 1}`)
-    .join(', ')
-  
-  const whereClause = Object.keys(where)
-    .map((key, i) => `${key} = $${i + Object.keys(data).length + 1}`)
-    .join(' AND ')
-  
-  const text = `
-    UPDATE ${table}
-    SET ${setClause}
-    WHERE ${whereClause}
-    RETURNING *
-  `
-  
-  const values = [...Object.values(data), ...Object.values(where)]
-  return query<T>(text, values)
-}
-
-/**
- * Execute delete query
- */
-export async function deleteRecord(
-  table: string,
-  where: Record<string, any>
-): Promise<number> {
-  const whereClause = Object.keys(where)
-    .map((key, i) => `${key} = $${i + 1}`)
-    .join(' AND ')
-  
-  const text = `DELETE FROM ${table} WHERE ${whereClause}`
-  const result = await pool.query(text, Object.values(where))
-  return result.rowCount || 0
-}
-
-/**
  * Get the pool for advanced operations
  */
 export function getPool() {
@@ -124,3 +62,4 @@ export async function closePool() {
 }
 
 export default pool
+

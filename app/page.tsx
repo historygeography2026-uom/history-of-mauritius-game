@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Sparkles, ArrowLeft, Trophy, LogOut, Map, Clock } from "lucide-react"
+import { Sparkles, ArrowLeft, Trophy, LogOut, Map, Clock, BookOpen } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
@@ -211,6 +211,15 @@ export default function SubjectSelection() {
               <Button className="kid-btn bg-gradient-to-r from-cyan-500 to-teal-600 text-white flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm md:text-base">
                 <Map className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span className="hidden sm:inline">🗺️ Explore Map</span>
+              </Button>
+            </Link>
+            <Link href="/practice">
+              <Button className="relative kid-btn bg-gradient-to-r from-emerald-500 to-teal-600 text-white flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm md:text-base">
+                <div className="absolute -top-2 -right-2 bg-rose-500 text-white text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full shadow-md z-10 animate-bounce border border-white">
+                  NEW
+                </div>
+                <BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">📝 Practice</span>
               </Button>
             </Link>
           </div>

@@ -43,7 +43,7 @@ export function KidBackground() {
       aria-hidden="true"
     >
       {/* Warm gradient overlay — slightly more vivid for kid-game feel */}
-      <div className="absolute inset-0 bg-gradient-to-br from-sky-100/70 via-amber-50/50 to-emerald-100/70" />
+      <div className="absolute inset-0 bg-gradient-to-br from-sky-100/40 via-amber-50/30 to-emerald-100/40" />
 
       {/* Subtle dot grid pattern */}
       <svg className="absolute inset-0 w-full h-full opacity-[0.035]" xmlns="http://www.w3.org/2000/svg">
@@ -90,7 +90,7 @@ export function KidBackground() {
       {icons.map((icon, i) => (
         <span
           key={i}
-          className="absolute select-none opacity-[0.18]"
+          className="absolute select-none opacity-[0.25]"
           style={{
             fontSize: `${icon.size}rem`,
             top: `${icon.top}%`,

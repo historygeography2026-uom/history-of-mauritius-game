@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Trophy, ArrowLeft, Search, ArrowUpDown, ArrowUp, ArrowDown,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Flame, Sparkles,
-  Layers, List,
+  Layers, List, Calendar,
 } from "lucide-react"
 import { useSession } from "next-auth/react"
 
@@ -65,6 +65,8 @@ export default function Leaderboard() {
   const [sortBy, setSortBy] = useState<SortField>("total_points")
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc")
   const [viewMode, setViewMode] = useState<ViewMode>("cumulated")
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear())
+  const [availableYears, setAvailableYears] = useState<number[]>([new Date().getFullYear()])
   const { data: session } = useSession()
   const [encouragement] = useState(() => encouragements[Math.floor(Math.random() * encouragements.length)])
 
@@ -79,7 +81,7 @@ export default function Leaderboard() {
 
   const apiUrl =
     `/api/leaderboard?subject=${selectedCategory}&page=${page}&limit=${ROWS_PER_PAGE}` +
-    `&sortBy=${sortBy}&sortOrder=${sortOrder}&view=${viewMode}` +
+    `&sortBy=${sortBy}&sortOrder=${sortOrder}&view=${viewMode}&year=${selectedYear}` +
     (debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : "")
 
   const { data, isLoading, error } = useSWR<{
@@ -90,8 +92,20 @@ export default function Leaderboard() {
     view: ViewMode
   }>(apiUrl, fetcher, { refreshInterval: 30000 })
 
-  // Reset page on category, sort, or view change
-  useEffect(() => { setPage(1) }, [selectedCategory, sortBy, sortOrder, viewMode])
+  // Reset page on category, sort, view, or year change
+  useEffect(() => { setPage(1) }, [selectedCategory, sortBy, sortOrder, viewMode, selectedYear])
+
+  // Fetch available years on mount
+  useEffect(() => {
+    fetch("/api/leaderboard?availableYears=true")
+      .then(r => r.json())
+      .then(d => {
+        if (d.years && d.years.length > 0) {
+          setAvailableYears(d.years)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const toggleSort = useCallback((field: SortField) => {
     if (sortBy === field) {
@@ -217,6 +231,21 @@ export default function Leaderboard() {
               <List className="h-4 w-4" />
               Per Level
             </button>
+          </div>
+
+          {/* Year Filter */}
+          <div className="flex items-center gap-1.5 bg-white/90 rounded-xl border-2 border-gray-200 px-3 py-1.5 shadow-sm shrink-0">
+            <Calendar className="h-4 w-4 text-amber-500" />
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className="bg-transparent text-sm font-bold text-gray-700 cursor-pointer focus:outline-none appearance-none pr-4"
+              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0 center' }}
+            >
+              {availableYears.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
           </div>
 
           {/* Search */}

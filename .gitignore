@@ -23,6 +23,14 @@ yarn-error.log*
 .env.render.production
 !.env.example
 
+# Temporary and office lock files
+~$*
+*.tmp
+
+# Database backups (contain sensitive production user data)
+backups/
+*.sql.bak
+
 # vercel
 .vercel
 

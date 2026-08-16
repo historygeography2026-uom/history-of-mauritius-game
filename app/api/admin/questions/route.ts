@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(enrichedQuestions)
   } catch (error: any) {
     console.error("Error fetching questions:", error)
-    return NextResponse.json({ error: "Failed to fetch questions", details: error?.message }, { status: 500 })
+    return NextResponse.json({ error: "Failed to fetch questions" }, { status: 500 })
   }
 }
 
@@ -379,7 +379,7 @@ export async function DELETE(request: NextRequest) {
   } catch (error: any) {
     console.error("[DELETE] Error deleting question:", error?.message || error)
     return NextResponse.json(
-      { error: "Failed to delete question", details: error?.message || "Unknown error" },
+      { error: "Failed to delete question" },
       { status: 500 }
     )
   }
