@@ -27,7 +27,7 @@ export default function PracticeCompleteScreen({ unit, onPracticeAgain, onBackTo
           You did it!
         </h1>
         <p className="mt-3 text-pretty text-base leading-relaxed text-gray-600">
-          You finished practicing <span className="font-bold text-gray-900">Unit {unit.unit_no}: {unit.unit_name}</span>.
+          You finished practicing <span className="font-bold text-gray-900">{unit.unit_name}</span>.
           Every practice makes your brain stronger. Keep it up!
         </p>
 

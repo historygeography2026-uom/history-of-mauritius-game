@@ -69,16 +69,20 @@ CREATE INDEX IF NOT EXISTS idx_pa_question    ON practice_attempts(question_id);
 CREATE INDEX IF NOT EXISTS idx_pa_unit        ON practice_attempts(unit_id);
 
 -- ===========================
--- Seed 6 initial units
+-- Seed 10 initial units (Grade 5 & Grade 6)
 -- ===========================
 INSERT INTO practice_units (unit_no, unit_name) VALUES
-  (1, 'Unit 1'),
-  (2, 'Unit 2'),
-  (3, 'Unit 3'),
-  (4, 'Unit 4'),
-  (5, 'Unit 5'),
-  (6, 'Unit 6')
-ON CONFLICT (unit_no) DO NOTHING;
+  (1, 'Grade 5 Unit 1'),
+  (2, 'Grade 5 Unit 2'),
+  (3, 'Grade 5 Unit 3'),
+  (4, 'Grade 5 Unit 4'),
+  (5, 'Grade 5 Unit 5'),
+  (6, 'Grade 6 Unit 1'),
+  (7, 'Grade 6 Unit 2'),
+  (8, 'Grade 6 Unit 3'),
+  (9, 'Grade 6 Unit 4'),
+  (10, 'Grade 6 Unit 5')
+ON CONFLICT (unit_no) DO UPDATE SET unit_name = EXCLUDED.unit_name;
 
 -- ===========================
 -- Row Level Security (match existing pattern from 01_create_schema.sql)

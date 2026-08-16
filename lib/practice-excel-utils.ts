@@ -90,7 +90,7 @@ export const generatePracticeExcelTemplate = async () => {
     { Instructions: "4. Save the file and upload it back to the admin panel" },
     { Instructions: "" },
     { Instructions: "REQUIRED FIELDS FOR ALL QUESTIONS:" },
-    { Instructions: "• unit: Unit number (1 through 6)" },
+    { Instructions: "• unit: Unit number (1 to 10) — 1-5 for Grade 5 (Units 1-5), 6-10 for Grade 6 (Units 1-5)" },
     { Instructions: "• type: 'mcq', 'matching', 'fill', 'reorder', or 'truefalse'" },
     { Instructions: "• question: The question text" },
     { Instructions: "" },
@@ -240,7 +240,7 @@ export interface PracticeValidationResult {
 }
 
 const VALID_TYPES = ["mcq", "matching", "fill", "reorder", "truefalse"]
-const MAX_UNIT = 6
+const MAX_UNIT = 10
 
 const toStr = (val: any): string => {
   if (val === null || val === undefined) return ""

@@ -171,7 +171,7 @@ export default function PracticeExcelImportSection({ onImport, isLoading }: Prac
 
         <div className="flex items-center">
           <p className="text-xs text-slate-600">
-            Use <strong>unit</strong> column (1–6) instead of subject/level. Timer column is ignored in practice mode.
+            Use <strong>unit</strong> column (1–10: 1–5 for Grade 5, 6–10 for Grade 6) instead of subject/level.
           </p>
         </div>
       </div>

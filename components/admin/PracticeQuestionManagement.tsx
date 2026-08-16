@@ -147,7 +147,7 @@ export default function PracticeQuestionManagement({ onImport, onAdd }: Props) {
             <option value="all">All units</option>
             {units.map((u) => (
               <option key={u.id} value={u.unit_no}>
-                Unit {u.unit_no} — {u.unit_name}
+                {u.unit_name}
               </option>
             ))}
           </select>
