@@ -233,28 +233,38 @@ export default function MultipleChoiceGame({
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-        {(question.options || []).map((option, index) => (
-          <Button
-            key={index}
-            onClick={() => !showResult && handleAnswer(index)}
-            disabled={showResult}
-            className={`h-auto w-full justify-start p-2 text-left text-sm transition-all rounded-xl ${
-              showResult
-                ? index === question.correctAnswer
-                  ? "bg-gradient-to-r from-green-400 to-green-500 text-white border-4 border-green-300 shadow-lg"
-                  : selectedAnswer === index
-                    ? "bg-gradient-to-r from-red-400 to-red-500 text-white border-4 border-red-300"
-                    : "bg-muted text-muted-foreground opacity-50"
-                : "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:from-primary/90 hover:to-primary/70 shadow-md"
-            }`}
-          >
-            <span className="mr-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/20 text-base font-bold">
-              {String.fromCharCode(65 + index)}
-            </span>
-            <span className="break-words whitespace-normal text-left flex-1 leading-tight">{option}</span>
-          </Button>
-        ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {(question.options || []).map((option, index) => {
+          const OPTION_THEMES = [
+            "bg-gradient-to-r from-blue-600 to-indigo-600 border-2 border-blue-400 text-white shadow-md hover:from-blue-700 hover:to-indigo-700",
+            "bg-gradient-to-r from-emerald-600 to-teal-600 border-2 border-emerald-400 text-white shadow-md hover:from-emerald-700 hover:to-teal-700",
+            "bg-gradient-to-r from-amber-500 to-orange-500 border-2 border-amber-400 text-white shadow-md hover:from-amber-600 hover:to-orange-600",
+            "bg-gradient-to-r from-purple-600 to-pink-600 border-2 border-purple-400 text-white shadow-md hover:from-purple-700 hover:to-pink-700",
+          ]
+          const defaultTheme = OPTION_THEMES[index % OPTION_THEMES.length]
+
+          return (
+            <Button
+              key={index}
+              onClick={() => !showResult && handleAnswer(index)}
+              disabled={showResult}
+              className={`h-auto w-full justify-start p-2.5 text-left text-sm font-black transition-all rounded-2xl ${
+                showResult
+                  ? index === question.correctAnswer
+                    ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white border-4 border-green-300 shadow-xl ring-4 ring-green-300 scale-[1.02]"
+                    : selectedAnswer === index
+                      ? "bg-gradient-to-r from-red-500 to-rose-600 text-white border-4 border-red-300 ring-4 ring-red-300"
+                      : "bg-slate-300 text-slate-500 opacity-40 grayscale"
+                  : defaultTheme
+              }`}
+            >
+              <span className="mr-2.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/30 text-base font-black text-white shadow-xs">
+                {String.fromCharCode(65 + index)}
+              </span>
+              <span className="break-words whitespace-normal text-left flex-1 leading-snug">{option}</span>
+            </Button>
+          )
+        })}
       </div>
 
       {showResult && (

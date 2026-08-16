@@ -1,8 +1,8 @@
-// MatchingQuestionScreen.tsx — Instant 0ms bidirectional matching with sound & vibrant design
+// MatchingQuestionScreen.tsx — Instant 0ms bidirectional matching with sound & vibrant true colors
 "use client"
 
 import { useState } from "react"
-import { X, Volume2 } from "lucide-react"
+import { X, Volume2, Check } from "lucide-react"
 import { useGameSounds, isGameMuted } from "@/hooks/use-game-sounds"
 
 const speakText = (text: string) => {
@@ -37,10 +37,10 @@ interface MatchingQuestionScreenProps {
 }
 
 const PAIR_PALETTES = [
-  { border: "border-blue-500", bg: "bg-blue-100", text: "text-blue-950", ring: "ring-blue-400" },
-  { border: "border-orange-500", bg: "bg-orange-100", text: "text-orange-950", ring: "ring-orange-400" },
-  { border: "border-emerald-500", bg: "bg-emerald-100", text: "text-emerald-950", ring: "ring-emerald-400" },
-  { border: "border-purple-500", bg: "bg-purple-100", text: "text-purple-950", ring: "ring-purple-400" },
+  { border: "border-blue-400", bg: "bg-gradient-to-r from-blue-600 to-indigo-600", text: "text-white", ring: "ring-blue-300" },
+  { border: "border-orange-400", bg: "bg-gradient-to-r from-orange-500 to-amber-600", text: "text-white", ring: "ring-orange-300" },
+  { border: "border-emerald-400", bg: "bg-gradient-to-r from-emerald-600 to-teal-600", text: "text-white", ring: "ring-emerald-300" },
+  { border: "border-purple-400", bg: "bg-gradient-to-r from-purple-600 to-pink-600", text: "text-white", ring: "ring-purple-300" },
 ]
 
 export default function MatchingQuestionScreen({
@@ -222,17 +222,18 @@ export default function MatchingQuestionScreen({
                 const isSelected = selectedLeft === item
                 const isCorrectPair = checked && correctMap[item] === matches[item]
 
-                let style = "border-slate-300 bg-slate-50 text-slate-900 hover:bg-rose-50 hover:border-rose-400"
+                // Default true rich vibrant color (Blue-Indigo)
+                let style = "bg-gradient-to-r from-blue-600 to-indigo-600 border-2 border-blue-400 text-white shadow-md hover:from-blue-700 hover:to-indigo-700"
 
                 if (checked && pairIndex >= 0) {
                   style = isCorrectPair
-                    ? "border-emerald-500 bg-emerald-100 text-emerald-950 ring-2 ring-emerald-300"
-                    : "border-rose-500 bg-rose-100 text-rose-950 ring-2 ring-rose-300"
+                    ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white border-4 border-green-300 ring-4 ring-green-300 shadow-xl"
+                    : "bg-gradient-to-r from-red-500 to-rose-600 text-white border-4 border-red-300 ring-4 ring-red-300"
                 } else if (pairIndex >= 0) {
                   const p = PAIR_PALETTES[pairIndex % PAIR_PALETTES.length]
-                  style = `${p.border} ${p.bg} ${p.text} shadow-md ring-2 ${p.ring}`
+                  style = `${p.bg} ${p.border} ${p.text} shadow-lg ring-4 ${p.ring} scale-[1.02]`
                 } else if (isSelected) {
-                  style = "border-amber-500 bg-amber-100 text-amber-950 shadow-md ring-4 ring-amber-300 scale-[1.02]"
+                  style = "bg-amber-400 text-gray-950 border-4 border-amber-500 shadow-2xl ring-4 ring-amber-300 scale-[1.03]"
                 }
 
                 return (
@@ -240,11 +241,18 @@ export default function MatchingQuestionScreen({
                     key={item}
                     type="button"
                     onClick={() => handleLeftClick(item)}
-                    className={`flex min-h-[3.75rem] items-center justify-between gap-2 rounded-2xl border-3 px-4 py-3 text-left text-sm sm:text-base font-black transition-all ${style}`}
+                    className={`flex min-h-[3.75rem] items-center justify-between gap-2 rounded-2xl px-4 py-3 text-left text-sm sm:text-base font-black transition-all ${style}`}
                   >
                     <span className="leading-snug">{item}</span>
                     {!checked && pairIndex >= 0 && (
-                      <X className="h-4 w-4 shrink-0 opacity-60 hover:opacity-100" />
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/30 text-white hover:bg-white/50">
+                        <X className="h-3.5 w-3.5" />
+                      </span>
+                    )}
+                    {checked && isCorrectPair && (
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-emerald-600 shadow-sm">
+                        <Check className="h-3.5 w-3.5 stroke-[3]" />
+                      </span>
                     )}
                   </button>
                 )
@@ -260,17 +268,18 @@ export default function MatchingQuestionScreen({
                 const leftKey = Object.keys(matches).find((k) => matches[k] === item)
                 const isCorrectPair = leftKey ? correctMap[leftKey] === item : false
 
-                let style = "border-slate-300 bg-slate-50 text-slate-900 hover:bg-rose-50 hover:border-rose-400"
+                // Default true rich vibrant color (Orange-Amber)
+                let style = "bg-gradient-to-r from-orange-500 to-amber-500 border-2 border-orange-400 text-white shadow-md hover:from-orange-600 hover:to-amber-600"
 
                 if (checked && pairIndex >= 0) {
                   style = isCorrectPair
-                    ? "border-emerald-500 bg-emerald-100 text-emerald-950 ring-2 ring-emerald-300"
-                    : "border-rose-500 bg-rose-100 text-rose-950 ring-2 ring-rose-300"
+                    ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white border-4 border-green-300 ring-4 ring-green-300 shadow-xl"
+                    : "bg-gradient-to-r from-red-500 to-rose-600 text-white border-4 border-red-300 ring-4 ring-red-300"
                 } else if (pairIndex >= 0) {
                   const p = PAIR_PALETTES[pairIndex % PAIR_PALETTES.length]
-                  style = `${p.border} ${p.bg} ${p.text} shadow-md ring-2 ${p.ring}`
+                  style = `${p.bg} ${p.border} ${p.text} shadow-lg ring-4 ${p.ring} scale-[1.02]`
                 } else if (isSelected) {
-                  style = "border-amber-500 bg-amber-100 text-amber-950 shadow-md ring-4 ring-amber-300 scale-[1.02]"
+                  style = "bg-amber-400 text-gray-950 border-4 border-amber-500 shadow-2xl ring-4 ring-amber-300 scale-[1.03]"
                 }
 
                 return (
@@ -278,9 +287,14 @@ export default function MatchingQuestionScreen({
                     key={item}
                     type="button"
                     onClick={() => handleRightClick(item)}
-                    className={`flex min-h-[3.75rem] items-center justify-between gap-2 rounded-2xl border-3 px-4 py-3 text-left text-sm sm:text-base font-black transition-all ${style}`}
+                    className={`flex min-h-[3.75rem] items-center justify-between gap-2 rounded-2xl px-4 py-3 text-left text-sm sm:text-base font-black transition-all ${style}`}
                   >
                     <span className="leading-snug">{item}</span>
+                    {checked && isCorrectPair && (
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-emerald-600 shadow-sm">
+                        <Check className="h-3.5 w-3.5 stroke-[3]" />
+                      </span>
+                    )}
                   </button>
                 )
               })}

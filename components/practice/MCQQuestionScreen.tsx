@@ -1,4 +1,4 @@
-// MCQQuestionScreen.tsx — Vibrant, high-contrast, playful practice screen with sound
+// MCQQuestionScreen.tsx — Vibrant, high-contrast, playful practice screen with sound & true colors
 "use client"
 
 import { useState } from "react"
@@ -34,6 +34,13 @@ interface MCQQuestionScreenProps {
   onAnswer: (answer: string) => Promise<{ is_correct: boolean; correct_answer: any }>
   onNext: () => void
 }
+
+const OPTION_THEMES = [
+  "bg-gradient-to-r from-blue-600 to-indigo-600 border-2 border-blue-400 text-white shadow-md hover:from-blue-700 hover:to-indigo-700",
+  "bg-gradient-to-r from-emerald-600 to-teal-600 border-2 border-emerald-400 text-white shadow-md hover:from-emerald-700 hover:to-teal-700",
+  "bg-gradient-to-r from-amber-500 to-orange-500 border-2 border-amber-400 text-white shadow-md hover:from-amber-600 hover:to-orange-600",
+  "bg-gradient-to-r from-purple-600 to-pink-600 border-2 border-purple-400 text-white shadow-md hover:from-purple-700 hover:to-pink-700",
+]
 
 export default function MCQQuestionScreen({
   question,
@@ -149,21 +156,24 @@ export default function MCQQuestionScreen({
             </div>
           )}
 
-          {/* Answer Options Grid */}
+          {/* Answer Options Grid with True Rich Saturated Colors by Default */}
           <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2" role="radiogroup" aria-label="Answer options">
             {question.options.map((option, i) => {
               const isSelected = selected === i
               const isRightAnswer = checked && correctIndex !== null && i === correctIndex
               const isWrongSelection = checked && isSelected && !isCorrect
+              const defaultTheme = OPTION_THEMES[i % OPTION_THEMES.length]
 
-              let cardStyle = "border-slate-300 bg-slate-50 text-slate-900 hover:border-blue-500 hover:bg-blue-50/80 shadow-sm"
+              let cardStyle = defaultTheme
 
               if (isRightAnswer) {
-                cardStyle = "border-emerald-500 bg-emerald-100 text-emerald-950 ring-4 ring-emerald-300 shadow-lg scale-[1.02]"
+                cardStyle = "bg-gradient-to-r from-green-500 to-emerald-600 text-white border-4 border-green-300 shadow-xl ring-4 ring-green-300 scale-[1.03]"
               } else if (isWrongSelection) {
-                cardStyle = "border-rose-500 bg-rose-100 text-rose-950 ring-4 ring-rose-300 shadow-md"
+                cardStyle = "bg-gradient-to-r from-red-500 to-rose-600 text-white border-4 border-red-300 ring-4 ring-red-300"
               } else if (isSelected) {
-                cardStyle = "border-blue-600 bg-blue-100 text-blue-950 ring-4 ring-blue-300 shadow-lg scale-[1.02]"
+                cardStyle = `${defaultTheme} ring-4 ring-yellow-300 scale-[1.03] shadow-2xl brightness-110`
+              } else if (checked) {
+                cardStyle = "bg-slate-300 text-slate-500 opacity-40 grayscale"
               }
 
               return (
@@ -174,16 +184,19 @@ export default function MCQQuestionScreen({
                   aria-checked={isSelected}
                   disabled={checked}
                   onClick={() => handleSelect(i)}
-                  className={`flex min-h-[4.25rem] items-center justify-between gap-3 rounded-2xl border-3 px-5 py-3.5 text-left text-base font-extrabold transition-all ${cardStyle} disabled:cursor-default`}
+                  className={`flex min-h-[4.5rem] items-center justify-between gap-3 rounded-2xl px-5 py-3.5 text-left text-base font-black transition-all ${cardStyle} disabled:cursor-default`}
                 >
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/30 text-base font-black text-white shadow-xs">
+                    {String.fromCharCode(65 + i)}
+                  </span>
                   <span className="flex-1 leading-snug">{option}</span>
                   {isRightAnswer && (
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white shadow-sm">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-emerald-600 shadow-sm">
                       <Check className="h-4 w-4 stroke-[3]" />
                     </span>
                   )}
                   {isWrongSelection && (
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-rose-600 text-white shadow-sm">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-rose-600 shadow-sm">
                       <X className="h-4 w-4 stroke-[3]" />
                     </span>
                   )}

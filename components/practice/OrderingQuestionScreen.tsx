@@ -1,4 +1,4 @@
-// OrderingQuestionScreen.tsx — Vibrant, high-contrast ordering practice screen with sound
+// OrderingQuestionScreen.tsx — Vibrant, high-contrast ordering practice screen with sound & true colors
 "use client"
 
 import { useState } from "react"
@@ -34,6 +34,13 @@ interface OrderingQuestionScreenProps {
   onAnswer: (answer: string[]) => Promise<{ is_correct: boolean; correct_answer: any }>
   onNext: () => void
 }
+
+const NUMBER_BADGES = [
+  "from-orange-500 to-red-500",
+  "from-blue-600 to-indigo-600",
+  "from-purple-600 to-pink-600",
+  "from-emerald-600 to-teal-600",
+]
 
 export default function OrderingQuestionScreen({
   question,
@@ -153,34 +160,39 @@ export default function OrderingQuestionScreen({
             </div>
           )}
 
-          {/* Ordering items list */}
+          {/* Ordering items list with solid vibrant true colors */}
           <ol className="flex flex-col gap-3 mt-4">
             {items.map((item, index) => {
               const inRightSpot = checked && correctLabels.length > 0 && item.label === correctLabels[index]
+              const badgeGradient = NUMBER_BADGES[index % NUMBER_BADGES.length]
 
-              let itemStyle = "border-slate-300 bg-slate-50 text-slate-900"
+              let itemStyle = "border-2 border-indigo-200 bg-white text-slate-900 shadow-md"
               if (checked) {
                 itemStyle = inRightSpot
-                  ? "border-emerald-500 bg-emerald-100 text-emerald-950 ring-2 ring-emerald-300"
-                  : "border-rose-500 bg-rose-100 text-rose-950 ring-2 ring-rose-300"
+                  ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white border-4 border-green-300 ring-4 ring-green-300 shadow-xl"
+                  : "bg-gradient-to-r from-red-500 to-rose-600 text-white border-4 border-red-300 ring-4 ring-red-300"
               }
 
               return (
                 <li
                   key={item.id}
-                  className={`flex items-center gap-3 rounded-2xl border-3 px-4 py-3.5 shadow-sm transition-all ${itemStyle}`}
+                  className={`flex items-center gap-3.5 rounded-2xl px-4 py-3.5 transition-all ${itemStyle}`}
                 >
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-base font-black text-white shadow-sm">
+                  <span
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-r ${badgeGradient} text-base font-black text-white shadow-sm`}
+                  >
                     {index + 1}
                   </span>
-                  <span className="flex-1 text-base font-black text-slate-900 leading-snug">{item.label}</span>
-                  <div className="flex gap-1.5">
+                  <span className={`flex-1 text-base font-black leading-snug ${checked ? "text-white" : "text-slate-900"}`}>
+                    {item.label}
+                  </span>
+                  <div className="flex gap-2">
                     <button
                       type="button"
                       onClick={() => move(index, -1)}
                       disabled={checked || index === 0}
                       aria-label={`Move ${item.label} up`}
-                      className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow transition-transform hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100"
+                      className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md transition-all hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100"
                     >
                       <ArrowUp className="h-5 w-5 stroke-[2.5]" />
                     </button>
@@ -189,7 +201,7 @@ export default function OrderingQuestionScreen({
                       onClick={() => move(index, 1)}
                       disabled={checked || index === items.length - 1}
                       aria-label={`Move ${item.label} down`}
-                      className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white shadow transition-transform hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100"
+                      className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md transition-all hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100"
                     >
                       <ArrowDown className="h-5 w-5 stroke-[2.5]" />
                     </button>
