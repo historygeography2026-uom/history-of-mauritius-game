@@ -1,4 +1,4 @@
-// MatchingQuestionScreen.tsx — Instant 0ms bidirectional matching with sound & vibrant true colors
+// MatchingQuestionScreen.tsx — Matches the exact screenshot design & colors
 "use client"
 
 import { useState } from "react"
@@ -37,10 +37,10 @@ interface MatchingQuestionScreenProps {
 }
 
 const PAIR_PALETTES = [
-  { border: "border-blue-400", bg: "bg-gradient-to-r from-blue-600 to-indigo-600", text: "text-white", ring: "ring-blue-300" },
-  { border: "border-orange-400", bg: "bg-gradient-to-r from-orange-500 to-amber-600", text: "text-white", ring: "ring-orange-300" },
-  { border: "border-emerald-400", bg: "bg-gradient-to-r from-emerald-600 to-teal-600", text: "text-white", ring: "ring-emerald-300" },
-  { border: "border-purple-400", bg: "bg-gradient-to-r from-purple-600 to-pink-600", text: "text-white", ring: "ring-purple-300" },
+  { border: "border-blue-300", bg: "bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500", text: "text-white", ring: "ring-blue-300" },
+  { border: "border-orange-300", bg: "bg-gradient-to-r from-amber-500 to-orange-400", text: "text-white", ring: "ring-orange-300" },
+  { border: "border-emerald-300", bg: "bg-gradient-to-r from-emerald-500 to-teal-500", text: "text-white", ring: "ring-emerald-300" },
+  { border: "border-pink-300", bg: "bg-gradient-to-r from-pink-500 to-rose-500", text: "text-white", ring: "ring-pink-300" },
 ]
 
 export default function MatchingQuestionScreen({
@@ -61,7 +61,6 @@ export default function MatchingQuestionScreen({
   const { playCorrect, playWrong, playClick } = useGameSounds()
 
   const { left_items, right_items } = question
-  const matchedRightValues = new Set(Object.values(matches))
   const allMatched = Object.keys(matches).length === left_items.length
 
   const pairIndexForLeft = (left: string) => Object.keys(matches).indexOf(left)
@@ -153,18 +152,18 @@ export default function MatchingQuestionScreen({
   })
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-rose-100 via-pink-50 to-purple-100 px-4 py-6 font-sans">
+    <main className="relative z-10 min-h-screen px-4 py-6 font-sans">
       <div className="mx-auto max-w-2xl">
         {/* Header */}
         <header className="mb-6 flex items-center justify-between">
           <button
             type="button"
             onClick={onExit}
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-5 py-2.5 text-sm font-extrabold text-white shadow-md transition-all hover:scale-105 hover:shadow-lg"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-400 to-amber-500 px-5 py-2 text-sm font-bold text-white shadow-sm transition-all hover:scale-105"
           >
             🚪 Exit
           </button>
-          <span className="rounded-full border-2 border-rose-300 bg-white px-5 py-2 text-sm font-black text-rose-900 shadow-sm">
+          <span className="rounded-full border border-amber-200 bg-white/90 px-5 py-2 text-sm font-bold text-amber-900 shadow-xs">
             ⭐ Question {questionNumber} of {totalQuestions}
           </span>
         </header>
@@ -172,27 +171,27 @@ export default function MatchingQuestionScreen({
         {/* Card */}
         <section
           aria-labelledby="match-prompt"
-          className="rounded-3xl border-4 border-rose-200 bg-white p-6 shadow-2xl sm:p-8"
+          className="rounded-3xl border-2 border-pink-100 bg-white/95 p-6 shadow-xl backdrop-blur-sm sm:p-8"
         >
-          <div className="mb-3 flex items-start gap-3">
+          <div className="mb-4 flex items-start gap-3">
             <span className="text-3xl sm:text-4xl" aria-hidden="true">
               🔗
             </span>
             <div className="flex-1">
               <div className="flex items-start justify-between gap-2">
-                <h1 id="match-prompt" className="text-xl font-black leading-snug text-slate-900 sm:text-2xl">
-                  {question.question_text}
+                <h1 id="match-prompt" className="text-xl font-black leading-snug text-slate-800 sm:text-2xl">
+                  {question.question_text || "Match the following pairs"}
                 </h1>
                 <button
                   type="button"
-                  onClick={() => speakText(question.question_text)}
-                  className="shrink-0 rounded-full bg-rose-100 p-2 text-rose-700 hover:bg-rose-200 transition-colors"
+                  onClick={() => speakText(question.question_text || "Match the following pairs")}
+                  className="shrink-0 rounded-full bg-rose-50 p-2 text-rose-500 hover:bg-rose-100 transition-colors"
                   title="Listen to question"
                 >
                   <Volume2 className="h-5 w-5" />
                 </button>
               </div>
-              <p className="mt-1 text-xs sm:text-sm font-bold text-slate-600">
+              <p className="mt-1 text-xs sm:text-sm font-bold text-slate-500">
                 Tap an item, then tap its match! Pairs connect with matching colors 🎨
               </p>
             </div>
@@ -214,26 +213,26 @@ export default function MatchingQuestionScreen({
 
           {/* Columns Grid */}
           <div className="grid grid-cols-2 gap-3 sm:gap-6 mt-4">
-            {/* Left Items */}
-            <div className="flex flex-col gap-2.5" role="group" aria-label="Left items">
-              <span className="text-xs font-black uppercase text-slate-500">Column A</span>
+            {/* Left Items (Column A: Blue-Indigo-Purple) */}
+            <div className="flex flex-col gap-3" role="group" aria-label="Column A items">
+              <span className="text-xs font-black uppercase tracking-wider text-slate-400">COLUMN A</span>
               {left_items.map((item) => {
                 const pairIndex = pairIndexForLeft(item)
                 const isSelected = selectedLeft === item
                 const isCorrectPair = checked && correctMap[item] === matches[item]
 
-                // Default true rich vibrant color (Blue-Indigo)
-                let style = "bg-gradient-to-r from-blue-600 to-indigo-600 border-2 border-blue-400 text-white shadow-md hover:from-blue-700 hover:to-indigo-700"
+                // Default matching screenshot: Blue-Indigo-Purple gradient
+                let style = "bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 text-white shadow-md hover:from-blue-600 hover:to-purple-600"
 
                 if (checked && pairIndex >= 0) {
                   style = isCorrectPair
-                    ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white border-4 border-green-300 ring-4 ring-green-300 shadow-xl"
-                    : "bg-gradient-to-r from-red-500 to-rose-600 text-white border-4 border-red-300 ring-4 ring-red-300"
+                    ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-xl ring-4 ring-emerald-300"
+                    : "bg-gradient-to-r from-rose-500 to-red-500 text-white ring-4 ring-rose-300"
                 } else if (pairIndex >= 0) {
                   const p = PAIR_PALETTES[pairIndex % PAIR_PALETTES.length]
-                  style = `${p.bg} ${p.border} ${p.text} shadow-lg ring-4 ${p.ring} scale-[1.02]`
+                  style = `${p.bg} ${p.text} shadow-lg ring-4 ${p.ring} scale-[1.02]`
                 } else if (isSelected) {
-                  style = "bg-amber-400 text-gray-950 border-4 border-amber-500 shadow-2xl ring-4 ring-amber-300 scale-[1.03]"
+                  style = "bg-gradient-to-r from-amber-400 to-orange-400 text-white shadow-2xl ring-4 ring-yellow-300 scale-[1.03]"
                 }
 
                 return (
@@ -241,16 +240,16 @@ export default function MatchingQuestionScreen({
                     key={item}
                     type="button"
                     onClick={() => handleLeftClick(item)}
-                    className={`flex min-h-[3.75rem] items-center justify-between gap-2 rounded-2xl px-4 py-3 text-left text-sm sm:text-base font-black transition-all ${style}`}
+                    className={`flex min-h-[4rem] items-center justify-between gap-2 rounded-2xl p-4 text-left text-sm sm:text-base font-bold transition-all ${style}`}
                   >
                     <span className="leading-snug">{item}</span>
                     {!checked && pairIndex >= 0 && (
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/30 text-white hover:bg-white/50">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/30 text-white hover:bg-white/50">
                         <X className="h-3.5 w-3.5" />
                       </span>
                     )}
                     {checked && isCorrectPair && (
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-emerald-600 shadow-sm">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-emerald-600 shadow-sm">
                         <Check className="h-3.5 w-3.5 stroke-[3]" />
                       </span>
                     )}
@@ -259,27 +258,27 @@ export default function MatchingQuestionScreen({
               })}
             </div>
 
-            {/* Right Items */}
-            <div className="flex flex-col gap-2.5" role="group" aria-label="Right items">
-              <span className="text-xs font-black uppercase text-slate-500">Column B</span>
+            {/* Right Items (Column B: Amber-Orange) */}
+            <div className="flex flex-col gap-3" role="group" aria-label="Column B items">
+              <span className="text-xs font-black uppercase tracking-wider text-slate-400">COLUMN B</span>
               {right_items.map((item) => {
                 const pairIndex = pairIndexForRight(item)
                 const isSelected = selectedRight === item
                 const leftKey = Object.keys(matches).find((k) => matches[k] === item)
                 const isCorrectPair = leftKey ? correctMap[leftKey] === item : false
 
-                // Default true rich vibrant color (Orange-Amber)
-                let style = "bg-gradient-to-r from-orange-500 to-amber-500 border-2 border-orange-400 text-white shadow-md hover:from-orange-600 hover:to-amber-600"
+                // Default matching screenshot: Amber-Orange gradient
+                let style = "bg-gradient-to-r from-amber-500 to-orange-400 text-white shadow-md hover:from-amber-600 hover:to-orange-500"
 
                 if (checked && pairIndex >= 0) {
                   style = isCorrectPair
-                    ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white border-4 border-green-300 ring-4 ring-green-300 shadow-xl"
-                    : "bg-gradient-to-r from-red-500 to-rose-600 text-white border-4 border-red-300 ring-4 ring-red-300"
+                    ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-xl ring-4 ring-emerald-300"
+                    : "bg-gradient-to-r from-rose-500 to-red-500 text-white ring-4 ring-rose-300"
                 } else if (pairIndex >= 0) {
                   const p = PAIR_PALETTES[pairIndex % PAIR_PALETTES.length]
-                  style = `${p.bg} ${p.border} ${p.text} shadow-lg ring-4 ${p.ring} scale-[1.02]`
+                  style = `${p.bg} ${p.text} shadow-lg ring-4 ${p.ring} scale-[1.02]`
                 } else if (isSelected) {
-                  style = "bg-amber-400 text-gray-950 border-4 border-amber-500 shadow-2xl ring-4 ring-amber-300 scale-[1.03]"
+                  style = "bg-gradient-to-r from-amber-400 to-orange-400 text-white shadow-2xl ring-4 ring-yellow-300 scale-[1.03]"
                 }
 
                 return (
@@ -287,11 +286,11 @@ export default function MatchingQuestionScreen({
                     key={item}
                     type="button"
                     onClick={() => handleRightClick(item)}
-                    className={`flex min-h-[3.75rem] items-center justify-between gap-2 rounded-2xl px-4 py-3 text-left text-sm sm:text-base font-black transition-all ${style}`}
+                    className={`flex min-h-[4rem] items-center justify-between gap-2 rounded-2xl p-4 text-left text-sm sm:text-base font-bold transition-all ${style}`}
                   >
                     <span className="leading-snug">{item}</span>
                     {checked && isCorrectPair && (
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-emerald-600 shadow-sm">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-emerald-600 shadow-sm">
                         <Check className="h-3.5 w-3.5 stroke-[3]" />
                       </span>
                     )}
@@ -304,10 +303,10 @@ export default function MatchingQuestionScreen({
           {/* Feedback */}
           {checked && (
             <div
-              className={`mt-6 rounded-2xl border-3 p-4 text-center text-base font-black shadow-md ${
+              className={`mt-6 rounded-2xl p-4 text-center text-base font-black shadow-sm ${
                 allCorrect
-                  ? "border-emerald-500 bg-emerald-100 text-emerald-900"
-                  : "border-amber-500 bg-amber-100 text-amber-900"
+                  ? "bg-emerald-100 text-emerald-900 border border-emerald-300"
+                  : "bg-amber-100 text-amber-900 border border-amber-300"
               }`}
             >
               {allCorrect
@@ -316,16 +315,16 @@ export default function MatchingQuestionScreen({
             </div>
           )}
 
-          {/* Action button */}
+          {/* Action button: Pink-Purple pastel gradient as shown in screenshot */}
           <button
             type="button"
             disabled={!allMatched || submitting}
             onClick={handleCheck}
-            className={`mt-6 w-full rounded-full py-4 text-lg font-black text-white shadow-xl transition-all ${
+            className={`mt-6 w-full rounded-full py-4 text-lg font-black text-white shadow-lg transition-all ${
               checked
-                ? "bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 hover:scale-[1.02]"
-                : "bg-gradient-to-r from-rose-600 via-pink-600 to-purple-600 hover:from-rose-700 hover:to-purple-700 hover:scale-[1.02]"
-            } disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100`}
+                ? "bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 hover:scale-[1.02]"
+                : "bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 hover:from-pink-500 hover:to-indigo-500 hover:scale-[1.02]"
+            } disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100`}
           >
             {submitting ? "Checking... ⏳" : checked ? "Next Question! 🚀" : "Check My Answer! ✅"}
           </button>

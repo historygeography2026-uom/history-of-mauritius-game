@@ -1,4 +1,4 @@
-// FillBlankQuestionScreen.tsx — Vibrant, high-contrast practice screen with sound
+// FillBlankQuestionScreen.tsx — Matches the exact screenshot aesthetic & colors
 "use client"
 
 import { useState } from "react"
@@ -34,17 +34,6 @@ interface FillBlankQuestionScreenProps {
   onNext: () => void
 }
 
-function splitAtBlank(text: string): { before: string; after: string } {
-  const marker = text.match(/_{3,}/)
-  if (marker && marker.index !== undefined) {
-    return {
-      before: text.substring(0, marker.index).trim(),
-      after: text.substring(marker.index + marker[0].length).trim(),
-    }
-  }
-  return { before: text, after: "" }
-}
-
 export default function FillBlankQuestionScreen({
   question,
   questionNumber,
@@ -56,11 +45,15 @@ export default function FillBlankQuestionScreen({
   const [value, setValue] = useState("")
   const [checked, setChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
-  const [correctAnswer, setCorrectAnswer] = useState("")
+  const [correctAnswer, setCorrectAnswer] = useState<string>("")
   const [submitting, setSubmitting] = useState(false)
   const { playCorrect, playWrong, playClick } = useGameSounds()
 
-  const { before, after } = splitAtBlank(question.question_text)
+  // Split question_text on blank marker: "___", "[blank]", or "(blank)"
+  const blankRegex = /_{2,}|\[blank\]|\(blank\)/i
+  const parts = question.question_text.split(blankRegex)
+  const before = parts[0] || ""
+  const after = parts[1] || ""
 
   const handleCheck = async () => {
     if (checked) {
@@ -89,18 +82,18 @@ export default function FillBlankQuestionScreen({
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-emerald-100 via-teal-50 to-cyan-100 px-4 py-6 font-sans">
+    <main className="relative z-10 min-h-screen px-4 py-6 font-sans">
       <div className="mx-auto max-w-2xl">
         {/* Header */}
         <header className="mb-6 flex items-center justify-between">
           <button
             type="button"
             onClick={onExit}
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-5 py-2.5 text-sm font-extrabold text-white shadow-md transition-all hover:scale-105 hover:shadow-lg"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-400 to-amber-500 px-5 py-2 text-sm font-bold text-white shadow-sm transition-all hover:scale-105"
           >
             🚪 Exit
           </button>
-          <span className="rounded-full border-2 border-emerald-300 bg-white px-5 py-2 text-sm font-black text-emerald-900 shadow-sm">
+          <span className="rounded-full border border-amber-200 bg-white/90 px-5 py-2 text-sm font-bold text-amber-900 shadow-xs">
             ⭐ Question {questionNumber} of {totalQuestions}
           </span>
         </header>
@@ -108,7 +101,7 @@ export default function FillBlankQuestionScreen({
         {/* Question Card */}
         <section
           aria-labelledby="fb-prompt"
-          className="rounded-3xl border-4 border-emerald-200 bg-white p-6 shadow-2xl sm:p-8"
+          className="rounded-3xl border-2 border-pink-100 bg-white/95 p-6 shadow-xl backdrop-blur-sm sm:p-8"
         >
           <div className="mb-6 flex items-start gap-3">
             <span className="text-3xl sm:text-4xl" aria-hidden="true">
@@ -116,20 +109,20 @@ export default function FillBlankQuestionScreen({
             </span>
             <div className="flex-1">
               <div className="flex items-start justify-between gap-2">
-                <h1 id="fb-prompt" className="text-xl font-black leading-snug text-slate-900 sm:text-2xl">
+                <h1 id="fb-prompt" className="text-xl font-black leading-snug text-slate-800 sm:text-2xl">
                   Fill in the missing word!
                 </h1>
                 <button
                   type="button"
                   onClick={() => speakText(question.question_text)}
-                  className="shrink-0 rounded-full bg-emerald-100 p-2 text-emerald-700 hover:bg-emerald-200 transition-colors"
+                  className="shrink-0 rounded-full bg-rose-50 p-2 text-rose-500 hover:bg-rose-100 transition-colors"
                   title="Listen to question"
                 >
                   <Volume2 className="h-5 w-5" />
                 </button>
               </div>
               {question.instruction && (
-                <p className="mt-2 inline-block rounded-full bg-amber-100 px-3.5 py-1 text-xs font-extrabold text-amber-900 border border-amber-300">
+                <p className="mt-2 inline-block rounded-full bg-amber-50 px-3.5 py-1 text-xs font-bold text-amber-800 border border-amber-200">
                   💡 {question.instruction}
                 </p>
               )}
@@ -138,7 +131,7 @@ export default function FillBlankQuestionScreen({
 
           {/* Question Image */}
           {question.image_url && (
-            <div className="mb-6 flex justify-center overflow-hidden rounded-2xl border-2 border-emerald-100 bg-slate-50 p-2">
+            <div className="mb-6 flex justify-center overflow-hidden rounded-2xl border-2 border-rose-100 bg-slate-50 p-2">
               <img
                 src={question.image_url}
                 alt="Question visual"
@@ -151,7 +144,7 @@ export default function FillBlankQuestionScreen({
           )}
 
           {/* Fill Blank sentence block */}
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-3 rounded-2xl border-2 border-slate-300 bg-slate-50 p-5 text-lg font-bold leading-relaxed text-slate-900 shadow-inner sm:text-xl">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-5 text-base sm:text-lg font-bold leading-relaxed text-slate-800 shadow-inner">
             <span>{before}</span>
             <input
               type="text"
@@ -162,13 +155,13 @@ export default function FillBlankQuestionScreen({
                 if (e.key === "Enter" && !e.nativeEvent.isComposing && value.trim()) handleCheck()
               }}
               aria-label="Your answer for the blank"
-              placeholder="type word here..."
-              className={`min-w-[140px] max-w-[220px] rounded-xl border-3 px-4 py-2 text-center text-lg font-black outline-none transition-all ${
+              placeholder="type word..."
+              className={`min-w-[140px] max-w-[220px] rounded-xl border-2 px-4 py-2 text-center text-base sm:text-lg font-black outline-none transition-all ${
                 checked
                   ? isCorrect
-                    ? "border-emerald-500 bg-emerald-100 text-emerald-950 ring-4 ring-emerald-300"
-                    : "border-rose-500 bg-rose-100 text-rose-950 ring-4 ring-rose-300"
-                  : "border-emerald-500 bg-white text-slate-900 shadow-sm focus:border-emerald-600 focus:ring-4 focus:ring-emerald-200"
+                    ? "border-emerald-400 bg-emerald-50 text-emerald-950 ring-4 ring-emerald-200"
+                    : "border-rose-400 bg-rose-50 text-rose-950 ring-4 ring-rose-200"
+                  : "border-blue-400 bg-white text-slate-900 shadow-xs focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
               }`}
             />
             {after && <span>{after}</span>}
@@ -177,15 +170,20 @@ export default function FillBlankQuestionScreen({
           {/* Feedback */}
           {checked && (
             <div
-              className={`mt-6 rounded-2xl border-3 p-4 text-center text-base font-black shadow-md ${
+              className={`mt-6 rounded-2xl p-4 text-center text-base font-black shadow-sm ${
                 isCorrect
-                  ? "border-emerald-500 bg-emerald-100 text-emerald-900"
-                  : "border-amber-500 bg-amber-100 text-amber-900"
+                  ? "bg-emerald-100 text-emerald-900 border border-emerald-300"
+                  : "bg-amber-100 text-amber-900 border border-amber-300"
               }`}
             >
-              {isCorrect
-                ? "🎉 Fantastic! That's the correct word! ⭐"
-                : `💪 Nice try! The answer was: "${correctAnswer}"`}
+              {isCorrect ? (
+                "🎉 That's right! Excellent job! ⭐"
+              ) : (
+                <p>
+                  💪 Good try! The correct answer is:{" "}
+                  <span className="underline decoration-2">{correctAnswer}</span>
+                </p>
+              )}
             </div>
           )}
 
@@ -194,11 +192,11 @@ export default function FillBlankQuestionScreen({
             type="button"
             disabled={!value.trim() || submitting}
             onClick={handleCheck}
-            className={`mt-6 w-full rounded-full py-4 text-lg font-black text-white shadow-xl transition-all ${
+            className={`mt-6 w-full rounded-full py-4 text-lg font-black text-white shadow-lg transition-all ${
               checked
-                ? "bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 hover:scale-[1.02]"
-                : "bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 hover:scale-[1.02]"
-            } disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100`}
+                ? "bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 hover:scale-[1.02]"
+                : "bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 hover:from-pink-500 hover:to-indigo-500 hover:scale-[1.02]"
+            } disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100`}
           >
             {submitting ? "Checking... ⏳" : checked ? "Next Question! 🚀" : "Check My Answer! ✅"}
           </button>

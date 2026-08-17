@@ -1,4 +1,4 @@
-// MCQQuestionScreen.tsx — Vibrant, high-contrast, playful practice screen with sound & true colors
+// MCQQuestionScreen.tsx — Matches the exact game aesthetic & colors
 "use client"
 
 import { useState } from "react"
@@ -36,10 +36,10 @@ interface MCQQuestionScreenProps {
 }
 
 const OPTION_THEMES = [
-  "bg-gradient-to-r from-blue-600 to-indigo-600 border-2 border-blue-400 text-white shadow-md hover:from-blue-700 hover:to-indigo-700",
-  "bg-gradient-to-r from-emerald-600 to-teal-600 border-2 border-emerald-400 text-white shadow-md hover:from-emerald-700 hover:to-teal-700",
-  "bg-gradient-to-r from-amber-500 to-orange-500 border-2 border-amber-400 text-white shadow-md hover:from-amber-600 hover:to-orange-600",
-  "bg-gradient-to-r from-purple-600 to-pink-600 border-2 border-purple-400 text-white shadow-md hover:from-purple-700 hover:to-pink-700",
+  "bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 text-white shadow-md hover:from-blue-600 hover:to-purple-600",
+  "bg-gradient-to-r from-amber-500 to-orange-400 text-white shadow-md hover:from-amber-600 hover:to-orange-500",
+  "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md hover:from-emerald-600 hover:to-teal-600",
+  "bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-md hover:from-pink-600 hover:to-rose-600",
 ]
 
 export default function MCQQuestionScreen({
@@ -94,18 +94,18 @@ export default function MCQQuestionScreen({
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-sky-100 via-blue-50 to-indigo-100 px-4 py-6 font-sans">
+    <main className="relative z-10 min-h-screen px-4 py-6 font-sans">
       <div className="mx-auto max-w-2xl">
         {/* Header */}
         <header className="mb-6 flex items-center justify-between">
           <button
             type="button"
             onClick={onExit}
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-5 py-2.5 text-sm font-extrabold text-white shadow-md transition-all hover:scale-105 hover:shadow-lg"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-400 to-amber-500 px-5 py-2 text-sm font-bold text-white shadow-sm transition-all hover:scale-105"
           >
             🚪 Exit
           </button>
-          <span className="rounded-full border-2 border-indigo-300 bg-white px-5 py-2 text-sm font-black text-indigo-900 shadow-sm">
+          <span className="rounded-full border border-amber-200 bg-white/90 px-5 py-2 text-sm font-bold text-amber-900 shadow-xs">
             ⭐ Question {questionNumber} of {totalQuestions}
           </span>
         </header>
@@ -113,7 +113,7 @@ export default function MCQQuestionScreen({
         {/* Question Card */}
         <section
           aria-labelledby="question-prompt"
-          className="rounded-3xl border-4 border-indigo-200 bg-white p-6 shadow-2xl sm:p-8"
+          className="rounded-3xl border-2 border-pink-100 bg-white/95 p-6 shadow-xl backdrop-blur-sm sm:p-8"
         >
           {/* Question text & speech button */}
           <div className="mb-6 flex items-start gap-3">
@@ -122,20 +122,20 @@ export default function MCQQuestionScreen({
             </span>
             <div className="flex-1">
               <div className="flex items-start justify-between gap-2">
-                <h1 id="question-prompt" className="text-xl font-black leading-snug text-slate-900 sm:text-2xl">
+                <h1 id="question-prompt" className="text-xl font-black leading-snug text-slate-800 sm:text-2xl">
                   {question.question_text}
                 </h1>
                 <button
                   type="button"
                   onClick={() => speakText(question.question_text)}
-                  className="shrink-0 rounded-full bg-blue-100 p-2 text-blue-700 hover:bg-blue-200 transition-colors"
+                  className="shrink-0 rounded-full bg-rose-50 p-2 text-rose-500 hover:bg-rose-100 transition-colors"
                   title="Listen to question"
                 >
                   <Volume2 className="h-5 w-5" />
                 </button>
               </div>
               {question.instruction && (
-                <p className="mt-2 inline-block rounded-full bg-amber-100 px-3.5 py-1 text-xs font-extrabold text-amber-900 border border-amber-300">
+                <p className="mt-2 inline-block rounded-full bg-amber-50 px-3.5 py-1 text-xs font-bold text-amber-800 border border-amber-200">
                   💡 {question.instruction}
                 </p>
               )}
@@ -144,7 +144,7 @@ export default function MCQQuestionScreen({
 
           {/* Question Image */}
           {question.image_url && (
-            <div className="mb-6 flex justify-center overflow-hidden rounded-2xl border-2 border-indigo-100 bg-slate-50 p-2">
+            <div className="mb-6 flex justify-center overflow-hidden rounded-2xl border-2 border-rose-100 bg-slate-50 p-2">
               <img
                 src={question.image_url}
                 alt="Question visual"
@@ -156,8 +156,8 @@ export default function MCQQuestionScreen({
             </div>
           )}
 
-          {/* Answer Options Grid with True Rich Saturated Colors by Default */}
-          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2" role="radiogroup" aria-label="Answer options">
+          {/* Answer Options Grid */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Answer options">
             {question.options.map((option, i) => {
               const isSelected = selected === i
               const isRightAnswer = checked && correctIndex !== null && i === correctIndex
@@ -167,11 +167,11 @@ export default function MCQQuestionScreen({
               let cardStyle = defaultTheme
 
               if (isRightAnswer) {
-                cardStyle = "bg-gradient-to-r from-green-500 to-emerald-600 text-white border-4 border-green-300 shadow-xl ring-4 ring-green-300 scale-[1.03]"
+                cardStyle = "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-xl ring-4 ring-emerald-300 scale-[1.02]"
               } else if (isWrongSelection) {
-                cardStyle = "bg-gradient-to-r from-red-500 to-rose-600 text-white border-4 border-red-300 ring-4 ring-red-300"
+                cardStyle = "bg-gradient-to-r from-rose-500 to-red-500 text-white ring-4 ring-rose-300"
               } else if (isSelected) {
-                cardStyle = `${defaultTheme} ring-4 ring-yellow-300 scale-[1.03] shadow-2xl brightness-110`
+                cardStyle = "bg-gradient-to-r from-amber-400 to-orange-400 text-white shadow-2xl ring-4 ring-yellow-300 scale-[1.03]"
               } else if (checked) {
                 cardStyle = "bg-slate-300 text-slate-500 opacity-40 grayscale"
               }
@@ -184,20 +184,20 @@ export default function MCQQuestionScreen({
                   aria-checked={isSelected}
                   disabled={checked}
                   onClick={() => handleSelect(i)}
-                  className={`flex min-h-[4.5rem] items-center justify-between gap-3 rounded-2xl px-5 py-3.5 text-left text-base font-black transition-all ${cardStyle} disabled:cursor-default`}
+                  className={`flex min-h-[4.25rem] items-center justify-between gap-3 rounded-2xl p-4 text-left text-sm sm:text-base font-bold transition-all ${cardStyle} disabled:cursor-default`}
                 >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/30 text-base font-black text-white shadow-xs">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/30 text-sm font-black text-white shadow-xs">
                     {String.fromCharCode(65 + i)}
                   </span>
                   <span className="flex-1 leading-snug">{option}</span>
                   {isRightAnswer && (
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-emerald-600 shadow-sm">
-                      <Check className="h-4 w-4 stroke-[3]" />
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-emerald-600 shadow-sm">
+                      <Check className="h-3.5 w-3.5 stroke-[3]" />
                     </span>
                   )}
                   {isWrongSelection && (
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-rose-600 shadow-sm">
-                      <X className="h-4 w-4 stroke-[3]" />
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-rose-600 shadow-sm">
+                      <X className="h-3.5 w-3.5 stroke-[3]" />
                     </span>
                   )}
                 </button>
@@ -208,26 +208,26 @@ export default function MCQQuestionScreen({
           {/* Feedback banner */}
           {checked && (
             <div
-              className={`mt-6 rounded-2xl border-3 p-4 text-center text-base font-black shadow-md ${
+              className={`mt-6 rounded-2xl p-4 text-center text-base font-black shadow-sm ${
                 isCorrect
-                  ? "border-emerald-500 bg-emerald-100 text-emerald-900"
-                  : "border-amber-500 bg-amber-100 text-amber-900"
+                  ? "bg-emerald-100 text-emerald-900 border border-emerald-300"
+                  : "bg-amber-100 text-amber-900 border border-amber-300"
               }`}
             >
               {isCorrect ? "🎉 Awesome! You got it right! ⭐" : "💪 Good try! Look at the green box for the right answer!"}
             </div>
           )}
 
-          {/* Action button */}
+          {/* Action button: Pink-Purple pastel gradient */}
           <button
             type="button"
             disabled={selected === null || submitting}
             onClick={handleCheck}
-            className={`mt-6 w-full rounded-full py-4 text-lg font-black text-white shadow-xl transition-all ${
+            className={`mt-6 w-full rounded-full py-4 text-lg font-black text-white shadow-lg transition-all ${
               checked
-                ? "bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 hover:scale-[1.02]"
-                : "bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:scale-[1.02]"
-            } disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100`}
+                ? "bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 hover:scale-[1.02]"
+                : "bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 hover:from-pink-500 hover:to-indigo-500 hover:scale-[1.02]"
+            } disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100`}
           >
             {submitting ? "Checking... ⏳" : checked ? "Next Question! 🚀" : "Check My Answer! ✅"}
           </button>

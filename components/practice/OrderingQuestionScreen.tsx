@@ -1,4 +1,4 @@
-// OrderingQuestionScreen.tsx — Vibrant, high-contrast ordering practice screen with sound & true colors
+// OrderingQuestionScreen.tsx — Matches the exact screenshot aesthetic & colors
 "use client"
 
 import { useState } from "react"
@@ -36,10 +36,10 @@ interface OrderingQuestionScreenProps {
 }
 
 const NUMBER_BADGES = [
-  "from-orange-500 to-red-500",
-  "from-blue-600 to-indigo-600",
-  "from-purple-600 to-pink-600",
-  "from-emerald-600 to-teal-600",
+  "from-blue-500 to-indigo-500",
+  "from-amber-500 to-orange-400",
+  "from-emerald-500 to-teal-500",
+  "from-pink-500 to-rose-500",
 ]
 
 export default function OrderingQuestionScreen({
@@ -101,18 +101,18 @@ export default function OrderingQuestionScreen({
   const correctLabels = correctOrder.length > 0 ? correctOrder : []
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-amber-100 via-orange-50 to-yellow-100 px-4 py-6 font-sans">
+    <main className="relative z-10 min-h-screen px-4 py-6 font-sans">
       <div className="mx-auto max-w-2xl">
         {/* Header */}
         <header className="mb-6 flex items-center justify-between">
           <button
             type="button"
             onClick={onExit}
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-5 py-2.5 text-sm font-extrabold text-white shadow-md transition-all hover:scale-105 hover:shadow-lg"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-400 to-amber-500 px-5 py-2 text-sm font-bold text-white shadow-sm transition-all hover:scale-105"
           >
             🚪 Exit
           </button>
-          <span className="rounded-full border-2 border-amber-300 bg-white px-5 py-2 text-sm font-black text-amber-900 shadow-sm">
+          <span className="rounded-full border border-amber-200 bg-white/90 px-5 py-2 text-sm font-bold text-amber-900 shadow-xs">
             ⭐ Question {questionNumber} of {totalQuestions}
           </span>
         </header>
@@ -120,7 +120,7 @@ export default function OrderingQuestionScreen({
         {/* Card */}
         <section
           aria-labelledby="ord-prompt"
-          className="rounded-3xl border-4 border-amber-200 bg-white p-6 shadow-2xl sm:p-8"
+          className="rounded-3xl border-2 border-pink-100 bg-white/95 p-6 shadow-xl backdrop-blur-sm sm:p-8"
         >
           <div className="mb-4 flex items-start gap-3">
             <span className="text-3xl sm:text-4xl" aria-hidden="true">
@@ -128,19 +128,19 @@ export default function OrderingQuestionScreen({
             </span>
             <div className="flex-1">
               <div className="flex items-start justify-between gap-2">
-                <h1 id="ord-prompt" className="text-xl font-black leading-snug text-slate-900 sm:text-2xl">
+                <h1 id="ord-prompt" className="text-xl font-black leading-snug text-slate-800 sm:text-2xl">
                   {question.question_text}
                 </h1>
                 <button
                   type="button"
                   onClick={() => speakText(question.question_text)}
-                  className="shrink-0 rounded-full bg-amber-100 p-2 text-amber-700 hover:bg-amber-200 transition-colors"
+                  className="shrink-0 rounded-full bg-rose-50 p-2 text-rose-500 hover:bg-rose-100 transition-colors"
                   title="Listen to question"
                 >
                   <Volume2 className="h-5 w-5" />
                 </button>
               </div>
-              <p className="mt-1 text-xs sm:text-sm font-bold text-slate-600">
+              <p className="mt-1 text-xs sm:text-sm font-bold text-slate-500">
                 Use the arrow buttons to arrange these items into the correct order 🔼🔽
               </p>
             </div>
@@ -148,7 +148,7 @@ export default function OrderingQuestionScreen({
 
           {/* Question Image */}
           {question.image_url && (
-            <div className="mb-6 flex justify-center overflow-hidden rounded-2xl border-2 border-amber-100 bg-slate-50 p-2">
+            <div className="mb-6 flex justify-center overflow-hidden rounded-2xl border-2 border-rose-100 bg-slate-50 p-2">
               <img
                 src={question.image_url}
                 alt="Question visual"
@@ -160,30 +160,30 @@ export default function OrderingQuestionScreen({
             </div>
           )}
 
-          {/* Ordering items list with solid vibrant true colors */}
+          {/* Ordering items list */}
           <ol className="flex flex-col gap-3 mt-4">
             {items.map((item, index) => {
               const inRightSpot = checked && correctLabels.length > 0 && item.label === correctLabels[index]
               const badgeGradient = NUMBER_BADGES[index % NUMBER_BADGES.length]
 
-              let itemStyle = "border-2 border-indigo-200 bg-white text-slate-900 shadow-md"
+              let itemStyle = "border border-slate-200 bg-white text-slate-800 shadow-sm"
               if (checked) {
                 itemStyle = inRightSpot
-                  ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white border-4 border-green-300 ring-4 ring-green-300 shadow-xl"
-                  : "bg-gradient-to-r from-red-500 to-rose-600 text-white border-4 border-red-300 ring-4 ring-red-300"
+                  ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-xl ring-4 ring-emerald-300"
+                  : "bg-gradient-to-r from-rose-500 to-red-500 text-white ring-4 ring-rose-300"
               }
 
               return (
                 <li
                   key={item.id}
-                  className={`flex items-center gap-3.5 rounded-2xl px-4 py-3.5 transition-all ${itemStyle}`}
+                  className={`flex items-center gap-3.5 rounded-2xl p-4 transition-all ${itemStyle}`}
                 >
                   <span
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-r ${badgeGradient} text-base font-black text-white shadow-sm`}
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-r ${badgeGradient} text-sm font-black text-white shadow-xs`}
                   >
                     {index + 1}
                   </span>
-                  <span className={`flex-1 text-base font-black leading-snug ${checked ? "text-white" : "text-slate-900"}`}>
+                  <span className={`flex-1 text-base font-bold leading-snug ${checked ? "text-white" : "text-slate-800"}`}>
                     {item.label}
                   </span>
                   <div className="flex gap-2">
@@ -192,18 +192,18 @@ export default function OrderingQuestionScreen({
                       onClick={() => move(index, -1)}
                       disabled={checked || index === 0}
                       aria-label={`Move ${item.label} up`}
-                      className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md transition-all hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100"
+                      className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-sm transition-all hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100"
                     >
-                      <ArrowUp className="h-5 w-5 stroke-[2.5]" />
+                      <ArrowUp className="h-4 w-4 stroke-[2.5]" />
                     </button>
                     <button
                       type="button"
                       onClick={() => move(index, 1)}
                       disabled={checked || index === items.length - 1}
                       aria-label={`Move ${item.label} down`}
-                      className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md transition-all hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100"
+                      className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-orange-400 text-white shadow-sm transition-all hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100"
                     >
-                      <ArrowDown className="h-5 w-5 stroke-[2.5]" />
+                      <ArrowDown className="h-4 w-4 stroke-[2.5]" />
                     </button>
                   </div>
                 </li>
@@ -214,10 +214,10 @@ export default function OrderingQuestionScreen({
           {/* Feedback */}
           {checked && (
             <div
-              className={`mt-6 rounded-2xl border-3 p-4 text-center text-base font-black shadow-md ${
+              className={`mt-6 rounded-2xl p-4 text-center text-base font-black shadow-sm ${
                 isCorrect
-                  ? "border-emerald-500 bg-emerald-100 text-emerald-900"
-                  : "border-amber-500 bg-amber-100 text-amber-900"
+                  ? "bg-emerald-100 text-emerald-900 border border-emerald-300"
+                  : "bg-amber-100 text-amber-900 border border-amber-300"
               }`}
             >
               {isCorrect
@@ -231,11 +231,11 @@ export default function OrderingQuestionScreen({
             type="button"
             disabled={submitting}
             onClick={handleCheck}
-            className={`mt-6 w-full rounded-full py-4 text-lg font-black text-white shadow-xl transition-all ${
+            className={`mt-6 w-full rounded-full py-4 text-lg font-black text-white shadow-lg transition-all ${
               checked
-                ? "bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 hover:scale-[1.02]"
-                : "bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:to-red-600 hover:scale-[1.02]"
-            } disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100`}
+                ? "bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 hover:scale-[1.02]"
+                : "bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 hover:from-pink-500 hover:to-indigo-500 hover:scale-[1.02]"
+            } disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100`}
           >
             {submitting ? "Checking... ⏳" : checked ? "Next Question! 🚀" : "Check My Answer! ✅"}
           </button>
