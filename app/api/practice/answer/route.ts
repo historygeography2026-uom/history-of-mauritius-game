@@ -7,21 +7,17 @@ import type { QuestionType } from "@/lib/practice-answer-checker"
 
 /**
  * Student API — Submit a single practice answer.
+ * Open for testing (authentication optional).
  *
  * POST { session_id, question_id, student_answer }
  *
- * - Validates session ownership
  * - Evaluates answer server-side
- * - Logs to practice_attempts
+ * - Logs to practice_attempts (student_id nullable for anonymous testing)
  * - Returns { is_correct, correct_answer } for immediate feedback
  */
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions)
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  const studentId = parseInt(session.user.id)
+  const studentId = session?.user?.id ? parseInt(session.user.id) : null
 
   try {
     const { session_id, question_id, student_answer } = await request.json()
@@ -33,15 +29,15 @@ export async function POST(request: Request) {
       )
     }
 
-    // Validate session belongs to this student and is still open
+    // Validate session exists and is still open
     const sessionResult = await pool.query(
       `SELECT id, unit_id, ended_at FROM practice_sessions
-       WHERE id = $1 AND student_id = $2`,
-      [session_id, studentId]
+       WHERE id = $1`,
+      [session_id]
     )
 
     if (sessionResult.rows.length === 0) {
-      return NextResponse.json({ error: "Session not found or unauthorized" }, { status: 404 })
+      return NextResponse.json({ error: "Session not found" }, { status: 404 })
     }
 
     if (sessionResult.rows[0].ended_at) {
@@ -73,7 +69,7 @@ export async function POST(request: Request) {
       student_answer
     )
 
-    // Log the attempt — this INSERT is mandatory (not fire-and-forget)
+    // Log the attempt — student_id is nullable
     await pool.query(
       `INSERT INTO practice_attempts
          (session_id, student_id, unit_id, question_id, student_answer, is_correct)

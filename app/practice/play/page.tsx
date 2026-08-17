@@ -44,10 +44,6 @@ function PracticePlayContent() {
 
   // Load session on mount
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/practice")
-      return
-    }
     if (!sessionId) {
       router.push("/practice")
       return

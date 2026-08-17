@@ -7,6 +7,7 @@ const QUESTIONS_PER_SESSION = 20
 
 /**
  * Student API — Start a new practice session.
+ * Open for testing (authentication optional).
  *
  * POST { unit_id }
  *
@@ -18,11 +19,7 @@ const QUESTIONS_PER_SESSION = 20
  */
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions)
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized. Please log in to practice." }, { status: 401 })
-  }
-
-  const studentId = parseInt(session.user.id)
+  const studentId = session?.user?.id ? parseInt(session.user.id) : null
 
   try {
     const { unit_id } = await request.json()
@@ -66,7 +63,7 @@ export async function POST(request: Request) {
     const selectedQuestions = allQuestions.slice(0, QUESTIONS_PER_SESSION)
     const questionIds = selectedQuestions.map((q) => q.id)
 
-    // Create session
+    // Create session (studentId can be null for anonymous testing)
     const sessionResult = await pool.query(
       `INSERT INTO practice_sessions (student_id, unit_id, questions_served)
        VALUES ($1, $2, $3)

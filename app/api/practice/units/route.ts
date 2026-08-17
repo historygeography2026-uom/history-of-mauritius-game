@@ -1,18 +1,11 @@
 import { pool } from "@/lib/db"
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
 
 /**
  * Student API — List active practice units with question counts.
- * Requires authentication.
+ * Open for testing (authentication optional).
  */
 export async function GET() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized. Please log in to access Practice Mode." }, { status: 401 })
-  }
-
   try {
     const result = await pool.query(`
       SELECT pu.id, pu.unit_no, pu.unit_name,
