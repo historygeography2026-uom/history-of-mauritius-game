@@ -5,12 +5,18 @@ import { usePathname } from "next/navigation"
 /**
  * Kid-friendly animated background with Mauritius history & geography themed icons.
  * Renders floating, slowly drifting emoji icons, a decorative wave, and subtle patterns
- * behind the page content at pleasant opacity for a fun kids' game feel.
+ * strictly behind landing/overview pages at negative z-index (-z-50).
+ * Disabled during active gameplay and practice play sessions to ensure 100% visual clarity.
  */
 export function KidBackground() {
   const pathname = usePathname()
 
-  if (pathname?.startsWith("/admin")) {
+  // Do not render floating background on admin, active game play, or practice play screens
+  if (
+    pathname?.startsWith("/admin") ||
+    pathname?.startsWith("/practice/play") ||
+    pathname?.startsWith("/game")
+  ) {
     return null
   }
 
@@ -39,10 +45,10 @@ export function KidBackground() {
 
   return (
     <div
-      className="fixed inset-0 overflow-hidden pointer-events-none z-0"
+      className="fixed inset-0 overflow-hidden pointer-events-none -z-50"
       aria-hidden="true"
     >
-      {/* Warm gradient overlay — slightly more vivid for kid-game feel */}
+      {/* Warm gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-sky-100/40 via-amber-50/30 to-emerald-100/40" />
 
       {/* Subtle dot grid pattern */}
