@@ -339,9 +339,9 @@ export default function PracticeUnitSelector({
 
         {/* Hero Banner with Floating Dodo Mascot */}
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-4 pt-8 pb-4 text-center sm:flex-row sm:text-left">
-          {/* Mascot wrapper with mix-blend-multiply and pure CSS float (NO transform motion wrapper) */}
+          {/* Mascot wrapper with pure CSS float */}
           <div className="relative shrink-0">
-            <div className="animate-dodo-float mix-blend-multiply">
+            <div className="animate-dodo-float">
               <Image
                 src="/images/dodo-mascot.png"
                 alt="Dodo the practice buddy, waving hello"
