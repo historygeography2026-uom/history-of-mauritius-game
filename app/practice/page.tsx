@@ -5,6 +5,8 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import PracticeUnitSelector from "@/components/practice/PracticeUnitSelector"
 
+import { useSession } from "next-auth/react"
+
 interface PracticeUnit {
   id: number
   unit_no: number
@@ -18,6 +20,7 @@ export default function PracticePage() {
   const [starting, setStarting] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
+  const { status } = useSession()
 
   // Fetch units from API immediately for all visitors
   useEffect(() => {
@@ -35,6 +38,11 @@ export default function PracticePage() {
   }, [])
 
   const handleStart = async (unitId: number) => {
+    if (status === "unauthenticated") {
+      router.push("/auth/login?callbackUrl=/practice")
+      return
+    }
+
     if (starting) return
     setStarting(true)
     setError("")
