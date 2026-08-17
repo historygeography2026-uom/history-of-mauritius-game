@@ -11,18 +11,20 @@ import {
   Rocket,
   Lock,
   Star,
-  TreePalm,
-  Castle,
-  Map,
-  Flame,
-  Wheat,
-  ScrollText,
-  BookOpen,
-  Microscope,
-  Globe2,
-  GraduationCap,
-  type LucideIcon,
 } from "lucide-react"
+
+import {
+  IllusNature,
+  IllusDiscovery,
+  IllusSettlement,
+  IllusWeather,
+  IllusCapital,
+  IllusLandUse,
+  IllusPeople,
+  IllusHazards,
+  IllusIndependence,
+  IllusHeritage
+} from "./UnitIllustrations"
 
 interface PracticeUnit {
   id: number
@@ -33,7 +35,7 @@ interface PracticeUnit {
 
 interface UnitTheming {
   title: string
-  icon: LucideIcon
+  icon: React.ElementType
   gradient: string
   tint: string
   glow: string
@@ -44,40 +46,40 @@ interface UnitTheming {
 const UNIT_CONFIGS: Record<number, UnitTheming> = {
   // Grade 5
   1: {
-    title: "Island Explorers",
-    icon: TreePalm,
+    title: "Our Natural Environment",
+    icon: IllusNature,
     gradient: "from-amber-400 to-orange-500",
     tint: "bg-amber-100",
     glow: "shadow-amber-400/40",
     shadow: "shadow-orange-600",
   },
   2: {
-    title: "Castle Quest",
-    icon: Castle,
+    title: "Discovery of Mauritius & Rodrigues",
+    icon: IllusDiscovery,
     gradient: "from-emerald-400 to-teal-500",
     tint: "bg-emerald-100",
     glow: "shadow-emerald-400/40",
     shadow: "shadow-teal-600",
   },
   3: {
-    title: "Treasure Maps",
-    icon: Map,
+    title: "Settlement in Mauritius",
+    icon: IllusSettlement,
     gradient: "from-sky-400 to-blue-500",
     tint: "bg-sky-100",
     glow: "shadow-sky-400/40",
     shadow: "shadow-blue-600",
   },
   4: {
-    title: "Volcano Valley",
-    icon: Flame,
+    title: "Weather and Climate",
+    icon: IllusWeather,
     gradient: "from-rose-400 to-red-500",
     tint: "bg-rose-100",
     glow: "shadow-rose-400/40",
     shadow: "shadow-red-600",
   },
   5: {
-    title: "Harvest Hills",
-    icon: Wheat,
+    title: "Port Louis: the capital of Mauritius",
+    icon: IllusCapital,
     gradient: "from-violet-400 to-purple-500",
     tint: "bg-violet-100",
     glow: "shadow-violet-400/40",
@@ -85,40 +87,40 @@ const UNIT_CONFIGS: Record<number, UnitTheming> = {
   },
   // Grade 6
   6: {
-    title: "Story Scrolls",
-    icon: ScrollText,
+    title: "Land Use",
+    icon: IllusLandUse,
     gradient: "from-blue-500 to-indigo-600",
     tint: "bg-blue-100",
     glow: "shadow-blue-500/50",
     shadow: "shadow-indigo-700",
   },
   7: {
-    title: "Book Mountain",
-    icon: BookOpen,
+    title: "People in the island in the past",
+    icon: IllusPeople,
     gradient: "from-orange-500 to-red-500",
     tint: "bg-orange-100",
     glow: "shadow-orange-500/50",
     shadow: "shadow-red-600",
   },
   8: {
-    title: "Science Lagoon",
-    icon: Microscope,
+    title: "Natural Hazards",
+    icon: IllusHazards,
     gradient: "from-emerald-500 to-teal-600",
     tint: "bg-emerald-100",
     glow: "shadow-emerald-500/50",
     shadow: "shadow-teal-700",
   },
   9: {
-    title: "World Wonders",
-    icon: Globe2,
+    title: "Celebrating Independence",
+    icon: IllusIndependence,
     gradient: "from-cyan-400 to-sky-500",
     tint: "bg-cyan-100",
     glow: "shadow-cyan-400/40",
     shadow: "shadow-sky-600",
   },
   10: {
-    title: "Graduation Peak",
-    icon: GraduationCap,
+    title: "Our Heritage",
+    icon: IllusHeritage,
     gradient: "from-pink-400 to-rose-500",
     tint: "bg-pink-100",
     glow: "shadow-pink-400/40",
@@ -128,7 +130,7 @@ const UNIT_CONFIGS: Record<number, UnitTheming> = {
 
 const DEFAULT_CONFIG: UnitTheming = {
   title: "Adventure Quest",
-  icon: BookOpen,
+  icon: IllusHeritage,
   gradient: "from-blue-500 to-indigo-600",
   tint: "bg-blue-100",
   glow: "shadow-blue-500/40",
@@ -212,7 +214,7 @@ function UnitQuestCard({
             isReady ? "animate-icon-float" : ""
           }`}
         >
-          <Icon className="h-10 w-10 text-white" strokeWidth={2.2} aria-hidden="true" />
+          <Icon className="h-14 w-14 drop-shadow-sm" aria-hidden="true" />
         </div>
 
         {/* Scalloped Wave SVG Edge Transition */}
