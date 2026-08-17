@@ -291,21 +291,14 @@ export default function PracticeUnitSelector({
   units: PracticeUnit[]
   onStart: (unitId: number) => void
 }) {
-  const [filter, setFilter] = useState<"all" | "g5" | "g6">("all")
+  const [filter, setFilter] = useState<"g5" | "g6">("g5")
 
   const readyCount = useMemo(
     () => units.filter((u) => Number(u.question_count) > 0).length,
     [units]
   )
 
-  const counts = useMemo(
-    () => ({
-      all: units.length,
-      g5: units.filter((u) => u.unit_no <= 5).length,
-      g6: units.filter((u) => u.unit_no >= 6 && u.unit_no <= 10).length,
-    }),
-    [units]
-  )
+
 
   const visibleUnits = useMemo(() => {
     if (filter === "g5") return units.filter((u) => u.unit_no <= 5)
@@ -404,9 +397,8 @@ export default function PracticeUnitSelector({
           className="mx-auto flex w-fit items-center gap-1 rounded-full border-2 border-[#333a56]/10 bg-white p-1.5 shadow-[0_5px_0_0_rgba(51,58,86,0.1)]"
         >
           {[
-            { value: "all" as const, label: "All Quests", count: counts.all },
-            { value: "g5" as const, label: "Grade 5", count: counts.g5 },
-            { value: "g6" as const, label: "Grade 6", count: counts.g6 },
+            { value: "g5" as const, label: "Grade 5" },
+            { value: "g6" as const, label: "Grade 6" },
           ].map((opt) => {
             const active = filter === opt.value
             return (
@@ -431,13 +423,6 @@ export default function PracticeUnitSelector({
                 )}
                 <span className="relative flex items-center gap-1.5">
                   {opt.label}
-                  <span
-                    className={`rounded-full px-1.5 py-0.5 text-[0.65rem] leading-none font-bold ${
-                      active ? "bg-white/25 text-white" : "bg-[#333a56]/10 text-[#333a56]"
-                    }`}
-                  >
-                    {opt.count}
-                  </span>
                 </span>
               </motion.button>
             )
