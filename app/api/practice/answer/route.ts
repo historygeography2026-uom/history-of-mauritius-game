@@ -7,13 +7,9 @@ import type { QuestionType } from "@/lib/practice-answer-checker"
 
 /**
  * Student API — Submit a single practice answer.
- * Open for testing (authentication optional).
+ * Open to all students & visitors (login optional).
  *
  * POST { session_id, question_id, student_answer }
- *
- * - Evaluates answer server-side
- * - Logs to practice_attempts (student_id nullable for anonymous testing)
- * - Returns { is_correct, correct_answer } for immediate feedback
  */
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions)
@@ -69,7 +65,7 @@ export async function POST(request: Request) {
       student_answer
     )
 
-    // Log the attempt — student_id is nullable
+    // Log the attempt (student_id nullable for guests)
     await pool.query(
       `INSERT INTO practice_attempts
          (session_id, student_id, unit_id, question_id, student_answer, is_correct)

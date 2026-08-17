@@ -1,4 +1,4 @@
-// app/practice/page.tsx — Practice unit selector (Open access for testing)
+// app/practice/page.tsx — Practice unit selector, open to all players
 "use client"
 
 import { useState, useEffect } from "react"
@@ -19,7 +19,7 @@ export default function PracticePage() {
   const [error, setError] = useState("")
   const router = useRouter()
 
-  // Fetch units from API immediately on mount (open access)
+  // Fetch units from API immediately for all visitors
   useEffect(() => {
     fetch("/api/practice/units")
       .then((res) => res.json())
@@ -77,7 +77,10 @@ export default function PracticePage() {
       <main className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-amber-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-lg text-red-600 font-bold mb-4">{error}</p>
-          <button onClick={() => window.location.reload()} className="rounded-full bg-blue-500 px-6 py-3 text-white font-bold">
+          <button
+            onClick={() => window.location.reload()}
+            className="rounded-full bg-blue-500 px-6 py-3 text-white font-bold"
+          >
             Try Again
           </button>
         </div>

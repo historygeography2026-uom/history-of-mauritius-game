@@ -3,7 +3,7 @@ import { NextResponse } from "next/server"
 
 /**
  * Student API — List active practice units with question counts.
- * Open for testing (authentication optional).
+ * Open to all students & visitors (login not required).
  */
 export async function GET() {
   try {

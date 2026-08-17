@@ -3,13 +3,11 @@ import { NextResponse } from "next/server"
 
 /**
  * Student API — End a practice session.
- * Open for testing (authentication optional).
+ * Open to all students & visitors (login optional).
  *
  * POST { session_id, exit_reason }
  *
  * exit_reason: "completed" | "exited" | "abandoned"
- *
- * Updates practice_sessions with ended_at and exit_reason.
  */
 export async function POST(request: Request) {
   try {
@@ -28,7 +26,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // Update the session
+    // Update the session if not already ended
     const result = await pool.query(
       `UPDATE practice_sessions
        SET ended_at = NOW(), exit_reason = $1
@@ -49,6 +47,7 @@ export async function POST(request: Request) {
       }
 
       if (existsResult.rows[0].ended_at) {
+        // Session already ended — idempotent, return success
         return NextResponse.json({
           success: true,
           already_ended: true,

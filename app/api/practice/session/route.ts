@@ -7,15 +7,9 @@ const QUESTIONS_PER_SESSION = 20
 
 /**
  * Student API — Start a new practice session.
- * Open for testing (authentication optional).
+ * Open to all students & visitors (login optional).
  *
  * POST { unit_id }
- *
- * 1. Loads all active questions for the unit
- * 2. Fisher-Yates shuffles them
- * 3. Takes first 20 (or all if < 20)
- * 4. Creates a practice_sessions row
- * 5. Returns the session + questions (WITHOUT correct answers)
  */
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions)
@@ -63,7 +57,7 @@ export async function POST(request: Request) {
     const selectedQuestions = allQuestions.slice(0, QUESTIONS_PER_SESSION)
     const questionIds = selectedQuestions.map((q) => q.id)
 
-    // Create session (studentId can be null for anonymous testing)
+    // Create session (studentId can be null for guests)
     const sessionResult = await pool.query(
       `INSERT INTO practice_sessions (student_id, unit_id, questions_served)
        VALUES ($1, $2, $3)
@@ -113,7 +107,6 @@ export async function POST(request: Request) {
         }
         sanitized.items = items
       }
-      // fill and truefalse don't need extra data sent
 
       return sanitized
     })
