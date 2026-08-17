@@ -1,11 +1,23 @@
 import type { Metadata } from 'next'
-import { Baloo_2 } from 'next/font/google'
+import { Baloo_2, Nunito } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { NextAuthProvider } from '@/components/providers'
 import { KidBackground } from '@/components/kid-background'
 import './globals.css'
 
-const baloo = Baloo_2({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"] });
+const baloo = Baloo_2({
+  subsets: ['latin'],
+  weight: ['600', '700', '800'],
+  variable: '--font-baloo',
+  display: 'swap',
+})
+
+const nunito = Nunito({
+  subsets: ['latin'],
+  weight: ['400', '600', '700', '800'],
+  variable: '--font-nunito',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'Mauritius Learning Hub',
@@ -21,8 +33,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={`${baloo.className} antialiased overflow-x-hidden`}>
+    <html lang="en" className={`${baloo.variable} ${nunito.variable}`}>
+      <body className="font-sans antialiased overflow-x-hidden">
         <NextAuthProvider>
           <KidBackground />
           {children}

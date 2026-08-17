@@ -3,6 +3,44 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@theme inline {
+  --font-display: var(--font-baloo), "Baloo 2", cursive, sans-serif;
+  --font-sans: var(--font-nunito), "Nunito", sans-serif;
+}
+
+@keyframes dodo-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes icon-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.animate-dodo-float {
+  animation: dodo-float 4s ease-in-out infinite;
+}
+
+.animate-icon-float {
+  animation: icon-float 3s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-dodo-float,
+  .animate-icon-float {
+    animation: none !important;
+  }
+}
+
 :root {
   --background: oklch(0.98 0.01 85);
   --foreground: oklch(0.25 0.02 280);

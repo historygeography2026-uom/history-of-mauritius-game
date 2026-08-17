@@ -1,9 +1,10 @@
-// PracticeUnitSelector.tsx — Kids Gaming Interface with 3D Tilt Quest Cards (Pure React & CSS, 0 extra libraries)
+// PracticeUnitSelector.tsx — Polished Kids Gaming Interface with Baloo 2 typography, Framer Motion, and 3D Arcade Cards
 "use client"
 
 import { useState, useMemo, useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion"
 import {
   Home,
   Sparkles,
@@ -31,6 +32,7 @@ interface PracticeUnit {
 }
 
 interface UnitTheming {
+  title: string
   icon: LucideIcon
   gradient: string
   tint: string
@@ -38,153 +40,164 @@ interface UnitTheming {
   shadow: string
 }
 
-const UNIT_THEMES: Record<number, UnitTheming> = {
+// 10 Named Quest Adventures with curated tropical palettes
+const UNIT_CONFIGS: Record<number, UnitTheming> = {
+  // Grade 5
   1: {
+    title: "Island Explorers",
     icon: TreePalm,
     gradient: "from-amber-400 to-orange-500",
-    tint: "bg-amber-100/80",
-    glow: "shadow-amber-400/30",
+    tint: "bg-amber-100",
+    glow: "shadow-amber-400/40",
     shadow: "shadow-orange-600",
   },
   2: {
+    title: "Castle Quest",
     icon: Castle,
     gradient: "from-emerald-400 to-teal-500",
-    tint: "bg-emerald-100/80",
-    glow: "shadow-emerald-400/30",
+    tint: "bg-emerald-100",
+    glow: "shadow-emerald-400/40",
     shadow: "shadow-teal-600",
   },
   3: {
+    title: "Treasure Maps",
     icon: Map,
     gradient: "from-sky-400 to-blue-500",
-    tint: "bg-sky-100/80",
-    glow: "shadow-sky-400/30",
+    tint: "bg-sky-100",
+    glow: "shadow-sky-400/40",
     shadow: "shadow-blue-600",
   },
   4: {
+    title: "Volcano Valley",
     icon: Flame,
     gradient: "from-rose-400 to-red-500",
-    tint: "bg-rose-100/80",
-    glow: "shadow-rose-400/30",
+    tint: "bg-rose-100",
+    glow: "shadow-rose-400/40",
     shadow: "shadow-red-600",
   },
   5: {
+    title: "Harvest Hills",
     icon: Wheat,
     gradient: "from-violet-400 to-purple-500",
-    tint: "bg-violet-100/80",
-    glow: "shadow-violet-400/30",
+    tint: "bg-violet-100",
+    glow: "shadow-violet-400/40",
     shadow: "shadow-purple-600",
   },
+  // Grade 6
   6: {
+    title: "Story Scrolls",
     icon: ScrollText,
     gradient: "from-blue-500 to-indigo-600",
-    tint: "bg-blue-100/80",
-    glow: "shadow-blue-500/40",
+    tint: "bg-blue-100",
+    glow: "shadow-blue-500/50",
     shadow: "shadow-indigo-700",
   },
   7: {
+    title: "Book Mountain",
     icon: BookOpen,
     gradient: "from-orange-500 to-red-500",
-    tint: "bg-orange-100/80",
-    glow: "shadow-orange-500/40",
+    tint: "bg-orange-100",
+    glow: "shadow-orange-500/50",
     shadow: "shadow-red-600",
   },
   8: {
+    title: "Science Lagoon",
     icon: Microscope,
     gradient: "from-emerald-500 to-teal-600",
-    tint: "bg-emerald-100/80",
-    glow: "shadow-emerald-500/40",
+    tint: "bg-emerald-100",
+    glow: "shadow-emerald-500/50",
     shadow: "shadow-teal-700",
   },
   9: {
+    title: "World Wonders",
     icon: Globe2,
     gradient: "from-cyan-400 to-sky-500",
-    tint: "bg-cyan-100/80",
-    glow: "shadow-cyan-400/30",
+    tint: "bg-cyan-100",
+    glow: "shadow-cyan-400/40",
     shadow: "shadow-sky-600",
   },
   10: {
+    title: "Graduation Peak",
     icon: GraduationCap,
     gradient: "from-pink-400 to-rose-500",
-    tint: "bg-pink-100/80",
-    glow: "shadow-pink-400/30",
+    tint: "bg-pink-100",
+    glow: "shadow-pink-400/40",
     shadow: "shadow-rose-600",
   },
 }
 
-const DEFAULT_THEME: UnitTheming = {
+const DEFAULT_CONFIG: UnitTheming = {
+  title: "Adventure Quest",
   icon: BookOpen,
   gradient: "from-blue-500 to-indigo-600",
-  tint: "bg-blue-100/80",
+  tint: "bg-blue-100",
   glow: "shadow-blue-500/40",
   shadow: "shadow-indigo-600",
 }
 
 const TITLE_WORDS = ["Pick", "Your", "Adventure!"]
 
-// 3D Tilt Quest Card Component with pure React state
-function QuestUnitCard({
+// 3D Interactive Quest Card Component
+function UnitQuestCard({
   unit,
   onStart,
 }: {
   unit: PracticeUnit
   onStart: (unitId: number) => void
 }) {
-  const [tilt, setTilt] = useState({ rx: 0, ry: 0 })
-  const [isHovered, setIsHovered] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
-
   const count = Number(unit.question_count) || 0
   const isReady = count > 0
   const isGrade5 = unit.unit_no <= 5
   const gradeNumber = isGrade5 ? 5 : 6
   const relativeUnitNo = isGrade5 ? unit.unit_no : unit.unit_no - 5
-  const theme = UNIT_THEMES[unit.unit_no] || DEFAULT_THEME
-  const Icon = theme.icon
+  const config = UNIT_CONFIGS[unit.unit_no] || DEFAULT_CONFIG
+  const Icon = config.icon
 
-  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
-    if (!ref.current) return
-    const rect = ref.current.getBoundingClientRect()
-    const x = (e.clientX - rect.left) / rect.width
-    const y = (e.clientY - rect.top) / rect.height
-    const rx = (0.5 - y) * 12
-    const ry = (x - 0.5) * 12
-    setTilt({ rx, ry })
+  // Framer motion 3D tilt tracking
+  const mx = useMotionValue(0.5)
+  const my = useMotionValue(0.5)
+  const rotateX = useSpring(useTransform(my, [0, 1], [6, -6]), { stiffness: 250, damping: 20 })
+  const rotateY = useSpring(useTransform(mx, [0, 1], [-6, 6]), { stiffness: 250, damping: 20 })
+
+  function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    const rect = ref.current?.getBoundingClientRect()
+    if (!rect) return
+    mx.set((e.clientX - rect.left) / rect.width)
+    my.set((e.clientY - rect.top) / rect.height)
   }
 
-  function handleMouseLeave() {
-    setTilt({ rx: 0, ry: 0 })
-    setIsHovered(false)
+  function resetTilt() {
+    mx.set(0.5)
+    my.set(0.5)
   }
 
   return (
-    <div
+    <motion.div
       ref={ref}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={handleMouseLeave}
-      style={{
-        transform: isHovered
-          ? `perspective(900px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg) translateY(-6px) scale(1.025)`
-          : "perspective(900px) rotateX(0deg) rotateY(0deg) translateY(0px) scale(1)",
-        transition: isHovered ? "transform 0.1s ease-out" : "transform 0.4s ease-out",
-      }}
+      layout
+      onPointerMove={handlePointerMove}
+      onPointerLeave={resetTilt}
+      style={{ rotateX, rotateY, transformPerspective: 900 }}
+      whileHover={{ scale: 1.03, y: -6 }}
+      transition={{ type: "spring", stiffness: 300, damping: 22 }}
       className={`group relative flex h-full flex-col overflow-hidden rounded-3xl border-2 bg-white ${
         isReady
-          ? `border-slate-800/10 shadow-xl ${theme.glow}`
-          : "border-dashed border-slate-800/15 shadow-md shadow-slate-900/5"
+          ? `border-white shadow-xl ${config.glow}`
+          : "border-dashed border-slate-800/15 shadow-md shadow-slate-900/5 opacity-90"
       }`}
     >
-      {/* Tinted Top Banner with Floating Icon */}
-      <div className={`relative flex flex-col items-center gap-2 px-5 pt-6 pb-4 ${theme.tint}`}>
+      {/* Pastel-Tinted Top Banner with Floating Icon Bubble */}
+      <div className={`relative flex flex-col items-center gap-2 px-5 pt-6 pb-4 ${config.tint}`}>
         {/* Badges */}
         <div className="absolute inset-x-4 top-4 flex items-center justify-between">
-          <span className="rounded-full bg-white/90 px-3 py-1 font-sans text-xs font-black text-slate-800 shadow-xs">
+          <span className="rounded-full bg-white/90 px-3 py-1 font-display text-xs font-bold text-slate-800 shadow-sm">
             Grade {gradeNumber}
           </span>
           <span
-            className={`flex items-center gap-1 rounded-full px-3 py-1 font-sans text-xs font-black shadow-xs ${
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1 font-display text-xs font-bold shadow-sm ${
               isReady
-                ? `bg-gradient-to-r ${theme.gradient} text-white`
+                ? `bg-gradient-to-r ${config.gradient} text-white`
                 : "bg-white/80 text-slate-600"
             }`}
           >
@@ -193,16 +206,16 @@ function QuestUnitCard({
           </span>
         </div>
 
-        {/* Icon Bubble */}
+        {/* Icon Bubble with soft drop shadow and CSS gentle oscillation */}
         <div
-          className={`mt-8 flex h-20 w-20 items-center justify-center rounded-[2rem] bg-gradient-to-br ${theme.gradient} shadow-lg ${theme.glow} transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110 ${
-            isReady ? "animate-pulse" : ""
+          className={`mt-8 flex h-20 w-20 items-center justify-center rounded-[2rem] bg-gradient-to-br ${config.gradient} shadow-lg ${config.glow} transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110 ${
+            isReady ? "animate-icon-float" : ""
           }`}
         >
           <Icon className="h-10 w-10 text-white" strokeWidth={2.2} aria-hidden="true" />
         </div>
 
-        {/* Scalloped Wave Edge Transition */}
+        {/* Scalloped Wave SVG Edge Transition */}
         <svg
           viewBox="0 0 320 16"
           preserveAspectRatio="none"
@@ -218,35 +231,39 @@ function QuestUnitCard({
 
       {/* Card Body */}
       <div className="flex flex-1 flex-col items-center gap-3 px-5 pt-3 pb-5 text-center">
-        <h2 className="text-xl font-black text-slate-900 leading-snug">{unit.unit_name}</h2>
+        <h2 className="font-display text-xl font-bold text-slate-900 leading-snug">
+          {config.title}
+        </h2>
 
         {isReady ? (
-          <p className="flex items-center gap-1.5 rounded-full bg-amber-100/70 px-3.5 py-1 text-xs sm:text-sm font-black text-amber-900 border border-amber-200">
+          <p className="flex items-center gap-1.5 rounded-full bg-amber-100/70 px-3.5 py-1 font-display text-sm font-bold text-amber-900 border border-amber-200">
             <Star className="h-4 w-4 fill-amber-500 text-amber-500" aria-hidden="true" />
-            {count} questions ready
+            {count} questions
           </p>
         ) : (
-          <p className="rounded-full bg-slate-100 px-3.5 py-1 text-xs sm:text-sm font-bold text-slate-500">
-            New quest hatching soon 🐣
+          <p className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3.5 py-1 font-display text-sm font-bold text-slate-500">
+            <Sparkles className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
+            New quest hatching soon
           </p>
         )}
 
-        {/* Action Button */}
+        {/* 3D Chunky Arcade Action Button */}
         <div className="mt-auto w-full pt-3">
           {isReady ? (
-            <button
+            <motion.button
               type="button"
+              whileTap={{ scale: 0.95, y: 5 }}
               onClick={() => onStart(unit.id)}
-              className={`flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r ${theme.gradient} px-4 py-3.5 text-base font-black text-white shadow-[0_5px_0_0] ${theme.shadow} transition-all hover:brightness-110 active:translate-y-1 active:shadow-[0_1px_0_0]`}
+              className={`flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r ${config.gradient} px-4 py-3.5 font-display text-base font-bold text-white shadow-[0_5px_0_0] ${config.shadow} transition-all hover:brightness-110 active:translate-y-[5px] active:shadow-none`}
             >
               Start Quest
               <Rocket
                 className="h-5 w-5 transition-transform duration-300 group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:rotate-12"
                 aria-hidden="true"
               />
-            </button>
+            </motion.button>
           ) : (
-            <div className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-3.5 text-base font-bold text-slate-400">
+            <div className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-dashed border-slate-800/15 bg-slate-100/80 px-4 py-3 font-display text-base font-bold text-slate-400 cursor-not-allowed">
               <Lock className="h-4 w-4" aria-hidden="true" />
               Locked
             </div>
@@ -254,14 +271,14 @@ function QuestUnitCard({
         </div>
       </div>
 
-      {/* Hover glow sweep */}
+      {/* Soft Glow Sweep on Hover */}
       {isReady && (
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
         />
       )}
-    </div>
+    </motion.div>
   )
 }
 
@@ -295,20 +312,22 @@ export default function PracticeUnitSelector({
   }, [units, filter])
 
   return (
-    <div className="relative z-10 min-h-screen font-sans">
+    <div className="relative z-10 min-h-screen">
       {/* Hero Header */}
       <header className="relative">
         {/* Top bar */}
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 pt-5">
-          <Link
-            href="/"
-            className="flex items-center gap-2 rounded-full border-2 border-slate-200 bg-white px-5 py-2 font-black text-slate-700 shadow-sm transition-all hover:border-teal-400 hover:scale-105"
-          >
-            <Home className="h-4 w-4 text-teal-600" aria-hidden="true" />
-            Home
-          </Link>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Link
+              href="/"
+              className="flex items-center gap-2 rounded-full border-2 border-slate-800/10 bg-white px-5 py-2 font-display text-sm font-bold text-slate-800 shadow-[0_4px_0_0_rgba(0,0,0,0.08)] transition-colors hover:border-teal-500"
+            >
+              <Home className="h-4 w-4 text-teal-600" aria-hidden="true" />
+              Home
+            </Link>
+          </motion.div>
 
-          <div className="flex items-center gap-2 rounded-full bg-amber-100/80 px-4 py-2 text-sm font-black text-amber-900 border border-amber-200 shadow-xs">
+          <div className="flex items-center gap-2 rounded-full bg-amber-100/80 px-4 py-2 font-display text-sm font-bold text-amber-900 border border-amber-200 shadow-sm">
             <Sparkles className="h-4 w-4 text-orange-500" aria-hidden="true" />
             {readyCount} of {units.length} quests ready
           </div>
@@ -316,46 +335,56 @@ export default function PracticeUnitSelector({
 
         {/* Hero Banner with Floating Dodo Mascot */}
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-4 pt-8 pb-4 text-center sm:flex-row sm:text-left">
-          {/* Floating Dodo Mascot */}
+          {/* Mascot wrapper with mix-blend-multiply and pure CSS float (NO transform motion wrapper) */}
           <div className="relative shrink-0">
-            <div className="animate-bounce" style={{ animationDuration: "3s" }}>
+            <div className="animate-dodo-float mix-blend-multiply">
               <Image
                 src="/images/dodo-mascot.png"
                 alt="Dodo the practice buddy, waving hello"
-                width={160}
-                height={160}
+                width={170}
+                height={170}
                 priority
-                className="h-auto w-36 sm:w-44 object-contain drop-shadow-xl"
+                className="h-auto w-36 sm:w-44 object-contain"
               />
             </div>
-            {/* Speech bubble */}
-            <div className="absolute -top-2 -right-8 hidden rounded-2xl rounded-bl-sm bg-white px-3.5 py-1.5 text-xs sm:text-sm font-black text-slate-800 shadow-lg border border-slate-100 sm:block">
-              {"Let\u2019s play! 🚀"}
-            </div>
+
+            {/* Comic Speech Bubble with Spring Scale-in */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 260, damping: 16, delay: 0.8 }}
+              className="absolute -top-2 -right-8 hidden rounded-2xl rounded-bl-sm bg-white px-3.5 py-1.5 font-display text-sm font-bold text-slate-800 shadow-lg border border-slate-100 sm:block"
+            >
+              {"Let\u2019s play!"}
+            </motion.div>
           </div>
 
           <div className="flex flex-col items-center gap-3 sm:items-start">
-            <span className="rounded-full bg-teal-100/90 px-4 py-1 text-xs font-black tracking-wider text-teal-800 uppercase border border-teal-200">
-              🏝️ Practice Island
+            <span className="flex items-center gap-1.5 rounded-full bg-teal-100/90 px-4 py-1 font-display text-xs font-bold tracking-wider text-teal-800 uppercase border border-teal-200">
+              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+              Practice Island
             </span>
 
-            <h1 className="text-4xl font-black text-slate-900 sm:text-6xl tracking-tight">
+            <h1 className="font-display text-5xl font-extrabold text-slate-900 sm:text-6xl tracking-tight text-balance">
               {TITLE_WORDS.map((word, i) => (
-                <span
+                <motion.span
                   key={word}
-                  className={`inline-block ${i > 0 ? "ml-3" : ""} ${
+                  initial={{ opacity: 0, y: 35, rotate: i % 2 === 0 ? -5 : 5 }}
+                  animate={{ opacity: 1, y: 0, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 220, damping: 16, delay: 0.2 + i * 0.12 }}
+                  className={`inline-block ${i > 0 ? "ml-3 sm:ml-4" : ""} ${
                     word === "Adventure!"
                       ? "bg-gradient-to-r from-teal-500 via-orange-500 to-amber-500 bg-clip-text text-transparent"
                       : ""
                   }`}
                 >
                   {word}
-                </span>
+                </motion.span>
               ))}
             </h1>
 
-            <p className="max-w-md font-bold text-slate-600 text-sm sm:text-base leading-relaxed">
-              No marks, no pressure — just fun quests at your own pace. Pick a unit and start exploring! 🌴
+            <p className="max-w-md font-sans text-sm sm:text-base font-semibold leading-relaxed text-slate-600 text-pretty">
+              No marks, no pressure — just fun quests at your own pace. Pick a unit and start exploring!
             </p>
           </div>
         </div>
@@ -366,86 +395,116 @@ export default function PracticeUnitSelector({
         <div
           role="tablist"
           aria-label="Filter units by grade"
-          className="mx-auto flex w-fit items-center gap-1.5 rounded-full border-2 border-slate-200 bg-white p-1.5 shadow-[0_5px_0_0] shadow-slate-200"
+          className="mx-auto flex w-fit items-center gap-1 rounded-full border-2 border-slate-800/10 bg-white p-1.5 shadow-[0_5px_0_0] shadow-slate-800/10"
         >
-          <button
+          <motion.button
             type="button"
             role="tab"
             aria-selected={filter === "all"}
             onClick={() => setFilter("all")}
-            className={`relative rounded-full px-5 py-2 text-xs sm:text-sm font-black transition-all ${
-              filter === "all"
-                ? "bg-gradient-to-r from-teal-500 to-orange-500 text-white shadow-md scale-105"
-                : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+            whileHover={{ scale: filter === "all" ? 1 : 1.04 }}
+            whileTap={{ scale: 0.94 }}
+            className={`relative rounded-full px-5 py-2 font-display text-sm font-bold transition-colors sm:px-6 ${
+              filter === "all" ? "text-white" : "text-slate-700 hover:text-slate-900"
             }`}
           >
-            <span className="flex items-center gap-1.5">
+            {filter === "all" && (
+              <motion.span
+                layoutId="activeFilterPill"
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                className="absolute inset-0 rounded-full bg-gradient-to-r from-teal-500 to-orange-500 shadow-md"
+              />
+            )}
+            <span className="relative flex items-center gap-2">
               All Quests
               <span
-                className={`rounded-full px-2 py-0.5 text-[0.65rem] leading-none font-extrabold ${
+                className={`rounded-full px-2 py-0.5 text-xs leading-none font-bold ${
                   filter === "all" ? "bg-white/30 text-white" : "bg-slate-100 text-slate-600"
                 }`}
               >
                 {counts.all}
               </span>
             </span>
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
             type="button"
             role="tab"
             aria-selected={filter === "g5"}
             onClick={() => setFilter("g5")}
-            className={`relative rounded-full px-5 py-2 text-xs sm:text-sm font-black transition-all ${
-              filter === "g5"
-                ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md scale-105"
-                : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+            whileHover={{ scale: filter === "g5" ? 1 : 1.04 }}
+            whileTap={{ scale: 0.94 }}
+            className={`relative rounded-full px-5 py-2 font-display text-sm font-bold transition-colors sm:px-6 ${
+              filter === "g5" ? "text-white" : "text-slate-700 hover:text-slate-900"
             }`}
           >
-            <span className="flex items-center gap-1.5">
+            {filter === "g5" && (
+              <motion.span
+                layoutId="activeFilterPill"
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                className="absolute inset-0 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 shadow-md"
+              />
+            )}
+            <span className="relative flex items-center gap-2">
               Grade 5
               <span
-                className={`rounded-full px-2 py-0.5 text-[0.65rem] leading-none font-extrabold ${
+                className={`rounded-full px-2 py-0.5 text-xs leading-none font-bold ${
                   filter === "g5" ? "bg-white/30 text-white" : "bg-slate-100 text-slate-600"
                 }`}
               >
                 {counts.g5}
               </span>
             </span>
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
             type="button"
             role="tab"
             aria-selected={filter === "g6"}
             onClick={() => setFilter("g6")}
-            className={`relative rounded-full px-5 py-2 text-xs sm:text-sm font-black transition-all ${
-              filter === "g6"
-                ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md scale-105"
-                : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+            whileHover={{ scale: filter === "g6" ? 1 : 1.04 }}
+            whileTap={{ scale: 0.94 }}
+            className={`relative rounded-full px-5 py-2 font-display text-sm font-bold transition-colors sm:px-6 ${
+              filter === "g6" ? "text-white" : "text-slate-700 hover:text-slate-900"
             }`}
           >
-            <span className="flex items-center gap-1.5">
+            {filter === "g6" && (
+              <motion.span
+                layoutId="activeFilterPill"
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 shadow-md"
+              />
+            )}
+            <span className="relative flex items-center gap-2">
               Grade 6
               <span
-                className={`rounded-full px-2 py-0.5 text-[0.65rem] leading-none font-extrabold ${
+                className={`rounded-full px-2 py-0.5 text-xs leading-none font-bold ${
                   filter === "g6" ? "bg-white/30 text-white" : "bg-slate-100 text-slate-600"
                 }`}
               >
                 {counts.g6}
               </span>
             </span>
-          </button>
+          </motion.button>
         </div>
 
-        {/* 3D Quest Cards Grid */}
-        <ul className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {visibleUnits.map((unit) => (
-            <li key={unit.id}>
-              <QuestUnitCard unit={unit} onStart={onStart} />
-            </li>
-          ))}
-        </ul>
+        {/* 3D Quest Cards Grid with Framer Motion Staggered Pop-in & Spring Reflow */}
+        <motion.ul layout className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <AnimatePresence mode="popLayout">
+            {visibleUnits.map((unit, i) => (
+              <motion.li
+                key={unit.id}
+                layout
+                initial={{ opacity: 0, scale: 0.95, y: 24 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ type: "spring", stiffness: 250, damping: 20, delay: i * 0.06 }}
+              >
+                <UnitQuestCard unit={unit} onStart={onStart} />
+              </motion.li>
+            ))}
+          </AnimatePresence>
+        </motion.ul>
       </section>
     </div>
   )
