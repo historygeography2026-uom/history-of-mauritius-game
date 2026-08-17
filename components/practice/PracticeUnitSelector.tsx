@@ -317,20 +317,24 @@ export default function PracticeUnitSelector({
       <header className="relative">
         {/* Top bar */}
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 pt-5">
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <motion.div whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}>
             <Link
               href="/"
-              className="flex items-center gap-2 rounded-full border-2 border-slate-800/10 bg-white px-5 py-2 font-display text-sm font-bold text-slate-800 shadow-[0_4px_0_0_rgba(0,0,0,0.08)] transition-colors hover:border-teal-500"
+              className="flex items-center gap-2 rounded-full border-2 border-[#333a56]/10 bg-white px-4 py-2 font-display text-sm font-bold text-[#333a56] shadow-[0_4px_0_0_rgba(51,58,86,0.1)] transition-colors hover:border-[#4aa3bd]"
             >
-              <Home className="h-4 w-4 text-teal-600" aria-hidden="true" />
+              <Home className="h-4 w-4 text-[#4aa3bd]" aria-hidden="true" />
               Home
             </Link>
           </motion.div>
 
-          <div className="flex items-center gap-2 rounded-full bg-amber-100/80 px-4 py-2 font-display text-sm font-bold text-amber-900 border border-amber-200 shadow-sm">
-            <Sparkles className="h-4 w-4 text-orange-500" aria-hidden="true" />
+          <motion.div
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-2 rounded-full bg-amber-100/80 px-4 py-2 font-display text-sm font-bold text-[#333a56] border border-amber-200 shadow-sm"
+          >
+            <Sparkles className="h-4 w-4 text-[#e8845a]" aria-hidden="true" />
             {readyCount} of {units.length} quests ready
-          </div>
+          </motion.div>
         </div>
 
         {/* Hero Banner with Floating Dodo Mascot */}
@@ -353,19 +357,19 @@ export default function PracticeUnitSelector({
               initial={{ opacity: 0, scale: 0, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ type: "spring", stiffness: 260, damping: 16, delay: 0.8 }}
-              className="absolute -top-2 -right-8 hidden rounded-2xl rounded-bl-sm bg-white px-3.5 py-1.5 font-display text-sm font-bold text-slate-800 shadow-lg border border-slate-100 sm:block"
+              className="absolute -top-2 -right-8 hidden rounded-2xl rounded-bl-sm bg-white px-3.5 py-1.5 font-display text-sm font-bold text-[#333a56] shadow-lg border border-slate-100 sm:block"
             >
               {"Let\u2019s play!"}
             </motion.div>
           </div>
 
           <div className="flex flex-col items-center gap-3 sm:items-start">
-            <span className="flex items-center gap-1.5 rounded-full bg-teal-100/90 px-4 py-1 font-display text-xs font-bold tracking-wider text-teal-800 uppercase border border-teal-200">
+            <span className="flex items-center gap-1.5 rounded-full bg-[#4aa3bd]/15 px-4 py-1 font-display text-xs font-bold tracking-wider text-[#4aa3bd] uppercase border border-[#4aa3bd]/20">
               <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
               Practice Island
             </span>
 
-            <h1 className="font-display text-5xl font-extrabold text-slate-900 sm:text-6xl tracking-tight text-balance">
+            <h1 className="font-display text-5xl font-extrabold text-[#333a56] sm:text-6xl tracking-tight text-balance">
               {TITLE_WORDS.map((word, i) => (
                 <motion.span
                   key={word}
@@ -374,7 +378,7 @@ export default function PracticeUnitSelector({
                   transition={{ type: "spring", stiffness: 220, damping: 16, delay: 0.2 + i * 0.12 }}
                   className={`inline-block ${i > 0 ? "ml-3 sm:ml-4" : ""} ${
                     word === "Adventure!"
-                      ? "bg-gradient-to-r from-teal-500 via-orange-500 to-amber-500 bg-clip-text text-transparent"
+                      ? "bg-gradient-to-r from-[#4aa3bd] via-[#e8845a] to-amber-500 bg-clip-text text-transparent"
                       : ""
                   }`}
                 >
@@ -383,7 +387,7 @@ export default function PracticeUnitSelector({
               ))}
             </h1>
 
-            <p className="max-w-md font-sans text-sm sm:text-base font-semibold leading-relaxed text-slate-600 text-pretty">
+            <p className="max-w-md font-sans text-sm sm:text-base font-semibold leading-relaxed text-[#333a56]/70 text-pretty">
               No marks, no pressure — just fun quests at your own pace. Pick a unit and start exploring!
             </p>
           </div>
@@ -395,97 +399,47 @@ export default function PracticeUnitSelector({
         <div
           role="tablist"
           aria-label="Filter units by grade"
-          className="mx-auto flex w-fit items-center gap-1 rounded-full border-2 border-slate-800/10 bg-white p-1.5 shadow-[0_5px_0_0] shadow-slate-800/10"
+          className="mx-auto flex w-fit items-center gap-1 rounded-full border-2 border-[#333a56]/10 bg-white p-1.5 shadow-[0_5px_0_0_rgba(51,58,86,0.1)]"
         >
-          <motion.button
-            type="button"
-            role="tab"
-            aria-selected={filter === "all"}
-            onClick={() => setFilter("all")}
-            whileHover={{ scale: filter === "all" ? 1 : 1.04 }}
-            whileTap={{ scale: 0.94 }}
-            className={`relative rounded-full px-5 py-2 font-display text-sm font-bold transition-colors sm:px-6 ${
-              filter === "all" ? "text-white" : "text-slate-700 hover:text-slate-900"
-            }`}
-          >
-            {filter === "all" && (
-              <motion.span
-                layoutId="activeFilterPill"
-                transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                className="absolute inset-0 rounded-full bg-gradient-to-r from-teal-500 to-orange-500 shadow-md"
-              />
-            )}
-            <span className="relative flex items-center gap-2">
-              All Quests
-              <span
-                className={`rounded-full px-2 py-0.5 text-xs leading-none font-bold ${
-                  filter === "all" ? "bg-white/30 text-white" : "bg-slate-100 text-slate-600"
+          {[
+            { value: "all" as const, label: "All Quests", count: counts.all },
+            { value: "g5" as const, label: "Grade 5", count: counts.g5 },
+            { value: "g6" as const, label: "Grade 6", count: counts.g6 },
+          ].map((opt) => {
+            const active = filter === opt.value
+            return (
+              <motion.button
+                key={opt.value}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setFilter(opt.value)}
+                whileHover={{ scale: active ? 1 : 1.05 }}
+                whileTap={{ scale: 0.93 }}
+                className={`relative rounded-full px-4 py-2 font-display text-sm font-bold transition-colors sm:px-5 ${
+                  active ? "text-white" : "text-[#333a56]/70 hover:text-[#333a56]"
                 }`}
               >
-                {counts.all}
-              </span>
-            </span>
-          </motion.button>
-
-          <motion.button
-            type="button"
-            role="tab"
-            aria-selected={filter === "g5"}
-            onClick={() => setFilter("g5")}
-            whileHover={{ scale: filter === "g5" ? 1 : 1.04 }}
-            whileTap={{ scale: 0.94 }}
-            className={`relative rounded-full px-5 py-2 font-display text-sm font-bold transition-colors sm:px-6 ${
-              filter === "g5" ? "text-white" : "text-slate-700 hover:text-slate-900"
-            }`}
-          >
-            {filter === "g5" && (
-              <motion.span
-                layoutId="activeFilterPill"
-                transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                className="absolute inset-0 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 shadow-md"
-              />
-            )}
-            <span className="relative flex items-center gap-2">
-              Grade 5
-              <span
-                className={`rounded-full px-2 py-0.5 text-xs leading-none font-bold ${
-                  filter === "g5" ? "bg-white/30 text-white" : "bg-slate-100 text-slate-600"
-                }`}
-              >
-                {counts.g5}
-              </span>
-            </span>
-          </motion.button>
-
-          <motion.button
-            type="button"
-            role="tab"
-            aria-selected={filter === "g6"}
-            onClick={() => setFilter("g6")}
-            whileHover={{ scale: filter === "g6" ? 1 : 1.04 }}
-            whileTap={{ scale: 0.94 }}
-            className={`relative rounded-full px-5 py-2 font-display text-sm font-bold transition-colors sm:px-6 ${
-              filter === "g6" ? "text-white" : "text-slate-700 hover:text-slate-900"
-            }`}
-          >
-            {filter === "g6" && (
-              <motion.span
-                layoutId="activeFilterPill"
-                transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 shadow-md"
-              />
-            )}
-            <span className="relative flex items-center gap-2">
-              Grade 6
-              <span
-                className={`rounded-full px-2 py-0.5 text-xs leading-none font-bold ${
-                  filter === "g6" ? "bg-white/30 text-white" : "bg-slate-100 text-slate-600"
-                }`}
-              >
-                {counts.g6}
-              </span>
-            </span>
-          </motion.button>
+                {active && (
+                  <motion.span
+                    layoutId="activeFilterPill"
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    className="absolute inset-0 rounded-full bg-gradient-to-r from-[#4aa3bd] to-[#e8845a]"
+                  />
+                )}
+                <span className="relative flex items-center gap-1.5">
+                  {opt.label}
+                  <span
+                    className={`rounded-full px-1.5 py-0.5 text-[0.65rem] leading-none font-bold ${
+                      active ? "bg-white/25 text-white" : "bg-[#333a56]/10 text-[#333a56]"
+                    }`}
+                  >
+                    {opt.count}
+                  </span>
+                </span>
+              </motion.button>
+            )
+          })}
         </div>
 
         {/* 3D Quest Cards Grid with Framer Motion Staggered Pop-in & Spring Reflow */}
