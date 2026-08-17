@@ -87,7 +87,7 @@ export async function POST(request: Request) {
           const j = Math.floor(Math.random() * (i + 1))
           ;[opts[i], opts[j]] = [opts[j], opts[i]]
         }
-        sanitized.options = opts.map((o: any) => o.text)
+        sanitized.options = opts.map((o: any) => (typeof o === "string" ? o : o.text))
       } else if (q.question_type === "matching" && answerData?.pairs) {
         // Send left items in order, right items shuffled
         const lefts = answerData.pairs.map((p: any) => p.left)

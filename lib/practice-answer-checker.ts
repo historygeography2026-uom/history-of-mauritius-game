@@ -58,28 +58,45 @@ function checkMcq(answerData: any, studentAnswer: any): CheckResult {
     return { is_correct: false, correct_answer: null }
   }
 
-  const correctIndex = options.findIndex((o: any) => o.is_correct)
-  const correctOption = options[correctIndex]
+  let correctText = ""
+  
+  // Support both legacy [{text, is_correct}] and new ["opt1", "opt2"] formats
+  if (typeof options[0] === "string") {
+    // New format (from Excel): correct_answer is stored at the root of answerData
+    correctText = String(answerData.correct_answer || "").trim()
+  } else {
+    // Legacy format: correct_answer is embedded in the object array
+    const correctIndex = options.findIndex((o: any) => o.is_correct)
+    if (correctIndex >= 0) {
+      correctText = String(options[correctIndex]?.text || "").trim()
+    }
+  }
 
-  // studentAnswer can be an index (number) or the option text (string)
+  // studentAnswer can be the option text (string) or an index (number)
   let isCorrect = false
-  if (typeof studentAnswer === "number") {
-    isCorrect = studentAnswer === correctIndex
-  } else if (typeof studentAnswer === "string") {
-    // Match by option letter (A/B/C/D) or by text
-    const letterIndex = "ABCDEFGHIJ".indexOf(studentAnswer.toUpperCase())
-    if (letterIndex >= 0) {
-      isCorrect = letterIndex === correctIndex
+  if (typeof studentAnswer === "string") {
+    // Check if the student answer exactly matches the correct text
+    if (correctText.toLowerCase() === studentAnswer.trim().toLowerCase()) {
+      isCorrect = true
     } else {
-      isCorrect = options.some(
-        (o: any) => o.is_correct && o.text.trim().toLowerCase() === studentAnswer.trim().toLowerCase()
-      )
+      // Fallback check if student submitted letter "A", "B", etc.
+      const letterIndex = "ABCDEFGHIJ".indexOf(studentAnswer.toUpperCase())
+      if (letterIndex >= 0) {
+        // Resolve the text for that letter index
+        const optText = typeof options[letterIndex] === "string" 
+                          ? options[letterIndex] 
+                          : options[letterIndex]?.text
+        
+        if (optText && String(optText).trim().toLowerCase() === correctText.toLowerCase()) {
+          isCorrect = true
+        }
+      }
     }
   }
 
   return {
     is_correct: isCorrect,
-    correct_answer: correctOption?.text ?? null,
+    correct_answer: correctText || null,
   }
 }
 
