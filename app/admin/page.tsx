@@ -17,7 +17,8 @@ const QuestionEditModal = dynamic(() => import("@/components/question-edit-modal
 // Practice Mode admin components
 const AdminTabNav = dynamic(() => import("@/components/admin/admin-tab-nav"), { ssr: false })
 const PracticeQuestionManagement = dynamic(() => import("@/components/admin/PracticeQuestionManagement"), { ssr: false })
-const PracticeLearnerStatsDashboard = dynamic(() => import("@/components/admin/PracticeLearnerStatsDashboard"), { ssr: false })
+const GameAnalyticsDashboard = dynamic(() => import("@/components/admin/GameAnalyticsDashboard"), { ssr: false })
+const PracticeAnalyticsDashboard = dynamic(() => import("@/components/admin/PracticeAnalyticsDashboard"), { ssr: false })
 const PracticeImportModal = dynamic(() => import("@/components/admin/PracticeImportModal"), { ssr: false })
 
 // Import UI components from shadcn/ui for better control
@@ -1261,7 +1262,13 @@ ${errorMessages}
             />
           </>
         )}
-        {activeAdminTab === "stats" && <PracticeLearnerStatsDashboard />}
+        {activeAdminTab === "stats" && (
+          <div className="space-y-8">
+            <GameAnalyticsDashboard />
+            <div className="border-t border-gray-200"></div>
+            <PracticeAnalyticsDashboard />
+          </div>
+        )}
 
         {activeAdminTab === "game" && (
         <>

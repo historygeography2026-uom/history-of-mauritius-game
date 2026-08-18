@@ -30,6 +30,8 @@ export async function GET(request: NextRequest) {
         return await getLearnerStats()
       case "units":
         return await getUnitStats()
+      case "learner-units":
+        return await getLearnerUnitStats()
       case "hard-questions":
         return await getHardQuestions(searchParams.get("unit"))
       case "learner-detail":
@@ -218,4 +220,20 @@ async function getLearnerDetail(studentIdParam: string | null) {
     recent_sessions: sessions.rows,
     daily_activity: dailyActivity.rows,
   })
+}
+
+async function getLearnerUnitStats() {
+  const result = await pool.query(`
+    SELECT
+      u.name as learner_name,
+      pu.unit_name,
+      COUNT(pa.id) as attempts
+    FROM users u
+    JOIN practice_attempts pa ON u.id = pa.student_id
+    JOIN practice_units pu ON pa.unit_id = pu.id
+    GROUP BY u.name, pu.unit_name
+    ORDER BY u.name, pu.unit_name
+  `)
+  
+  return NextResponse.json(result.rows)
 }
