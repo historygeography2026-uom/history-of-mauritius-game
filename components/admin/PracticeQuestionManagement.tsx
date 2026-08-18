@@ -505,11 +505,30 @@ export default function PracticeQuestionManagement({ onImport, onAdd }: Props) {
                           }}
                           className="flex-1 rounded-xl border border-slate-300 p-2.5 text-slate-900 font-medium focus:border-blue-500 focus:outline-none"
                         />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newOptions = [...(editingQuestion.answer_data.options || [])];
+                            newOptions.splice(idx, 1);
+                            setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, options: newOptions }});
+                          }}
+                          className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
                     ))}
-                    {(!editingQuestion.answer_data?.options || editingQuestion.answer_data.options.length === 0) && (
-                      <p className="text-sm text-slate-500 italic">No options found. This question may be malformed.</p>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newOptions = [...(editingQuestion.answer_data?.options || [])];
+                        newOptions.push({ text: "", is_correct: newOptions.length === 0 });
+                        setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, options: newOptions }});
+                      }}
+                      className="text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 mt-2"
+                    >
+                      <Plus className="h-4 w-4" /> Add Option
+                    </button>
                   </div>
                 )}
 
@@ -575,8 +594,30 @@ export default function PracticeQuestionManagement({ onImport, onAdd }: Props) {
                           placeholder="Right side"
                           className="flex-1 rounded-xl border border-slate-300 p-2.5 text-slate-900 font-medium focus:border-blue-500 focus:outline-none"
                         />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newPairs = [...(editingQuestion.answer_data.pairs || [])];
+                            newPairs.splice(idx, 1);
+                            setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, pairs: newPairs }});
+                          }}
+                          className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
                     ))}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newPairs = [...(editingQuestion.answer_data?.pairs || [])];
+                        newPairs.push({ left: "", right: "" });
+                        setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, pairs: newPairs }});
+                      }}
+                      className="text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 mt-2"
+                    >
+                      <Plus className="h-4 w-4" /> Add Pair
+                    </button>
                   </div>
                 )}
 
@@ -598,8 +639,34 @@ export default function PracticeQuestionManagement({ onImport, onAdd }: Props) {
                           }}
                           className="flex-1 rounded-xl border border-slate-300 p-2.5 text-slate-900 font-medium focus:border-blue-500 focus:outline-none"
                         />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newItems = [...(editingQuestion.answer_data.items || [])];
+                            const itemIndex = newItems.findIndex(i => i.correct_position === item.correct_position);
+                            if(itemIndex > -1) {
+                                newItems.splice(itemIndex, 1);
+                                newItems.sort((a,b) => a.correct_position - b.correct_position).forEach((it, i) => it.correct_position = i + 1);
+                            }
+                            setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, items: newItems }});
+                          }}
+                          className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
                     ))}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newItems = [...(editingQuestion.answer_data?.items || [])];
+                        newItems.push({ text: "", correct_position: newItems.length + 1 });
+                        setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, items: newItems }});
+                      }}
+                      className="text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 mt-2"
+                    >
+                      <Plus className="h-4 w-4" /> Add Step
+                    </button>
                   </div>
                 )}
               </div>
