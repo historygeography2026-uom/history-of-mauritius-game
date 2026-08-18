@@ -138,18 +138,7 @@ export default function QuestionEditModal({ question, isOpen, onClose, onSave }:
     return data.url
   }
 
-  // Delete image from server storage
-  const deleteImageFromStorage = async (imageUrl: string) => {
-    if (!imageUrl || !imageUrl.includes('question-images')) return
-    
-    try {
-      await fetch(`/api/upload-image?url=${encodeURIComponent(imageUrl)}`, {
-        method: 'DELETE',
-      })
-    } catch (error) {
-      console.error('Error deleting old image:', error)
-    }
-  }
+
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -163,11 +152,6 @@ export default function QuestionEditModal({ question, isOpen, onClose, onSave }:
         
         // Upload to Render persistent disk
         const uploadedUrl = await uploadImageToStorage(blob, formData.id)
-        
-        // Delete old image if it was stored on our server
-        if (formData.image && formData.image.includes('question-images')) {
-          await deleteImageFromStorage(formData.image)
-        }
         
         setFormData({ ...formData, image: uploadedUrl })
         
@@ -340,10 +324,6 @@ export default function QuestionEditModal({ question, isOpen, onClose, onSave }:
                       size="sm"
                       variant="outline"
                       onClick={async () => {
-                        // Delete from server storage if stored locally
-                        if (formData.image && formData.image.includes('question-images')) {
-                          await deleteImageFromStorage(formData.image)
-                        }
                         setImagePreview(null)
                         setFormData({ ...formData, image: "" })
                       }}

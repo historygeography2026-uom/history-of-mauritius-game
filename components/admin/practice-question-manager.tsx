@@ -67,6 +67,8 @@ export default function PracticeQuestionManager() {
   const [formQuestionText, setFormQuestionText] = useState("")
   const [formInstruction, setFormInstruction] = useState("")
   const [formImageUrl, setFormImageUrl] = useState("")
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
   // MCQ
   const [formOptionA, setFormOptionA] = useState("")
   const [formOptionB, setFormOptionB] = useState("")
@@ -179,6 +181,7 @@ export default function PracticeQuestionManager() {
     setFormFillAnswer("")
     setFormSteps(["", ""])
     setFormIsTrue(true)
+    setImagePreview(null)
     setEditingQuestion(null)
   }
 
@@ -188,6 +191,7 @@ export default function PracticeQuestionManager() {
     setFormQuestionText(q.question_text)
     setFormInstruction(q.instruction || "")
     setFormImageUrl(q.image_url || "")
+    setImagePreview(q.image_url || null)
 
     const ad = typeof q.answer_data === "string" ? JSON.parse(q.answer_data) : q.answer_data
 
@@ -339,6 +343,58 @@ export default function PracticeQuestionManager() {
     fetchUnits()
   }
 
+  // ── Image Upload ──
+
+  const createImagePreview = (file: File): Promise<{ blob: Blob; previewUrl: string }> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const previewUrl = e.target?.result as string
+        resolve({ blob: file, previewUrl })
+      }
+      reader.onerror = () => reject(new Error('Failed to read file'))
+      reader.readAsDataURL(file)
+    })
+  }
+
+  const uploadImageToStorage = async (blob: Blob): Promise<string> => {
+    const ext = (blob instanceof File && blob.name) ? blob.name.split('.').pop() || 'jpg' : 'jpg'
+    const formData = new FormData()
+    formData.append('file', blob, `practice-image-${Date.now()}.${ext}`)
+
+    const response = await fetch('/api/upload-image', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Upload failed')
+    }
+
+    const data = await response.json()
+    return data.url
+  }
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      try {
+        setIsUploadingImage(true)
+        const { blob, previewUrl } = await createImagePreview(file)
+        setImagePreview(previewUrl)
+        
+        const uploadedUrl = await uploadImageToStorage(blob)
+        setFormImageUrl(uploadedUrl)
+      } catch (error) {
+        console.error('Error uploading image:', error)
+        alert('Failed to upload image. Please try again.')
+      } finally {
+        setIsUploadingImage(false)
+      }
+    }
+  }
+
   // ── Filtering ──
 
   const filteredQuestions = questions.filter((q) => {
@@ -459,25 +515,70 @@ export default function PracticeQuestionManager() {
                 <span className="text-xs font-normal text-muted-foreground">(Optional)</span>
               </div>
               <div className="p-4 rounded-lg border bg-card space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Image URL</Label>
-                  <Input
-                    value={formImageUrl}
-                    onChange={(e) => setFormImageUrl(e.target.value)}
-                    placeholder="/practice-assets/g5-u1/image.jpg"
-                    className="h-10"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Upload Image</Label>
+                    <Input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleImageChange} 
+                      className="h-10 cursor-pointer"
+                      disabled={isUploadingImage}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Supports JPG, PNG, GIF, WebP.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Or Paste Image URL</Label>
+                    <Input
+                      type="url"
+                      value={formImageUrl}
+                      onChange={(e) => {
+                        setFormImageUrl(e.target.value)
+                        setImagePreview(e.target.value)
+                      }}
+                      placeholder="https://example.com/image.jpg"
+                      className="h-10"
+                      disabled={isUploadingImage}
+                    />
+                  </div>
                 </div>
-                {formImageUrl && (
+                
+                {isUploadingImage && (
+                  <div className="flex items-center gap-2 p-3 rounded-md bg-emerald-50 text-emerald-700">
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-emerald-600 border-t-transparent"></div>
+                    <span className="text-sm font-medium">Uploading image...</span>
+                  </div>
+                )}
+                
+                {imagePreview && !isUploadingImage && (
                   <div className="flex items-start gap-4 p-3 rounded-md bg-muted/50 mt-4">
                     <img
-                      src={formImageUrl}
+                      src={imagePreview}
                       alt="Preview"
                       className="h-24 rounded border object-cover"
                       onError={(e) => {
                         e.currentTarget.src = "/placeholder.svg?height=128&width=200"
                       }}
                     />
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setImagePreview(null)
+                          setFormImageUrl("")
+                        }}
+                        className="gap-1"
+                      >
+                        <X className="h-3 w-3" />
+                        Remove
+                      </Button>
+                      <span className="text-xs text-muted-foreground">
+                        {formImageUrl?.includes('question-images') || formImageUrl?.startsWith('/api/images/') ? '✓ Stored on server' : 'External URL'}
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>
