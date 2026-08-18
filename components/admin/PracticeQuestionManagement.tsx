@@ -307,7 +307,13 @@ export default function PracticeQuestionManagement({ onImport, onAdd }: Props) {
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           type="button"
-                          onClick={() => setEditingQuestion(q)}
+                          onClick={() => {
+                            let parsed = q.answer_data;
+                            if (typeof parsed === "string") {
+                              try { parsed = JSON.parse(parsed) } catch(e) {}
+                            }
+                            setEditingQuestion({ ...q, answer_data: parsed || {} });
+                          }}
                           aria-label={`Edit question ${q.id}`}
                           className="rounded-lg p-2 text-blue-600 hover:bg-blue-50 transition-colors"
                           title="Edit Question"
@@ -467,6 +473,136 @@ export default function PracticeQuestionManagement({ onImport, onAdd }: Props) {
                 )}
               </div>
 
+              {/* Answer Data Editor */}
+              <div className="pt-4 border-t border-slate-100">
+                <label className="block text-xs font-bold uppercase text-slate-700 mb-3">
+                  Answer Data:
+                </label>
+                
+                {editingQuestion.question_type === "mcq" && (
+                  <div className="space-y-3">
+                    {(editingQuestion.answer_data?.options || []).map((opt: any, idx: number) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <input 
+                          type="radio" 
+                          name="mcq_correct" 
+                          className="h-4 w-4 text-blue-600"
+                          checked={opt.is_correct} 
+                          onChange={() => {
+                            const newOptions = [...(editingQuestion.answer_data.options || [])];
+                            newOptions.forEach(o => o.is_correct = false);
+                            newOptions[idx].is_correct = true;
+                            setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, options: newOptions }});
+                          }}
+                        />
+                        <input
+                          type="text"
+                          value={opt.text}
+                          onChange={(e) => {
+                            const newOptions = [...(editingQuestion.answer_data.options || [])];
+                            newOptions[idx].text = e.target.value;
+                            setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, options: newOptions }});
+                          }}
+                          className="flex-1 rounded-xl border border-slate-300 p-2.5 text-slate-900 font-medium focus:border-blue-500 focus:outline-none"
+                        />
+                      </div>
+                    ))}
+                    {(!editingQuestion.answer_data?.options || editingQuestion.answer_data.options.length === 0) && (
+                      <p className="text-sm text-slate-500 italic">No options found. This question may be malformed.</p>
+                    )}
+                  </div>
+                )}
+
+                {editingQuestion.question_type === "truefalse" && (
+                  <div className="flex items-center gap-6">
+                    <label className="flex items-center gap-2 font-bold text-slate-700 cursor-pointer">
+                      <input 
+                        type="radio" 
+                        className="h-4 w-4 text-blue-600"
+                        checked={editingQuestion.answer_data?.correct_answer === true}
+                        onChange={() => setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, correct_answer: true }})}
+                      />
+                      True
+                    </label>
+                    <label className="flex items-center gap-2 font-bold text-slate-700 cursor-pointer">
+                      <input 
+                        type="radio" 
+                        className="h-4 w-4 text-blue-600"
+                        checked={editingQuestion.answer_data?.correct_answer === false}
+                        onChange={() => setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, correct_answer: false }})}
+                      />
+                      False
+                    </label>
+                  </div>
+                )}
+
+                {editingQuestion.question_type === "fill" && (
+                  <div>
+                    <input
+                      type="text"
+                      value={editingQuestion.answer_data?.answers?.[0] || ""}
+                      onChange={(e) => setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, answers: [e.target.value] }})}
+                      className="w-full rounded-xl border border-slate-300 p-2.5 text-slate-900 font-medium focus:border-blue-500 focus:outline-none"
+                      placeholder="Correct answer..."
+                    />
+                  </div>
+                )}
+
+                {editingQuestion.question_type === "matching" && (
+                  <div className="space-y-3">
+                    {(editingQuestion.answer_data?.pairs || []).map((pair: any, idx: number) => (
+                      <div key={idx} className="flex items-center gap-3">
+                        <input
+                          type="text"
+                          value={pair.left}
+                          onChange={(e) => {
+                            const newPairs = [...(editingQuestion.answer_data.pairs || [])];
+                            newPairs[idx].left = e.target.value;
+                            setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, pairs: newPairs }});
+                          }}
+                          placeholder="Left side"
+                          className="flex-1 rounded-xl border border-slate-300 p-2.5 text-slate-900 font-medium focus:border-blue-500 focus:outline-none"
+                        />
+                        <span className="text-slate-400 font-bold">-</span>
+                        <input
+                          type="text"
+                          value={pair.right}
+                          onChange={(e) => {
+                            const newPairs = [...(editingQuestion.answer_data.pairs || [])];
+                            newPairs[idx].right = e.target.value;
+                            setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, pairs: newPairs }});
+                          }}
+                          placeholder="Right side"
+                          className="flex-1 rounded-xl border border-slate-300 p-2.5 text-slate-900 font-medium focus:border-blue-500 focus:outline-none"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {editingQuestion.question_type === "reorder" && (
+                  <div className="space-y-3">
+                    {(editingQuestion.answer_data?.items || [])
+                      .sort((a:any, b:any) => a.correct_position - b.correct_position)
+                      .map((item: any, idx: number) => (
+                      <div key={idx} className="flex items-center gap-3">
+                        <span className="w-8 text-center font-black text-slate-400">{item.correct_position}.</span>
+                        <input
+                          type="text"
+                          value={item.text}
+                          onChange={(e) => {
+                            const newItems = [...(editingQuestion.answer_data.items || [])];
+                            const itemIndex = newItems.findIndex(i => i.correct_position === item.correct_position);
+                            if(itemIndex > -1) newItems[itemIndex].text = e.target.value;
+                            setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, items: newItems }});
+                          }}
+                          className="flex-1 rounded-xl border border-slate-300 p-2.5 text-slate-900 font-medium focus:border-blue-500 focus:outline-none"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
             </div>
 
