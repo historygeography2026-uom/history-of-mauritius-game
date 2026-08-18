@@ -21,8 +21,7 @@ interface PracticeQuestion {
   image_url?: string
   answer_data?: any
   is_active?: boolean
-  created_by?: string
-  created_at?: string
+    created_at?: string
   updated_at?: string
 }
 
@@ -223,7 +222,6 @@ export default function PracticeQuestionManagement({ onImport, onAdd }: Props) {
                 <th scope="col" className="w-[130px] px-4 py-3.5">Level / Unit</th>
                 <th scope="col" className="min-w-[280px] px-4 py-3.5">Question</th>
                 <th scope="col" className="w-[110px] px-4 py-3.5">Image</th>
-                <th scope="col" className="w-[110px] px-4 py-3.5">Created By</th>
                 <th scope="col" className="w-[130px] px-4 py-3.5">Created At</th>
                 <th scope="col" className="w-[120px] px-4 py-3.5 text-right">Actions</th>
               </tr>
@@ -297,11 +295,6 @@ export default function PracticeQuestionManagement({ onImport, onAdd }: Props) {
                           <ImageIcon className="h-3.5 w-3.5" /> No image
                         </span>
                       )}
-                    </td>
-
-                    {/* Created By */}
-                    <td className="px-4 py-3 text-xs font-bold text-slate-600">
-                      {q.created_by || "MES"}
                     </td>
 
                     {/* Created At */}
@@ -474,20 +467,7 @@ export default function PracticeQuestionManagement({ onImport, onAdd }: Props) {
                 )}
               </div>
 
-              {/* Created By */}
-              <div>
-                <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                  Created By:
-                </label>
-                <input
-                  type="text"
-                  value={editingQuestion.created_by || ""}
-                  onChange={(e) =>
-                    setEditingQuestion({ ...editingQuestion, created_by: e.target.value })
-                  }
-                  className="w-full rounded-xl border border-slate-300 p-2.5 text-slate-900 font-medium focus:border-blue-500 focus:outline-none"
-                />
-              </div>
+
             </div>
 
             {/* Modal Actions */}

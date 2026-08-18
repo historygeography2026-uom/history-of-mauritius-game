@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     let query = `
       SELECT 
         q.id, q.question_text, q.instruction, q.image_url, q.timer_seconds, 
-        q.created_by, q.created_at, q.updated_at,
+        q.created_at, q.updated_at,
         s.name as subject, l.level_number as level, qt.name as question_type
       FROM questions q
       JOIN subjects s ON q.subject_id = s.id
@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(enrichedQuestions)
   } catch (error: any) {
     console.error("Error fetching questions:", error)
-    return NextResponse.json({ error: "Failed to fetch questions" }, { status: 500 })
+    return NextResponse.json({ error: "Failed to fetch questions", details: error?.message, stack: error?.stack }, { status: 500 })
   }
 }
 
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { subject, level, type, question_text, instruction, image_url, timer_seconds, answer_data, created_by } = body
+    const { subject, level, type, question_text, instruction, image_url, timer_seconds, answer_data } = body
 
     // Validate required fields
     if (!question_text || typeof question_text !== "string" || question_text.trim().length === 0) {
@@ -173,8 +173,8 @@ export async function POST(request: NextRequest) {
 
     // Create question
     const questionResult = await pool.query(
-      `INSERT INTO questions (subject_id, level_id, question_type_id, question_text, instruction, image_url, timer_seconds, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO questions (subject_id, level_id, question_type_id, question_text, instruction, image_url, timer_seconds)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
       [
         subjectResult.rows[0].id,
@@ -183,8 +183,7 @@ export async function POST(request: NextRequest) {
         question_text,
         instruction || null,
         image_url || null,
-        timer_seconds || 30,
-        created_by || "MES",
+        timer_seconds || 30
       ]
     )
 
@@ -244,7 +243,7 @@ export async function PUT(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { id, subject, level, type, question_text, instruction, image_url, timer_seconds, answer_data, created_by } = body
+    const { id, subject, level, type, question_text, instruction, image_url, timer_seconds, answer_data } = body
 
     // Get IDs
     const [subjectResult, levelResult, typeResult] = await Promise.all([

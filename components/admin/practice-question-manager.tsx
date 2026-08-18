@@ -40,8 +40,7 @@ interface PracticeQuestion {
   image_url?: string
   answer_data: any
   is_active: boolean
-  created_by?: string
-  created_at: string
+    created_at: string
   updated_at: string
 }
 
@@ -120,10 +119,16 @@ export default function PracticeQuestionManager() {
       if (filterType !== "all") params.set("type", filterType)
 
       const res = await fetch(`/api/admin/practice/questions?${params}`)
-      if (res.ok) {
-        const data = await res.json()
-        setQuestions(data)
+      if (!res.ok) {
+        let errDetails = ""
+        try {
+          const errBody = await res.json()
+          errDetails = errBody.details || errBody.error || "Unknown API Error"
+        } catch(e) {}
+        throw new Error("Failed to fetch questions: " + errDetails)
       }
+      const data = await res.json()
+      setQuestions(data)
     } catch (error) {
       console.error("Error fetching questions:", error)
     } finally {
@@ -259,8 +264,7 @@ export default function PracticeQuestionManager() {
         instruction: formInstruction.trim() || null,
         image_url: formImageUrl.trim() || null,
         answer_data: answerData,
-        created_by: "MES",
-      }
+              }
 
       let res
       if (editingQuestion) {

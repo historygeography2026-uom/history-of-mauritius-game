@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS practice_questions (
   image_url      TEXT,
   answer_data    JSONB NOT NULL,
   is_active      BOOLEAN NOT NULL DEFAULT TRUE,
-  created_by     VARCHAR(100),
+  
   created_at     TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at     TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

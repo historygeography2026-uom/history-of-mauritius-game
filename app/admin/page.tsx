@@ -219,8 +219,7 @@ export default function AdminPage() {
       level: parseInt(q.level) || 1,
       question: q.question_text,
       timer: q.timer_seconds,
-      createdBy: q.created_by || "MES",
-      image: q.image_url || "",
+            image: q.image_url || "",
       ...typeSpecificData,
       createdAt: q.created_at ? new Date(q.created_at).getTime() : Date.now(),
       updatedAt: q.updated_at ? new Date(q.updated_at).getTime() : Date.now(),
@@ -238,7 +237,14 @@ export default function AdminPage() {
         return
       }
 
-      if (!res.ok) throw new Error("Failed to fetch questions")
+      if (!res.ok) {
+        let errDetails = ""
+        try {
+          const errBody = await res.json()
+          errDetails = errBody.details || errBody.error || "Unknown API Error"
+        } catch(e) {}
+        throw new Error("Failed to fetch questions: " + errDetails)
+      }
       const data = await res.json()
       setQuestions(data.map(transformApiQuestion))
     } catch (error) {
@@ -583,8 +589,7 @@ export default function AdminPage() {
             image_url: imageUrl,
             timer_seconds: formData.timer || 30,
             answer_data: buildAnswerData(),
-            created_by: currentUser,
-          }),
+                      }),
         })
         if (!res.ok) {
           const err = await res.json()
@@ -605,8 +610,7 @@ export default function AdminPage() {
             image_url: imageUrl,
             timer_seconds: formData.timer || 30,
             answer_data: buildAnswerData(),
-            created_by: currentUser,
-          }),
+                      }),
         })
         if (!res.ok) {
           const err = await res.json()
@@ -675,8 +679,7 @@ export default function AdminPage() {
           image_url: updatedQuestion.image || "",
           timer_seconds: updatedQuestion.timer || 30,
           answer_data,
-          created_by: currentUser,
-        }),
+                  }),
       })
 
       if (!res.ok) {

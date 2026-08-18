@@ -119,7 +119,6 @@ export default function PracticeImportModal({ open, onClose, onImportComplete }:
 
       const res = await fetch("/api/admin/practice/import", {
         method: "POST",
-        headers: { Authorization: `Bearer ${adminToken}` },
         body: formData,
       })
 

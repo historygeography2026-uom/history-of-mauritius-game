@@ -33,8 +33,8 @@ CREATE TABLE IF NOT EXISTS questions (
   question_text TEXT NOT NULL,
   timer_seconds INT DEFAULT 30,
   display_title VARCHAR(100),
-  created_by VARCHAR(100),
-  -- Added created_by field to track question author
+  
+  
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

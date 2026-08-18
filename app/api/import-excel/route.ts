@@ -147,10 +147,10 @@ export async function POST(req: NextRequest) {
         let questionId: number
         try {
           const questionResult = await pool.query(
-            `INSERT INTO questions (subject_id, level_id, question_type_id, question_text, instruction, image_url, timer_seconds, created_by)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            `INSERT INTO questions (subject_id, level_id, question_type_id, question_text, instruction, image_url, timer_seconds)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
              RETURNING id`,
-            [subjectId, levelId, typeId, q.question, q.instruction || null, finalImageUrl, q.timer || 30, createdBy]
+            [subjectId, levelId, typeId, q.question, q.instruction || null, finalImageUrl, q.timer || 30]
           )
           questionId = questionResult.rows[0].id
         } catch (dbError: any) {

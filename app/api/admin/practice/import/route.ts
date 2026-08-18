@@ -180,16 +180,15 @@ export async function POST(req: NextRequest) {
         // Insert question
         await pool.query(
           `INSERT INTO practice_questions
-             (unit_id, question_type, question_text, instruction, image_url, answer_data, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+             (unit_id, question_type, question_text, instruction, image_url, answer_data)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
           [
             unitId,
             type,
             String(q.question).trim(),
             q.instruction ? String(q.instruction).trim() : null,
             imageUrl || null,
-            JSON.stringify(answerData),
-            createdBy,
+            JSON.stringify(answerData)
           ]
         )
 

@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     let query = `
       SELECT pq.id, pq.question_text, pq.instruction, pq.image_url,
              pq.question_type, pq.answer_data, pq.is_active,
-             pq.created_by, pq.created_at, pq.updated_at,
+             pq.created_at, pq.updated_at,
              pu.unit_no, pu.unit_name
       FROM practice_questions pq
       JOIN practice_units pu ON pq.unit_id = pu.id
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(result.rows)
   } catch (error: any) {
     console.error("[admin/practice/questions] Error fetching:", error)
-    return NextResponse.json({ error: "Failed to fetch questions" }, { status: 500 })
+    return NextResponse.json({ error: "Failed to fetch questions", details: error?.message, stack: error?.stack }, { status: 500 })
   }
 }
 
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { unit_id, question_type, question_text, instruction, image_url, answer_data, created_by } = body
+    const { unit_id, question_type, question_text, instruction, image_url, answer_data } = body
 
     // Validate required fields
     if (!question_text || typeof question_text !== "string" || question_text.trim().length === 0) {
@@ -80,8 +80,8 @@ export async function POST(request: NextRequest) {
 
     const result = await pool.query(
       `INSERT INTO practice_questions
-         (unit_id, question_type, question_text, instruction, image_url, answer_data, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+         (unit_id, question_type, question_text, instruction, image_url, answer_data)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
       [
         unit_id,
@@ -89,8 +89,7 @@ export async function POST(request: NextRequest) {
         question_text.trim(),
         instruction || null,
         image_url || null,
-        JSON.stringify(answer_data),
-        created_by || "MES",
+        JSON.stringify(answer_data)
       ]
     )
 
@@ -108,7 +107,7 @@ export async function PUT(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { id, unit_id, question_type, question_text, instruction, image_url, answer_data, is_active, created_by } = body
+    const { id, unit_id, question_type, question_text, instruction, image_url, answer_data, is_active } = body
 
     if (!id) {
       return NextResponse.json({ error: "id is required" }, { status: 400 })
@@ -149,8 +148,7 @@ export async function PUT(request: NextRequest) {
          instruction = COALESCE($4, instruction),
          image_url = COALESCE($5, image_url),
          answer_data = COALESCE($6, answer_data),
-         is_active = COALESCE($7, is_active),
-         created_by = COALESCE($8, created_by),
+         is_active = COALESCE($7, is_active) = COALESCE($8),
          updated_at = NOW()
        WHERE id = $9
        RETURNING *`,
@@ -162,7 +160,6 @@ export async function PUT(request: NextRequest) {
         image_url !== undefined ? image_url : null,
         answer_data ? JSON.stringify(answer_data) : null,
         is_active !== undefined ? is_active : null,
-        created_by || null,
         id,
       ]
     )
