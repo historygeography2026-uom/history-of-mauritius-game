@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Plus, Trash2, Edit2, Search, X, Save } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { Separator } from "@/components/ui/separator"
+import { Plus, Trash2, Edit2, Search, X, Save, Settings, FileText, Image as ImageIcon, CheckCircle } from "lucide-react"
 import dynamic from "next/dynamic"
 
 const PracticeExcelImportSection = dynamic(
@@ -371,177 +372,269 @@ export default function PracticeQuestionManager() {
     <div className="space-y-6">
       
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingQuestion ? "Edit Practice Question" : "Add Practice Question"}</DialogTi          <div className="space-y-4 py-4">
-            {/* Unit and Type */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Unit</Label>
-                <Select value={formUnitId} onValueChange={setFormUnitId}>
-                  <SelectTrigger><SelectValue placeholder="Select unit" /></SelectTrigger>
-                  <SelectContent>
-                    {units.filter(u => u.is_active).map((u) => (
-                      <SelectItem key={u.id} value={u.id.toString()}>
-                        Unit {u.unit_no}: {u.unit_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b bg-muted/30">
+            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+              <FileText className="h-6 w-6 text-emerald-600" />
+              {editingQuestion ? "Edit Practice Question" : "Add Practice Question"}
+            </DialogTitle>
+            <DialogDescription>
+              Update the practice question details below. Changes will be saved to the database.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="px-6 py-6 space-y-8">
+            {/* Section: Basic Settings */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-lg font-semibold text-emerald-700">
+                <Settings className="h-5 w-5" />
+                <span>Basic Settings</span>
               </div>
-              <div>
-                <Label>Type</Label>
-                <Select value={formType} onValueChange={(v) => setFormType(v as QuestionType)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {questionTypes.map((t) => (
-                      <SelectItem key={t} value={t}>{typeLabel(t)}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Question text */}
-            <div>
-              <Label>Question Text</Label>
-              <Textarea
-                value={formQuestionText}
-                onChange={(e) => setFormQuestionText(e.target.value)}
-                placeholder="Enter the question..."
-                className="min-h-[80px]"
-              />
-            </div>
-
-            {/* Instruction */}
-            <div>
-              <Label>Instruction (optional)</Label>
-              <Input
-                value={formInstruction}
-                onChange={(e) => setFormInstruction(e.target.value)}
-                placeholder="e.g. Match each item on the left with its pair on the right"
-              />
-            </div>
-
-            {/* Image URL */}
-            <div>
-              <Label>Image URL (optional)</Label>
-              <Input
-                value={formImageUrl}
-                onChange={(e) => setFormImageUrl(e.target.value)}
-                placeholder="/practice-assets/g5-u1/image.jpg"
-              />
-            </div>
-
-            {/* Type-specific fields */}
-            {formType === "mcq" && (
-              <div className="space-y-3 p-4 bg-blue-50/50 border border-blue-100 rounded-lg">
-                <Label className="text-blue-700 font-semibold">MCQ Options</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  <Input placeholder="Option A" value={formOptionA} onChange={(e) => setFormOptionA(e.target.value)} className="bg-white" />
-                  <Input placeholder="Option B" value={formOptionB} onChange={(e) => setFormOptionB(e.target.value)} className="bg-white" />
-                  <Input placeholder="Option C" value={formOptionC} onChange={(e) => setFormOptionC(e.target.value)} className="bg-white" />
-                  <Input placeholder="Option D" value={formOptionD} onChange={(e) => setFormOptionD(e.target.value)} className="bg-white" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-lg border bg-card">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Unit</Label>
+                  <Select value={formUnitId} onValueChange={setFormUnitId}>
+                    <SelectTrigger className="h-10"><SelectValue placeholder="Select unit" /></SelectTrigger>
+                    <SelectContent>
+                      {units.filter(u => u.is_active).map((u) => (
+                        <SelectItem key={u.id} value={u.id.toString()}>
+                          Unit {u.unit_no}: {u.unit_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div>
-                  <Label className="text-blue-700">Correct Answer (must match one option exactly)</Label>
-                  <Input value={formCorrectAnswer} onChange={(e) => setFormCorrectAnswer(e.target.value)} placeholder="Port Louis" className="bg-white border-blue-200" />
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Question Type</Label>
+                  <Select value={formType} onValueChange={(v) => setFormType(v as QuestionType)}>
+                    <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {questionTypes.map((t) => (
+                        <SelectItem key={t} value={t}>{typeLabel(t)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-            )}
+            </div>
 
-            {formType === "matching" && (
-              <div className="space-y-3 p-4 bg-purple-50/50 border border-purple-100 rounded-lg">
-                <Label className="text-purple-700 font-semibold">Matching Pairs</Label>
-                {formPairs.map((pair, i) => (
-                  <div key={i} className="grid grid-cols-2 gap-2">
-                    <Input
-                      placeholder={`Left item ${i + 1}`}
-                      value={pair.left}
-                      onChange={(e) => {
-                        const updated = [...formPairs]
-                        updated[i] = { ...updated[i], left: e.target.value }
-                        setFormPairs(updated)
+            <Separator />
+
+            {/* Section: Question Content */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-lg font-semibold text-emerald-700">
+                <FileText className="h-5 w-5" />
+                <span>Question Content</span>
+              </div>
+              <div className="p-4 rounded-lg border bg-card space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Question Text</Label>
+                  <Textarea
+                    value={formQuestionText}
+                    onChange={(e) => setFormQuestionText(e.target.value)}
+                    placeholder="Enter the question..."
+                    className="min-h-[80px] resize-none"
+                    rows={3}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Instruction (optional)</Label>
+                  <Input
+                    value={formInstruction}
+                    onChange={(e) => setFormInstruction(e.target.value)}
+                    placeholder="e.g. Match each item on the left with its pair on the right"
+                    className="h-10"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Section: Image */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-lg font-semibold text-emerald-700">
+                <ImageIcon className="h-5 w-5" />
+                <span>Question Image</span>
+                <span className="text-xs font-normal text-muted-foreground">(Optional)</span>
+              </div>
+              <div className="p-4 rounded-lg border bg-card space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Image URL</Label>
+                  <Input
+                    value={formImageUrl}
+                    onChange={(e) => setFormImageUrl(e.target.value)}
+                    placeholder="/practice-assets/g5-u1/image.jpg"
+                    className="h-10"
+                  />
+                </div>
+                {formImageUrl && (
+                  <div className="flex items-start gap-4 p-3 rounded-md bg-muted/50 mt-4">
+                    <img
+                      src={formImageUrl}
+                      alt="Preview"
+                      className="h-24 rounded border object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = "/placeholder.svg?height=128&width=200"
                       }}
-                      className="bg-white"
-                    />
-                    <Input
-                      placeholder={`Right item ${i + 1}`}
-                      value={pair.right}
-                      onChange={(e) => {
-                        const updated = [...formPairs]
-                        updated[i] = { ...updated[i], right: e.target.value }
-                        setFormPairs(updated)
-                      }}
-                      className="bg-white"
                     />
                   </div>
-                ))}
-                {formPairs.length < 4 && (
-                  <Button variant="outline" size="sm" onClick={() => setFormPairs([...formPairs, { left: "", right: "" }])}>
-                    <Plus className="h-3 w-3 mr-1" /> Add Pair
-                  </Button>
                 )}
               </div>
-            )}
+            </div>
 
-            {formType === "fill" && (
-              <div className="p-4 bg-green-50/50 border border-green-100 rounded-lg">
-                <Label className="text-green-700 font-semibold">Fill Answer</Label>
-                <Input value={formFillAnswer} onChange={(e) => setFormFillAnswer(e.target.value)} placeholder="extinct" className="bg-white" />
-                <p className="text-xs text-green-600 mt-1">Use _______ in the question text to mark the blank</p>
+            <Separator />
+
+            {/* Section: Answer Options */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-lg font-semibold text-emerald-700">
+                <CheckCircle className="h-5 w-5" />
+                <span>Answer Options</span>
+                <span className="ml-2 px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-100 text-emerald-800 uppercase">
+                  {formType}
+                </span>
               </div>
-            )}
-
-            {formType === "reorder" && (
-              <div className="space-y-3 p-4 bg-amber-50/50 border border-amber-100 rounded-lg">
-                <Label className="text-amber-700 font-semibold">Steps (in correct order)</Label>
-                {formSteps.map((step, i) => (
-                  <div key={i} className="flex gap-2 items-center">
-                    <span className="text-xs font-bold text-amber-600 w-6">{i + 1}.</span>
-                    <Input
-                      placeholder={`Step ${i + 1}`}
-                      value={step}
-                      onChange={(e) => {
-                        const updated = [...formSteps]
-                        updated[i] = e.target.value
-                        setFormSteps(updated)
-                      }}
-                      className="bg-white"
-                    />
+              <div className="p-4 rounded-lg border bg-card space-y-4">
+                {formType === "mcq" && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {["A", "B", "C", "D"].map((opt, i) => {
+                        const optState = [formOptionA, formOptionB, formOptionC, formOptionD][i]
+                        const optSetter = [setFormOptionA, setFormOptionB, setFormOptionC, setFormOptionD][i]
+                        return (
+                          <div key={opt} className="space-y-2">
+                            <Label className="text-sm font-medium">Option {opt}</Label>
+                            <Input
+                              value={optState}
+                              onChange={(e) => optSetter(e.target.value)}
+                              className="h-10"
+                              placeholder={`Enter option ${opt}`}
+                            />
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <div className="pt-2 border-t">
+                      <div className="space-y-2 max-w-xs">
+                        <Label className="text-sm font-medium">Correct Answer</Label>
+                        <Input 
+                          value={formCorrectAnswer} 
+                          onChange={(e) => setFormCorrectAnswer(e.target.value)} 
+                          placeholder="e.g. Option B text exactly" 
+                          className="h-10" 
+                        />
+                      </div>
+                    </div>
                   </div>
-                ))}
-                {formSteps.length < 4 && (
-                  <Button variant="outline" size="sm" onClick={() => setFormSteps([...formSteps, ""])}>
-                    <Plus className="h-3 w-3 mr-1" /> Add Step
-                  </Button>
+                )}
+
+                {formType === "matching" && (
+                  <div className="space-y-3">
+                    {formPairs.map((pair, idx) => (
+                      <div key={idx} className="grid grid-cols-2 gap-4 p-3 rounded-md bg-muted/30">
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">Left {idx + 1}</Label>
+                          <Input
+                            placeholder={`Left item ${idx + 1}`}
+                            value={pair.left}
+                            onChange={(e) => {
+                              const updated = [...formPairs]
+                              updated[idx] = { ...updated[idx], left: e.target.value }
+                              setFormPairs(updated)
+                            }}
+                            className="h-10"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">Right {idx + 1}</Label>
+                          <Input
+                            placeholder={`Right item ${idx + 1}`}
+                            value={pair.right}
+                            onChange={(e) => {
+                              const updated = [...formPairs]
+                              updated[idx] = { ...updated[idx], right: e.target.value }
+                              setFormPairs(updated)
+                            }}
+                            className="h-10"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    {formPairs.length < 4 && (
+                      <Button variant="outline" size="sm" onClick={() => setFormPairs([...formPairs, { left: "", right: "" }])}>
+                        <Plus className="h-3 w-3 mr-1" /> Add Pair
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                {formType === "fill" && (
+                  <div className="space-y-2 max-w-md">
+                    <Label className="text-sm font-medium">Correct Answer</Label>
+                    <Input 
+                      value={formFillAnswer} 
+                      onChange={(e) => setFormFillAnswer(e.target.value)} 
+                      placeholder="e.g. extinct" 
+                      className="h-10" 
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Use _______ in the question text to mark the blank</p>
+                  </div>
+                )}
+
+                {formType === "reorder" && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground">Enter items in the correct order (top to bottom)</p>
+                    {formSteps.map((step, idx) => (
+                      <div key={idx} className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 text-sm font-medium">
+                          {idx + 1}
+                        </span>
+                        <Input
+                          value={step}
+                          onChange={(e) => {
+                            const updated = [...formSteps]
+                            updated[idx] = e.target.value
+                            setFormSteps(updated)
+                          }}
+                          className="h-10 flex-1"
+                          placeholder={`Item ${idx + 1}`}
+                        />
+                      </div>
+                    ))}
+                    {formSteps.length < 4 && (
+                      <Button variant="outline" size="sm" onClick={() => setFormSteps([...formSteps, ""])}>
+                        <Plus className="h-3 w-3 mr-1" /> Add Step
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                {formType === "truefalse" && (
+                  <div className="space-y-2 max-w-xs">
+                    <Label className="text-sm font-medium">Correct Answer</Label>
+                    <Select value={formIsTrue ? "true" : "false"} onValueChange={(v) => setFormIsTrue(v === "true")}>
+                      <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="true">✓ True</SelectItem>
+                        <SelectItem value="false">✗ False</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 )}
               </div>
-            )}
-
-            {formType === "truefalse" && (
-              <div className="p-4 bg-orange-50/50 border border-orange-100 rounded-lg">
-                <Label className="text-orange-700 font-semibold">Correct Answer</Label>
-                <Select value={formIsTrue ? "true" : "false"} onValueChange={(v) => setFormIsTrue(v === "true")}>
-                  <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="true">True</SelectItem>
-                    <SelectItem value="false">False</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            <div className="flex justify-end gap-2 pt-4 border-t mt-4">
-              <Button onClick={() => { resetForm(); setShowForm(false) }} variant="ghost">
-                Cancel
-              </Button>
-              <Button onClick={handleSaveQuestion} className="bg-emerald-600 hover:bg-emerald-700 text-white min-w-[120px]">
-                <Save className="h-4 w-4 mr-2" />
-                {editingQuestion ? "Update" : "Save"}
-              </Button>
             </div>
           </div>
+
+          <DialogFooter className="px-6 py-4 border-t bg-muted/30">
+            <Button variant="outline" onClick={() => { resetForm(); setShowForm(false) }} className="gap-2">
+              <X className="h-4 w-4" />
+              Cancel
+            </Button>
+            <Button onClick={handleSaveQuestion} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
+              <Save className="h-4 w-4" />
+              {editingQuestion ? "Update Changes" : "Save Changes"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
       {/* Unit Management */}
