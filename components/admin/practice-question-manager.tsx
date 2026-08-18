@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Plus, Trash2, Edit2, Search, X, Save } from "lucide-react"
 import dynamic from "next/dynamic"
 
@@ -366,20 +367,13 @@ export default function PracticeQuestionManager() {
 
   // ── Render ──
 
-  if (showForm) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold text-slate-900">
-            {editingQuestion ? "Edit Practice Question" : "Add Practice Question"}
-          </h3>
-          <Button onClick={() => { resetForm(); setShowForm(false) }} variant="outline" size="sm">
-            <X className="h-4 w-4 mr-1" /> Cancel
-          </Button>
-        </div>
-
-        <Card className="p-6">
-          <div className="space-y-4">
+  return (
+    <div className="space-y-6">
+      
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingQuestion ? "Edit Practice Question" : "Add Practice Question"}</DialogTi          <div className="space-y-4 py-4">
             {/* Unit and Type */}
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -435,29 +429,29 @@ export default function PracticeQuestionManager() {
               <Input
                 value={formImageUrl}
                 onChange={(e) => setFormImageUrl(e.target.value)}
-                placeholder="/api/images/your-file.jpg"
+                placeholder="/practice-assets/g5-u1/image.jpg"
               />
             </div>
 
             {/* Type-specific fields */}
             {formType === "mcq" && (
-              <div className="space-y-3 p-4 bg-blue-50 rounded-lg">
+              <div className="space-y-3 p-4 bg-blue-50/50 border border-blue-100 rounded-lg">
                 <Label className="text-blue-700 font-semibold">MCQ Options</Label>
                 <div className="grid grid-cols-2 gap-3">
-                  <Input placeholder="Option A" value={formOptionA} onChange={(e) => setFormOptionA(e.target.value)} />
-                  <Input placeholder="Option B" value={formOptionB} onChange={(e) => setFormOptionB(e.target.value)} />
-                  <Input placeholder="Option C" value={formOptionC} onChange={(e) => setFormOptionC(e.target.value)} />
-                  <Input placeholder="Option D" value={formOptionD} onChange={(e) => setFormOptionD(e.target.value)} />
+                  <Input placeholder="Option A" value={formOptionA} onChange={(e) => setFormOptionA(e.target.value)} className="bg-white" />
+                  <Input placeholder="Option B" value={formOptionB} onChange={(e) => setFormOptionB(e.target.value)} className="bg-white" />
+                  <Input placeholder="Option C" value={formOptionC} onChange={(e) => setFormOptionC(e.target.value)} className="bg-white" />
+                  <Input placeholder="Option D" value={formOptionD} onChange={(e) => setFormOptionD(e.target.value)} className="bg-white" />
                 </div>
                 <div>
                   <Label className="text-blue-700">Correct Answer (must match one option exactly)</Label>
-                  <Input value={formCorrectAnswer} onChange={(e) => setFormCorrectAnswer(e.target.value)} placeholder="Port Louis" />
+                  <Input value={formCorrectAnswer} onChange={(e) => setFormCorrectAnswer(e.target.value)} placeholder="Port Louis" className="bg-white border-blue-200" />
                 </div>
               </div>
             )}
 
             {formType === "matching" && (
-              <div className="space-y-3 p-4 bg-purple-50 rounded-lg">
+              <div className="space-y-3 p-4 bg-purple-50/50 border border-purple-100 rounded-lg">
                 <Label className="text-purple-700 font-semibold">Matching Pairs</Label>
                 {formPairs.map((pair, i) => (
                   <div key={i} className="grid grid-cols-2 gap-2">
@@ -469,6 +463,7 @@ export default function PracticeQuestionManager() {
                         updated[i] = { ...updated[i], left: e.target.value }
                         setFormPairs(updated)
                       }}
+                      className="bg-white"
                     />
                     <Input
                       placeholder={`Right item ${i + 1}`}
@@ -478,6 +473,7 @@ export default function PracticeQuestionManager() {
                         updated[i] = { ...updated[i], right: e.target.value }
                         setFormPairs(updated)
                       }}
+                      className="bg-white"
                     />
                   </div>
                 ))}
@@ -490,15 +486,15 @@ export default function PracticeQuestionManager() {
             )}
 
             {formType === "fill" && (
-              <div className="p-4 bg-green-50 rounded-lg">
+              <div className="p-4 bg-green-50/50 border border-green-100 rounded-lg">
                 <Label className="text-green-700 font-semibold">Fill Answer</Label>
-                <Input value={formFillAnswer} onChange={(e) => setFormFillAnswer(e.target.value)} placeholder="extinct" />
+                <Input value={formFillAnswer} onChange={(e) => setFormFillAnswer(e.target.value)} placeholder="extinct" className="bg-white" />
                 <p className="text-xs text-green-600 mt-1">Use _______ in the question text to mark the blank</p>
               </div>
             )}
 
             {formType === "reorder" && (
-              <div className="space-y-3 p-4 bg-amber-50 rounded-lg">
+              <div className="space-y-3 p-4 bg-amber-50/50 border border-amber-100 rounded-lg">
                 <Label className="text-amber-700 font-semibold">Steps (in correct order)</Label>
                 {formSteps.map((step, i) => (
                   <div key={i} className="flex gap-2 items-center">
@@ -511,6 +507,7 @@ export default function PracticeQuestionManager() {
                         updated[i] = e.target.value
                         setFormSteps(updated)
                       }}
+                      className="bg-white"
                     />
                   </div>
                 ))}
@@ -523,10 +520,10 @@ export default function PracticeQuestionManager() {
             )}
 
             {formType === "truefalse" && (
-              <div className="p-4 bg-orange-50 rounded-lg">
+              <div className="p-4 bg-orange-50/50 border border-orange-100 rounded-lg">
                 <Label className="text-orange-700 font-semibold">Correct Answer</Label>
                 <Select value={formIsTrue ? "true" : "false"} onValueChange={(v) => setFormIsTrue(v === "true")}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="true">True</SelectItem>
                     <SelectItem value="false">False</SelectItem>
@@ -535,23 +532,18 @@ export default function PracticeQuestionManager() {
               </div>
             )}
 
-            <div className="flex gap-4 pt-4 border-t">
-              <Button onClick={handleSaveQuestion} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white">
-                <Save className="h-4 w-4 mr-2" />
-                {editingQuestion ? "Update Question" : "Save Question"}
-              </Button>
-              <Button onClick={() => { resetForm(); setShowForm(false) }} variant="outline" className="flex-1">
+            <div className="flex justify-end gap-2 pt-4 border-t mt-4">
+              <Button onClick={() => { resetForm(); setShowForm(false) }} variant="ghost">
                 Cancel
+              </Button>
+              <Button onClick={handleSaveQuestion} className="bg-emerald-600 hover:bg-emerald-700 text-white min-w-[120px]">
+                <Save className="h-4 w-4 mr-2" />
+                {editingQuestion ? "Update" : "Save"}
               </Button>
             </div>
           </div>
-        </Card>
-      </div>
-    )
-  }
-
-  return (
-    <div className="space-y-6">
+        </DialogContent>
+      </Dialog>
       {/* Unit Management */}
       <Card className="p-4 border-emerald-200">
         <div className="flex items-center justify-between mb-3">
@@ -712,7 +704,6 @@ export default function PracticeQuestionManager() {
                   <TableHead className="w-[80px]">Type</TableHead>
                   <TableHead className="min-w-[300px]">Question</TableHead>
                   <TableHead className="w-[100px]">Image</TableHead>
-                  <TableHead className="w-[100px]">Created By</TableHead>
                   <TableHead className="w-[140px]">Created At</TableHead>
                   <TableHead className="w-[120px] text-right">Actions</TableHead>
                 </TableRow>
@@ -720,13 +711,13 @@ export default function PracticeQuestionManager() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8 text-slate-500">
+                    <TableCell colSpan={8} className="text-center py-8 text-slate-500">
                       Loading questions...
                     </TableCell>
                   </TableRow>
                 ) : filteredQuestions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8 text-slate-500">
+                    <TableCell colSpan={8} className="text-center py-8 text-slate-500">
                       No practice questions found. Try adjusting your filters or add new questions.
                     </TableCell>
                   </TableRow>
@@ -757,7 +748,6 @@ export default function PracticeQuestionManager() {
                           <span className="text-slate-400 text-xs">None</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-sm">{q.created_by || "MES"}</TableCell>
                       <TableCell className="text-xs text-slate-600">
                         {new Date(q.created_at).toLocaleDateString()}
                       </TableCell>
