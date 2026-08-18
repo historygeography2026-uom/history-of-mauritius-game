@@ -171,6 +171,25 @@ export default function PracticeQuestionManagement({ onImport, onAdd }: Props) {
           </div>
         </header>
 
+        {/* Statistics Bar */}
+        <div className="mb-6 flex flex-wrap gap-2">
+          <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm shadow-sm flex items-center gap-2">
+            <span className="font-bold text-blue-700">Displaying:</span>
+            <span className="font-black text-blue-900">{filtered.length}</span>
+            <span className="text-blue-600">/ {questions.length} total</span>
+          </div>
+          {units.map(u => {
+            const count = questions.filter(q => q.unit_no === u.unit_no).length;
+            if (count === 0) return null;
+            return (
+              <div key={u.id} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-sm flex items-center gap-2">
+                <span className="font-bold text-slate-700">{u.unit_name}</span>
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 font-black text-slate-600">{count}</span>
+              </div>
+            )
+          })}
+        </div>
+
         {/* Filters Bar */}
         <div className="mb-4 flex flex-col gap-3 sm:flex-row">
           <div className="relative flex-1">
