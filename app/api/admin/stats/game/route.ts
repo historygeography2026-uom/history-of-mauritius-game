@@ -6,12 +6,20 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const month = searchParams.get('month') // e.g., '2026-08'
     const view = searchParams.get('view') || 'daily' // 'daily', 'subject', 'level'
+    const period = searchParams.get('period') || 'weekly' // 'daily', 'weekly', 'monthly'
 
     // We get attempts from the leaderboard table as it records all finished games.
-    if (view === 'daily') {
+    if (view === 'daily' || view === 'timeline') {
+      let dateExpression = `TO_CHAR(l.game_date, 'YYYY-MM-DD')`
+      if (period === 'weekly') {
+        dateExpression = `TO_CHAR(DATE_TRUNC('week', l.game_date), 'YYYY-MM-DD')`
+      } else if (period === 'monthly') {
+        dateExpression = `TO_CHAR(DATE_TRUNC('month', l.game_date), 'YYYY-MM-DD')`
+      }
+
       const sql = `
         SELECT 
-          TO_CHAR(l.game_date, 'YYYY-MM-DD') as day,
+          ${dateExpression} as day,
           s.name as subject,
           lev.level_number as level,
           COUNT(l.id) as attempts
@@ -19,7 +27,7 @@ export async function GET(request: Request) {
         LEFT JOIN subjects s ON l.subject_id = s.id
         LEFT JOIN levels lev ON l.level_id = lev.id
         WHERE l.game_date IS NOT NULL
-        GROUP BY TO_CHAR(l.game_date, 'YYYY-MM-DD'), s.name, lev.level_number
+        GROUP BY ${dateExpression}, s.name, lev.level_number
         ORDER BY day DESC
       `
       const rawData = await query(sql)

@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { Users, BookOpen, Target, TrendingUp } from "lucide-react"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts'
 
 interface LearnerUnitStat {
   learner_name: string
@@ -15,23 +15,35 @@ interface Props {}
 
 export default function PracticeAnalyticsDashboard({}: Props) {
   const [stats, setStats] = useState<LearnerUnitStat[]>([])
+  const [timelineStats, setTimelineStats] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly'>('weekly')
 
   const fetchStats = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/practice/stats?view=learner-units")
-      if (res.ok) {
-        const data = await res.json()
+      setLoading(true)
+      const [unitsRes, timelineRes] = await Promise.all([
+        fetch("/api/admin/practice/stats?view=learner-units"),
+        fetch(`/api/admin/practice/stats?view=timeline&period=${period}`)
+      ])
+      
+      if (unitsRes.ok) {
+        const data = await unitsRes.json()
         setStats(Array.isArray(data) ? data : [])
+      }
+      
+      if (timelineRes.ok) {
+        const tData = await timelineRes.json()
+        setTimelineStats(Array.isArray(tData) ? tData : [])
       }
     } catch (e) {
       console.error("Failed to fetch practice stats:", e)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [period])
 
-  useEffect(() => { fetchStats() }, [fetchStats])
+  useEffect(() => { fetchStats() }, [fetchStats, period])
 
   if (loading) {
     return (
@@ -72,6 +84,12 @@ export default function PracticeAnalyticsDashboard({}: Props) {
   }).sort((a, b) => b.Attempts - a.Attempts)
 
   const totalPracticeAttempts = pivotTable.reduce((acc, row) => acc + row.total, 0)
+  
+  const timelineChartData = [...timelineStats].reverse().map(d => ({
+    ...d,
+    displayDate: new Date(d.day).toLocaleDateString("en-GB", { day: 'numeric', month: 'short' }),
+    Attempts: Number(d.attempts) || 0
+  }))
 
   return (
     <div className="bg-gray-50 px-4 py-8 font-sans">
@@ -81,9 +99,20 @@ export default function PracticeAnalyticsDashboard({}: Props) {
             <h1 className="text-2xl font-semibold text-gray-900">Practice Analytics</h1>
             <p className="mt-1 text-sm text-gray-500">Detailed breakdown of practice attempts per learner and unit.</p>
           </div>
-          <button onClick={fetchStats} className="text-sm font-medium text-emerald-600 hover:text-emerald-800">
-            Refresh Data
-          </button>
+          <div className="flex items-center gap-4">
+            <select 
+              value={period} 
+              onChange={(e) => setPeriod(e.target.value as any)}
+              className="rounded-md border-gray-300 py-1.5 pl-3 pr-8 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+            >
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+            <button onClick={fetchStats} className="text-sm font-medium text-emerald-600 hover:text-emerald-800">
+              Refresh Data
+            </button>
+          </div>
         </header>
 
         {/* Summary cards */}
@@ -116,6 +145,29 @@ export default function PracticeAnalyticsDashboard({}: Props) {
             </div>
           </div>
         </div>
+
+        {/* Practice Timeline Chart */}
+        <section className="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <h2 className="mb-4 text-sm font-semibold text-gray-900 flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-emerald-500" /> Practice Engagement (Over Time)
+          </h2>
+          <div className="h-72 w-full">
+            {timelineChartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={timelineChartData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                  <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} />
+                  <RechartsTooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                  <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '12px' }} />
+                  <Line type="monotone" dataKey="Attempts" name="Practice Attempts" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-gray-400">No chart data available</div>
+            )}
+          </div>
+        </section>
 
         {/* Charts */}
         <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">

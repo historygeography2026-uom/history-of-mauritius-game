@@ -32,6 +32,8 @@ export async function GET(request: NextRequest) {
         return await getUnitStats()
       case "learner-units":
         return await getLearnerUnitStats()
+      case "timeline":
+        return await getPracticeTimeline(searchParams.get("period"))
       case "hard-questions":
         return await getHardQuestions(searchParams.get("unit"))
       case "learner-detail":
@@ -234,6 +236,29 @@ async function getLearnerUnitStats() {
     GROUP BY u.name, pu.unit_name
     ORDER BY u.name, pu.unit_name
   `)
+  
+  return NextResponse.json(result.rows)
+}
+
+async function getPracticeTimeline(period: string | null) {
+  const p = period || 'weekly'
+  let dateExpression = `TO_CHAR(pa.attempted_at, 'YYYY-MM-DD')`
+  if (p === 'weekly') {
+    dateExpression = `TO_CHAR(DATE_TRUNC('week', pa.attempted_at), 'YYYY-MM-DD')`
+  } else if (p === 'monthly') {
+    dateExpression = `TO_CHAR(DATE_TRUNC('month', pa.attempted_at), 'YYYY-MM-DD')`
+  }
+
+  const sql = `
+    SELECT
+      ${dateExpression} as day,
+      COUNT(pa.id) as attempts
+    FROM practice_attempts pa
+    WHERE pa.attempted_at IS NOT NULL
+    GROUP BY ${dateExpression}
+    ORDER BY day DESC
+  `
+  const result = await pool.query(sql)
   
   return NextResponse.json(result.rows)
 }

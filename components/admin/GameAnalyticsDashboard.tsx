@@ -21,10 +21,12 @@ interface Props {}
 export default function GameAnalyticsDashboard({}: Props) {
   const [stats, setStats] = useState<DailyGameStat[]>([])
   const [loading, setLoading] = useState(true)
+  const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly'>('weekly')
 
   const fetchStats = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/stats/game?view=daily")
+      setLoading(true)
+      const res = await fetch(`/api/admin/stats/game?view=timeline&period=${period}`)
       if (res.ok) {
         const data = await res.json()
         setStats(Array.isArray(data) ? data : [])
@@ -34,9 +36,9 @@ export default function GameAnalyticsDashboard({}: Props) {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [period])
 
-  useEffect(() => { fetchStats() }, [fetchStats])
+  useEffect(() => { fetchStats() }, [fetchStats, period])
 
   if (loading) {
     return (
@@ -63,11 +65,22 @@ export default function GameAnalyticsDashboard({}: Props) {
         <header className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">Game Analytics</h1>
-            <p className="mt-1 text-sm text-gray-500">Daily number of game attempts broken down by subject and level.</p>
+            <p className="mt-1 text-sm text-gray-500">Number of game attempts broken down by subject and level.</p>
           </div>
-          <button onClick={fetchStats} className="text-sm font-medium text-blue-600 hover:text-blue-800">
-            Refresh Data
-          </button>
+          <div className="flex items-center gap-4">
+            <select 
+              value={period} 
+              onChange={(e) => setPeriod(e.target.value as any)}
+              className="rounded-md border-gray-300 py-1.5 pl-3 pr-8 text-sm focus:border-blue-500 focus:ring-blue-500"
+            >
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+            <button onClick={fetchStats} className="text-sm font-medium text-blue-600 hover:text-blue-800">
+              Refresh Data
+            </button>
+          </div>
         </header>
 
         {/* Summary cards */}
@@ -86,7 +99,7 @@ export default function GameAnalyticsDashboard({}: Props) {
               <Calendar className="h-6 w-6 text-emerald-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Most Active Day</p>
+              <p className="text-sm font-medium text-gray-500">Most Active Period</p>
               <p className="text-2xl font-bold text-gray-900">
                 {mostActiveDay ? new Date(mostActiveDay.day).toLocaleDateString("en-GB", { day: 'numeric', month: 'short', year: 'numeric' }) : "—"}
               </p>
@@ -151,13 +164,13 @@ export default function GameAnalyticsDashboard({}: Props) {
         {/* Daily Data Table */}
         <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
           <div className="border-b border-gray-200 px-5 py-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-gray-900">Daily Game Attempts</h2>
+            <h2 className="text-sm font-semibold text-gray-900">Game Attempts Timeline</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-gray-200 bg-gray-50 text-xs font-medium uppercase tracking-wide text-gray-500">
                 <tr>
-                  <th scope="col" className="px-5 py-3 whitespace-nowrap">Date</th>
+                  <th scope="col" className="px-5 py-3 whitespace-nowrap">Period Start</th>
                   <th scope="col" className="px-5 py-3 text-right">Total Attempts</th>
                   <th scope="col" className="px-5 py-3 text-right">History</th>
                   <th scope="col" className="px-5 py-3 text-right">Geography</th>
