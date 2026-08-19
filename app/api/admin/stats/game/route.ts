@@ -47,6 +47,15 @@ export async function GET(request: Request) {
             level_1: 0,
             level_2: 0,
             level_3: 0,
+            history_level_1: 0,
+            history_level_2: 0,
+            history_level_3: 0,
+            geography_level_1: 0,
+            geography_level_2: 0,
+            geography_level_3: 0,
+            combined_level_1: 0,
+            combined_level_2: 0,
+            combined_level_3: 0,
           })
         }
         
@@ -62,6 +71,11 @@ export async function GET(request: Request) {
         if (row.level === 1) dayRecord.level_1 += count
         else if (row.level === 2) dayRecord.level_2 += count
         else if (row.level === 3) dayRecord.level_3 += count
+        
+        const combKey = `${row.subject}_level_${row.level}`
+        if (dayRecord[combKey] !== undefined) {
+          dayRecord[combKey] += count
+        }
       }
       
       return NextResponse.json(Array.from(dailyMap.values()))

@@ -14,6 +14,15 @@ interface DailyGameStat {
   level_1: number
   level_2: number
   level_3: number
+  history_level_1: number
+  history_level_2: number
+  history_level_3: number
+  geography_level_1: number
+  geography_level_2: number
+  geography_level_3: number
+  combined_level_1: number
+  combined_level_2: number
+  combined_level_3: number
 }
 
 interface Props {}
@@ -76,7 +85,7 @@ export default function GameAnalyticsDashboard({}: Props) {
 
   const handleExportCSV = () => {
     if (filteredStats.length === 0) return
-    const headers = ["Period Start", "Total Attempts", "History", "Geography", "Combined", "Level 1", "Level 2", "Level 3"]
+    const headers = ["Period Start", "Total Attempts", "History", "Geography", "Combined", "Hist L1", "Hist L2", "Hist L3", "Geo L1", "Geo L2", "Geo L3", "Comb L1", "Comb L2", "Comb L3"]
     const csvRows = [headers.join(",")]
     filteredStats.forEach(row => {
       const date = new Date(row.day).toLocaleDateString("en-GB", { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
@@ -86,9 +95,15 @@ export default function GameAnalyticsDashboard({}: Props) {
         row.subject_history,
         row.subject_geography,
         row.subject_combined,
-        row.level_1,
-        row.level_2,
-        row.level_3
+        row.history_level_1,
+        row.history_level_2,
+        row.history_level_3,
+        row.geography_level_1,
+        row.geography_level_2,
+        row.geography_level_3,
+        row.combined_level_1,
+        row.combined_level_2,
+        row.combined_level_3
       ].join(","))
     })
     const blob = new Blob([csvRows.join("\n")], { type: "text/csv" })
@@ -142,18 +157,28 @@ export default function GameAnalyticsDashboard({}: Props) {
             <span className="font-bold text-slate-700">Combined</span>
             <span className="rounded-full bg-slate-100 px-2 py-0.5 font-black text-slate-600">{totalCombined}</span>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-sm flex items-center gap-2">
-            <span className="font-bold text-slate-700">Level 1</span>
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 font-black text-slate-600">{totalLevel1}</span>
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-sm flex items-center gap-2">
-            <span className="font-bold text-slate-700">Level 2</span>
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 font-black text-slate-600">{totalLevel2}</span>
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-sm flex items-center gap-2">
-            <span className="font-bold text-slate-700">Level 3</span>
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 font-black text-slate-600">{totalLevel3}</span>
-          </div>
+          
+          {/* Specific Combinations */}
+          {[
+            { key: 'history_level_1', label: 'Hist Lvl 1' },
+            { key: 'history_level_2', label: 'Hist Lvl 2' },
+            { key: 'history_level_3', label: 'Hist Lvl 3' },
+            { key: 'geography_level_1', label: 'Geo Lvl 1' },
+            { key: 'geography_level_2', label: 'Geo Lvl 2' },
+            { key: 'geography_level_3', label: 'Geo Lvl 3' },
+            { key: 'combined_level_1', label: 'Comb Lvl 1' },
+            { key: 'combined_level_2', label: 'Comb Lvl 2' },
+            { key: 'combined_level_3', label: 'Comb Lvl 3' },
+          ].map(({ key, label }) => {
+            const total = stats.reduce((acc, curr) => acc + (curr[key as keyof DailyGameStat] as number || 0), 0)
+            if (total === 0) return null;
+            return (
+              <div key={key} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-sm flex items-center gap-2">
+                <span className="font-bold text-slate-700">{label}</span>
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 font-black text-slate-600">{total}</span>
+              </div>
+            )
+          })}
         </div>
 
         {/* Charts */}
@@ -242,9 +267,15 @@ export default function GameAnalyticsDashboard({}: Props) {
                   <th scope="col" className="px-5 py-3 text-right">History</th>
                   <th scope="col" className="px-5 py-3 text-right">Geography</th>
                   <th scope="col" className="px-5 py-3 text-right">Combined</th>
-                  <th scope="col" className="px-5 py-3 text-right">Level 1</th>
-                  <th scope="col" className="px-5 py-3 text-right">Level 2</th>
-                  <th scope="col" className="px-5 py-3 text-right">Level 3</th>
+                  <th scope="col" className="px-5 py-3 text-right border-l border-gray-200 bg-gray-50/50">Hist L1</th>
+                  <th scope="col" className="px-5 py-3 text-right bg-gray-50/50">Hist L2</th>
+                  <th scope="col" className="px-5 py-3 text-right bg-gray-50/50">Hist L3</th>
+                  <th scope="col" className="px-5 py-3 text-right border-l border-gray-200">Geo L1</th>
+                  <th scope="col" className="px-5 py-3 text-right">Geo L2</th>
+                  <th scope="col" className="px-5 py-3 text-right">Geo L3</th>
+                  <th scope="col" className="px-5 py-3 text-right border-l border-gray-200 bg-gray-50/50">Comb L1</th>
+                  <th scope="col" className="px-5 py-3 text-right bg-gray-50/50">Comb L2</th>
+                  <th scope="col" className="px-5 py-3 text-right bg-gray-50/50">Comb L3</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -257,14 +288,20 @@ export default function GameAnalyticsDashboard({}: Props) {
                     <td className="px-5 py-3 text-right text-gray-600">{row.subject_history}</td>
                     <td className="px-5 py-3 text-right text-gray-600">{row.subject_geography}</td>
                     <td className="px-5 py-3 text-right text-gray-600">{row.subject_combined}</td>
-                    <td className="px-5 py-3 text-right text-gray-600 bg-gray-50/50">{row.level_1}</td>
-                    <td className="px-5 py-3 text-right text-gray-600 bg-gray-50/50">{row.level_2}</td>
-                    <td className="px-5 py-3 text-right text-gray-600 bg-gray-50/50">{row.level_3}</td>
+                    <td className="px-5 py-3 text-right text-gray-600 border-l border-gray-200 bg-gray-50/50">{row.history_level_1}</td>
+                    <td className="px-5 py-3 text-right text-gray-600 bg-gray-50/50">{row.history_level_2}</td>
+                    <td className="px-5 py-3 text-right text-gray-600 bg-gray-50/50">{row.history_level_3}</td>
+                    <td className="px-5 py-3 text-right text-gray-600 border-l border-gray-200">{row.geography_level_1}</td>
+                    <td className="px-5 py-3 text-right text-gray-600">{row.geography_level_2}</td>
+                    <td className="px-5 py-3 text-right text-gray-600">{row.geography_level_3}</td>
+                    <td className="px-5 py-3 text-right text-gray-600 border-l border-gray-200 bg-gray-50/50">{row.combined_level_1}</td>
+                    <td className="px-5 py-3 text-right text-gray-600 bg-gray-50/50">{row.combined_level_2}</td>
+                    <td className="px-5 py-3 text-right text-gray-600 bg-gray-50/50">{row.combined_level_3}</td>
                   </tr>
                 ))}
                 {filteredStats.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="px-5 py-12 text-center text-sm text-gray-500">
+                    <td colSpan={14} className="px-5 py-12 text-center text-sm text-gray-500">
                       No game data matches your search.
                     </td>
                   </tr>
