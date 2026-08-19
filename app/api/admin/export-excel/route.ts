@@ -1,10 +1,11 @@
 import { pool } from "@/lib/db"
 import { NextResponse } from "next/server"
 import { verifyAdminToken } from "@/lib/admin-auth"
+import ExcelJS from "exceljs"
 
 /**
- * GET /api/admin/export-csv?type=exam|practice|all
- * Exports student data as CSV.
+ * GET /api/admin/export-excel?type=exam|practice|all
+ * Exports student data as a multi-sheet Excel file.
  * Requires admin authentication.
  */
 export async function GET(request: Request) {
@@ -17,11 +18,14 @@ export async function GET(request: Request) {
   try {
     const now = new Date()
     const timestamp = now.toISOString().replace(/[-:]/g, "").replace("T", "_").slice(0, 15)
-    let csvContent = ""
-    let filename = ""
+    
+    const workbook = new ExcelJS.Workbook()
+    workbook.creator = 'Admin System'
+    workbook.created = now
+
+    let hasData = false
 
     if (type === "exam" || type === "all") {
-      // Exam/Game leaderboard data
       const examResult = await pool.query(`
         SELECT 
           lb.player_name AS "Student Name",
@@ -39,22 +43,24 @@ export async function GET(request: Request) {
         ORDER BY lb.created_at DESC
       `)
 
-      if (type === "all") {
-        csvContent += "=== EXAM / GAME RESULTS ===\n"
-      }
+      const sheet = workbook.addWorksheet('Game Results')
       if (examResult.rows.length > 0) {
-        const headers = Object.keys(examResult.rows[0])
-        csvContent += headers.join(",") + "\n"
-        for (const row of examResult.rows) {
-          csvContent += headers.map(h => escapeCsvField(row[h])).join(",") + "\n"
-        }
+        hasData = true
+        // Set columns based on keys
+        const keys = Object.keys(examResult.rows[0])
+        sheet.columns = keys.map(k => ({ header: k, key: k, width: 20 }))
+        
+        // Add rows
+        sheet.addRows(examResult.rows)
+
+        // Make header bold
+        sheet.getRow(1).font = { bold: true }
       } else {
-        csvContent += "No exam data found.\n"
+        sheet.addRow(['No game data found.'])
       }
     }
 
     if (type === "practice" || type === "all") {
-      // Practice session summary per student per unit
       const practiceResult = await pool.query(`
         SELECT 
           u.name AS "Student Name",
@@ -78,43 +84,39 @@ export async function GET(request: Request) {
         ORDER BY u.name, pu.unit_no
       `)
 
-      if (type === "all") {
-        csvContent += "\n\n=== PRACTICE SESSION RESULTS ===\n"
-      }
+      const sheet = workbook.addWorksheet('Practice Results')
       if (practiceResult.rows.length > 0) {
-        const headers = Object.keys(practiceResult.rows[0])
-        csvContent += headers.join(",") + "\n"
-        for (const row of practiceResult.rows) {
-          csvContent += headers.map(h => escapeCsvField(row[h])).join(",") + "\n"
-        }
+        hasData = true
+        // Set columns based on keys
+        const keys = Object.keys(practiceResult.rows[0])
+        sheet.columns = keys.map(k => ({ header: k, key: k, width: 20 }))
+        
+        // Add rows
+        sheet.addRows(practiceResult.rows)
+
+        // Make header bold
+        sheet.getRow(1).font = { bold: true }
       } else {
-        csvContent += "No practice data found.\n"
+        sheet.addRow(['No practice data found.'])
       }
     }
 
-    if (type === "exam") filename = `exam_results_${timestamp}.csv`
-    else if (type === "practice") filename = `practice_results_${timestamp}.csv`
-    else filename = `all_student_data_${timestamp}.csv`
+    // Write to buffer
+    const buffer = await workbook.xlsx.writeBuffer()
+    
+    let filename = `all_student_data_${timestamp}.xlsx`
+    if (type === "exam") filename = `exam_results_${timestamp}.xlsx`
+    else if (type === "practice") filename = `practice_results_${timestamp}.xlsx`
 
-    return new NextResponse(csvContent, {
+    return new NextResponse(buffer, {
       status: 200,
       headers: {
-        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "Content-Disposition": `attachment; filename="${filename}"`,
       },
     })
   } catch (error) {
-    console.error("[admin/export-csv] Error:", error)
-    return NextResponse.json({ error: "Failed to export CSV" }, { status: 500 })
+    console.error("[admin/export-excel] Error:", error)
+    return NextResponse.json({ error: "Failed to export Excel" }, { status: 500 })
   }
-}
-
-function escapeCsvField(value: any): string {
-  if (value === null || value === undefined) return ""
-  const str = String(value)
-  // Wrap in quotes if it contains comma, quote, or newline
-  if (str.includes(",") || str.includes('"') || str.includes("\n")) {
-    return `"${str.replace(/"/g, '""')}"`
-  }
-  return str
 }

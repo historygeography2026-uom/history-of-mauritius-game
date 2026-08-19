@@ -74,7 +74,7 @@ export default function AdminPage() {
   const [activeAdminTab, setActiveAdminTab] = useState<string>("game")
   const [showPracticeImport, setShowPracticeImport] = useState(false)
   const [exportingSql, setExportingSql] = useState(false)
-  const [exportingCsv, setExportingCsv] = useState(false)
+  const [exportingExcel, setExportingExcel] = useState(false)
 
   const subjects = ["history", "geography"]
   const levels = [1, 2, 3]
@@ -1197,27 +1197,27 @@ ${errorMessages}
             </Button>
             <Button
               onClick={async () => {
-                setExportingCsv(true)
+                setExportingExcel(true)
                 try {
-                  const res = await fetch("/api/admin/export-csv?type=all")
+                  const res = await fetch("/api/admin/export-excel?type=all")
                   if (!res.ok) throw new Error("Export failed")
                   const blob = await res.blob()
                   const disposition = res.headers.get("Content-Disposition") || ""
                   const match = disposition.match(/filename="(.+?)"/) 
-                  const fname = match ? match[1] : `student_data_${Date.now()}.csv`
+                  const fname = match ? match[1] : `student_data_${Date.now()}.xlsx`
                   const url = URL.createObjectURL(blob)
                   const a = document.createElement("a")
                   a.href = url; a.download = fname; a.click()
                   URL.revokeObjectURL(url)
-                } catch { alert("CSV export failed") }
-                setExportingCsv(false)
+                } catch { alert("Excel export failed") }
+                setExportingExcel(false)
               }}
-              disabled={exportingCsv}
+              disabled={exportingExcel}
               className="kid-btn gap-2 bg-gradient-to-r from-emerald-600 to-green-600 hover:shadow-lg hover:shadow-emerald-400/40 text-white font-bold px-4 py-2"
-              title="Export All Student Data (CSV)"
+              title="Export All Student Data (Excel)"
             >
               <FileSpreadsheet className="h-4 w-4" />
-              {exportingCsv ? "Exporting..." : "📊 CSV Export"}
+              {exportingExcel ? "Exporting..." : "📊 Excel Export"}
             </Button>
             <Link href="/admin/reset-password">
               <Button className="kid-btn gap-2 bg-gradient-to-r from-primary via-purple-500 to-secondary hover:shadow-lg hover:shadow-primary/40 text-white font-bold px-5 py-2">
