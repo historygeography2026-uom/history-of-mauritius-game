@@ -2,6 +2,8 @@
 "use client"
 
 import { useState } from "react"
+import { motion } from "framer-motion"
+import { DodoMascot } from "./dodo-mascot"
 import { Volume2 } from "lucide-react"
 import { useGameSounds, isGameMuted } from "@/hooks/use-game-sounds"
 
@@ -98,7 +100,12 @@ export default function FillBlankQuestionScreen({
              <div className="flex items-center gap-1 sm:gap-1.5 h-2.5 sm:h-3">
                {Array.from({ length: totalQuestions }).map((_, i) => (
                   <div key={i} className="h-full flex-1 overflow-hidden rounded-full bg-slate-200 shadow-inner">
-                    <div className={`h-full rounded-full transition-all duration-500 ease-out ${i < questionNumber ? 'bg-gradient-to-r from-emerald-400 to-green-500' : 'bg-transparent'}`} />
+                    <motion.div
+                      className="h-full rounded-full bg-emerald-500"
+                      initial={false}
+                      animate={{ width: i < (questionNumber - 1) ? '100%' : i === (questionNumber - 1) ? (checked ? '100%' : '50%') : '0%' }}
+                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                    />
                   </div>
                ))}
              </div>
@@ -114,11 +121,7 @@ export default function FillBlankQuestionScreen({
           className="rounded-3xl border-2 border-pink-100 bg-white/95 p-6 shadow-xl backdrop-blur-sm sm:p-8"
         >
           <div className="mb-6 flex items-start gap-3">
-            <img 
-              src="/images/dodo-mascot.jpeg" 
-              alt="Dodo mascot" 
-              className="h-10 w-10 sm:h-12 sm:w-12 object-cover rounded-full shadow-md border-2 border-white ring-2 ring-emerald-200" 
-            />
+            <DodoMascot mood={!checked ? 'thinking' : (isCorrect ? 'happy' : 'sad')} size={64} />
             <div className="flex-1">
               <div className="flex items-start justify-between gap-2">
                 <h1 id="fb-prompt" className="text-xl font-black leading-snug text-slate-800 sm:text-2xl">
