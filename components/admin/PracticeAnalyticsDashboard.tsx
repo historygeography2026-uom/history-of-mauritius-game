@@ -17,7 +17,7 @@ export default function PracticeAnalyticsDashboard({}: Props) {
   const [stats, setStats] = useState<LearnerUnitStat[]>([])
   const [timelineStats, setTimelineStats] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly'>('weekly')
+  const [timeRange, setTimeRange] = useState<'7d' | '30d' | 'all'>('7d')
   const [currentPage, setCurrentPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState("")
   const pageSize = 10
@@ -26,8 +26,8 @@ export default function PracticeAnalyticsDashboard({}: Props) {
     try {
       setLoading(true)
       const [unitsRes, timelineRes] = await Promise.all([
-        fetch("/api/admin/practice/stats?view=learner-units"),
-        fetch(`/api/admin/practice/stats?view=timeline&period=${period}`)
+        fetch(`/api/admin/practice/stats?view=learner-units&range=${timeRange}`),
+        fetch(`/api/admin/practice/stats?view=timeline&range=${timeRange}`)
       ])
       
       if (unitsRes.ok) {
@@ -44,12 +44,12 @@ export default function PracticeAnalyticsDashboard({}: Props) {
     } finally {
       setLoading(false)
     }
-  }, [period])
+  }, [timeRange])
 
   useEffect(() => { 
     setCurrentPage(1)
     fetchStats() 
-  }, [fetchStats, period])
+  }, [fetchStats, timeRange])
 
   if (loading) {
     return (
@@ -133,13 +133,13 @@ export default function PracticeAnalyticsDashboard({}: Props) {
           </div>
           <div className="flex items-center gap-4">
             <select 
-              value={period} 
-              onChange={(e) => setPeriod(e.target.value as any)}
+              value={timeRange} 
+              onChange={(e) => setTimeRange(e.target.value as any)}
               className="rounded-md border-gray-300 py-1.5 pl-3 pr-8 text-sm focus:border-emerald-500 focus:ring-emerald-500"
             >
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
+              <option value="7d">Last 7 Days</option>
+              <option value="30d">Last 30 Days</option>
+              <option value="all">All Time</option>
             </select>
             <button onClick={fetchStats} className="text-sm font-medium text-emerald-600 hover:text-emerald-800">
               Refresh Data

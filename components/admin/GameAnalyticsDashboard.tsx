@@ -30,7 +30,7 @@ interface Props {}
 export default function GameAnalyticsDashboard({}: Props) {
   const [stats, setStats] = useState<DailyGameStat[]>([])
   const [loading, setLoading] = useState(true)
-  const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly'>('weekly')
+  const [timeRange, setTimeRange] = useState<'7d' | '30d' | 'all'>('7d')
   const [currentPage, setCurrentPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState("")
   const pageSize = 10
@@ -38,7 +38,7 @@ export default function GameAnalyticsDashboard({}: Props) {
   const fetchStats = useCallback(async () => {
     try {
       setLoading(true)
-      const res = await fetch(`/api/admin/stats/game?view=timeline&period=${period}`)
+      const res = await fetch(`/api/admin/stats/game?view=timeline&range=${timeRange}`)
       if (res.ok) {
         const data = await res.json()
         setStats(Array.isArray(data) ? data : [])
@@ -48,12 +48,12 @@ export default function GameAnalyticsDashboard({}: Props) {
     } finally {
       setLoading(false)
     }
-  }, [period])
+  }, [timeRange])
 
   useEffect(() => { 
     setCurrentPage(1)
     fetchStats() 
-  }, [fetchStats, period])
+  }, [fetchStats, timeRange])
 
   if (loading) {
     return (
@@ -110,7 +110,7 @@ export default function GameAnalyticsDashboard({}: Props) {
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = `game-analytics-${period}.csv`
+    a.download = `game-analytics-${timeRange}.csv`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -125,13 +125,13 @@ export default function GameAnalyticsDashboard({}: Props) {
           </div>
           <div className="flex items-center gap-4">
             <select 
-              value={period} 
-              onChange={(e) => setPeriod(e.target.value as any)}
+              value={timeRange} 
+              onChange={(e) => setTimeRange(e.target.value as any)}
               className="rounded-md border-gray-300 py-1.5 pl-3 pr-8 text-sm focus:border-blue-500 focus:ring-blue-500"
             >
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
+              <option value="7d">Last 7 Days</option>
+              <option value="30d">Last 30 Days</option>
+              <option value="all">All Time</option>
             </select>
             <button onClick={fetchStats} className="text-sm font-medium text-blue-600 hover:text-blue-800">
               Refresh Data

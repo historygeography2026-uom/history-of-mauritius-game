@@ -31,9 +31,9 @@ export async function GET(request: NextRequest) {
       case "units":
         return await getUnitStats()
       case "learner-units":
-        return await getLearnerUnitStats()
+        return await getLearnerUnitStats(searchParams.get("range"))
       case "timeline":
-        return await getPracticeTimeline(searchParams.get("period"))
+        return await getPracticeTimeline(searchParams.get("range"))
       case "hard-questions":
         return await getHardQuestions(searchParams.get("unit"))
       case "learner-detail":
@@ -224,7 +224,15 @@ async function getLearnerDetail(studentIdParam: string | null) {
   })
 }
 
-async function getLearnerUnitStats() {
+async function getLearnerUnitStats(range: string | null) {
+  const p = range || 'all'
+  let dateFilter = ''
+  if (p === '7d') {
+    dateFilter = `WHERE pa.attempted_at > NOW() - INTERVAL '7 days'`
+  } else if (p === '30d') {
+    dateFilter = `WHERE pa.attempted_at > NOW() - INTERVAL '30 days'`
+  }
+
   const result = await pool.query(`
     SELECT
       u.name as learner_name,
@@ -233,6 +241,7 @@ async function getLearnerUnitStats() {
     FROM users u
     JOIN practice_attempts pa ON u.id = pa.student_id
     JOIN practice_units pu ON pa.unit_id = pu.id
+    ${dateFilter}
     GROUP BY u.name, pu.unit_name
     ORDER BY u.name, pu.unit_name
   `)
@@ -240,13 +249,18 @@ async function getLearnerUnitStats() {
   return NextResponse.json(result.rows)
 }
 
-async function getPracticeTimeline(period: string | null) {
-  const p = period || 'weekly'
+async function getPracticeTimeline(range: string | null) {
+  const p = range || 'all'
+  
   let dateExpression = `TO_CHAR(pa.attempted_at, 'YYYY-MM-DD')`
-  if (p === 'weekly') {
-    dateExpression = `TO_CHAR(DATE_TRUNC('week', pa.attempted_at), 'YYYY-MM-DD')`
-  } else if (p === 'monthly') {
-    dateExpression = `TO_CHAR(DATE_TRUNC('month', pa.attempted_at), 'YYYY-MM-DD')`
+  let dateFilter = ''
+  
+  if (p === '7d') {
+    dateFilter = `AND pa.attempted_at > NOW() - INTERVAL '7 days'`
+  } else if (p === '30d') {
+    dateFilter = `AND pa.attempted_at > NOW() - INTERVAL '30 days'`
+  } else if (p === 'all') {
+    dateExpression = `TO_CHAR(DATE_TRUNC('month', pa.attempted_at), 'YYYY-MM')`
   }
 
   const sql = `
@@ -254,7 +268,7 @@ async function getPracticeTimeline(period: string | null) {
       ${dateExpression} as day,
       COUNT(pa.id) as attempts
     FROM practice_attempts pa
-    WHERE pa.attempted_at IS NOT NULL
+    WHERE pa.attempted_at IS NOT NULL ${dateFilter}
     GROUP BY ${dateExpression}
     ORDER BY day DESC
   `

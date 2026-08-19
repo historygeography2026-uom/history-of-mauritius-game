@@ -4,17 +4,19 @@ import { query } from '@/lib/db'
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
-    const month = searchParams.get('month') // e.g., '2026-08'
+    const range = searchParams.get('range') || 'all' // '7d', '30d', 'all'
     const view = searchParams.get('view') || 'daily' // 'daily', 'subject', 'level'
-    const period = searchParams.get('period') || 'weekly' // 'daily', 'weekly', 'monthly'
 
-    // We get attempts from the leaderboard table as it records all finished games.
     if (view === 'daily' || view === 'timeline') {
       let dateExpression = `TO_CHAR(l.game_date, 'YYYY-MM-DD')`
-      if (period === 'weekly') {
-        dateExpression = `TO_CHAR(DATE_TRUNC('week', l.game_date), 'YYYY-MM-DD')`
-      } else if (period === 'monthly') {
-        dateExpression = `TO_CHAR(DATE_TRUNC('month', l.game_date), 'YYYY-MM-DD')`
+      let dateFilter = ``
+      
+      if (range === '7d') {
+        dateFilter = `AND l.game_date > NOW() - INTERVAL '7 days'`
+      } else if (range === '30d') {
+        dateFilter = `AND l.game_date > NOW() - INTERVAL '30 days'`
+      } else if (range === 'all') {
+        dateExpression = `TO_CHAR(DATE_TRUNC('month', l.game_date), 'YYYY-MM')`
       }
 
       const sql = `
@@ -26,7 +28,7 @@ export async function GET(request: Request) {
         FROM leaderboard l
         LEFT JOIN subjects s ON l.subject_id = s.id
         LEFT JOIN levels lev ON l.level_id = lev.id
-        WHERE l.game_date IS NOT NULL
+        WHERE l.game_date IS NOT NULL ${dateFilter}
         GROUP BY ${dateExpression}, s.name, lev.level_number
         ORDER BY day DESC
       `
