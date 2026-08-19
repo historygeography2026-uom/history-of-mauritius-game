@@ -18,6 +18,17 @@ export default function PracticeAnalyticsDashboard({}: Props) {
   const [timelineStats, setTimelineStats] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | 'all'>('7d')
+
+  const [hiddenSeries, setHiddenSeries] = useState<Record<string, boolean>>({})
+
+  const handleLegendClick = (e: any) => {
+    if (!e || !e.dataKey) return
+    setHiddenSeries(prev => ({
+      ...prev,
+      [e.dataKey]: !prev[e.dataKey]
+    }))
+  }
+
   const [currentPage, setCurrentPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState("")
   const pageSize = 10
@@ -178,8 +189,8 @@ export default function PracticeAnalyticsDashboard({}: Props) {
                   <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} dy={10} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} />
                   <RechartsTooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                  <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '12px' }} />
-                  <Line type="monotone" dataKey="Attempts" name="Practice Attempts" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                  <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '12px', cursor: 'pointer' }} onClick={handleLegendClick} />
+                  <Line type="monotone" dataKey="Attempts" name="Practice Attempts" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} hide={hiddenSeries['Attempts']} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
@@ -203,7 +214,8 @@ export default function PracticeAnalyticsDashboard({}: Props) {
                     <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} />
                     <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#374151', fontWeight: 500 }} width={80} />
                     <RechartsTooltip cursor={{ fill: '#f3f4f6' }} contentStyle={{ borderRadius: '8px' }} />
-                    <Bar dataKey="Attempts" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={20} />
+                    <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '12px', cursor: 'pointer' }} onClick={handleLegendClick} />
+                    <Bar dataKey="Attempts" name="Attempts" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={20} hide={hiddenSeries['Attempts']} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
@@ -225,7 +237,8 @@ export default function PracticeAnalyticsDashboard({}: Props) {
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6b7280' }} dy={10} interval={0} angle={-30} textAnchor="end" height={60} />
                     <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} />
                     <RechartsTooltip cursor={{ fill: '#f3f4f6' }} contentStyle={{ borderRadius: '8px' }} />
-                    <Bar dataKey="Attempts" fill="#10b981" radius={[4, 4, 0, 0]} barSize={40} />
+                    <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '12px', cursor: 'pointer' }} onClick={handleLegendClick} />
+                    <Bar dataKey="Attempts" name="Attempts" fill="#10b981" radius={[4, 4, 0, 0]} barSize={40} hide={hiddenSeries['Attempts']} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
