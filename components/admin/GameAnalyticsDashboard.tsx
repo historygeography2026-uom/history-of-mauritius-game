@@ -22,6 +22,8 @@ export default function GameAnalyticsDashboard({}: Props) {
   const [stats, setStats] = useState<DailyGameStat[]>([])
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly'>('weekly')
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 10
 
   const fetchStats = useCallback(async () => {
     try {
@@ -38,7 +40,10 @@ export default function GameAnalyticsDashboard({}: Props) {
     }
   }, [period])
 
-  useEffect(() => { fetchStats() }, [fetchStats, period])
+  useEffect(() => { 
+    setCurrentPage(1)
+    fetchStats() 
+  }, [fetchStats, period])
 
   if (loading) {
     return (
@@ -181,7 +186,7 @@ export default function GameAnalyticsDashboard({}: Props) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {stats.map((row) => (
+                {stats.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((row) => (
                   <tr key={row.day} className="hover:bg-gray-50 transition-colors">
                     <td className="px-5 py-3 font-medium text-gray-900 whitespace-nowrap">
                       {new Date(row.day).toLocaleDateString("en-GB", { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
@@ -205,6 +210,29 @@ export default function GameAnalyticsDashboard({}: Props) {
               </tbody>
             </table>
           </div>
+          {Math.ceil(stats.length / pageSize) > 1 && (
+            <div className="border-t border-gray-200 px-5 py-3 flex items-center justify-between bg-gray-50">
+              <span className="text-sm text-gray-500">
+                Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to <span className="font-medium">{Math.min(currentPage * pageSize, stats.length)}</span> of <span className="font-medium">{stats.length}</span> results
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 hover:bg-gray-100 transition-colors font-medium text-gray-700 bg-white"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(Math.ceil(stats.length / pageSize), p + 1))}
+                  disabled={currentPage === Math.ceil(stats.length / pageSize)}
+                  className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 hover:bg-gray-100 transition-colors font-medium text-gray-700 bg-white"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </section>
       </div>
     </div>

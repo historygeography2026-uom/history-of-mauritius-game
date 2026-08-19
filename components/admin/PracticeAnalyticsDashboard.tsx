@@ -18,6 +18,8 @@ export default function PracticeAnalyticsDashboard({}: Props) {
   const [timelineStats, setTimelineStats] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly'>('weekly')
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 10
 
   const fetchStats = useCallback(async () => {
     try {
@@ -43,7 +45,10 @@ export default function PracticeAnalyticsDashboard({}: Props) {
     }
   }, [period])
 
-  useEffect(() => { fetchStats() }, [fetchStats, period])
+  useEffect(() => { 
+    setCurrentPage(1)
+    fetchStats() 
+  }, [fetchStats, period])
 
   if (loading) {
     return (
@@ -233,7 +238,7 @@ export default function PracticeAnalyticsDashboard({}: Props) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {pivotTable.map((row) => (
+                {pivotTable.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((row) => (
                   <tr key={row.learner} className="hover:bg-gray-50 transition-colors">
                     <td className="px-5 py-3 font-medium text-gray-900 border-r border-gray-100 bg-white sticky left-0 z-10 shadow-[1px_0_0_0_#f3f4f6]">
                       {row.learner}
@@ -258,6 +263,29 @@ export default function PracticeAnalyticsDashboard({}: Props) {
               </tbody>
             </table>
           </div>
+          {Math.ceil(pivotTable.length / pageSize) > 1 && (
+            <div className="border-t border-gray-200 px-5 py-3 flex items-center justify-between bg-gray-50">
+              <span className="text-sm text-gray-500">
+                Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to <span className="font-medium">{Math.min(currentPage * pageSize, pivotTable.length)}</span> of <span className="font-medium">{pivotTable.length}</span> results
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 hover:bg-gray-100 transition-colors font-medium text-gray-700 bg-white"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(Math.ceil(pivotTable.length / pageSize), p + 1))}
+                  disabled={currentPage === Math.ceil(pivotTable.length / pageSize)}
+                  className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 hover:bg-gray-100 transition-colors font-medium text-gray-700 bg-white"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </section>
       </div>
     </div>

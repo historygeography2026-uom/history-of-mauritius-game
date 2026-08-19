@@ -1239,7 +1239,8 @@ ${errorMessages}
           tabs={[
             { id: "game", label: "Game Questions", icon: "📝" },
             { id: "practice", label: "Practice Questions", icon: "📚" },
-            { id: "stats", label: "Learner Stats", icon: "📊" },
+            { id: "stats_game", label: "Game Stats", icon: "🎮" },
+            { id: "stats_practice", label: "Practice Stats", icon: "📊" },
           ]}
           activeTab={activeAdminTab}
           onTabChange={setActiveAdminTab}
@@ -1262,10 +1263,13 @@ ${errorMessages}
             />
           </>
         )}
-        {activeAdminTab === "stats" && (
+        {activeAdminTab === "stats_game" && (
           <div className="space-y-8">
             <GameAnalyticsDashboard />
-            <div className="border-t border-gray-200"></div>
+          </div>
+        )}
+        {activeAdminTab === "stats_practice" && (
+          <div className="space-y-8">
             <PracticeAnalyticsDashboard />
           </div>
         )}
