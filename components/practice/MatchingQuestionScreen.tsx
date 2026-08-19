@@ -63,7 +63,7 @@ export default function MatchingQuestionScreen({
   const [submitting, setSubmitting] = useState(false)
   const { playCorrect, playWrong, playClick } = useGameSounds()
 
-  const { left_items, right_items } = question
+  const left_items = question.left_items || []; const right_items = question.right_items || [];
   const allMatched = Object.keys(matches).length === left_items.length
 
   const pairIndexForLeft = (left: string) => Object.keys(matches).indexOf(left)

@@ -169,7 +169,8 @@ function PracticePlayContent() {
 
   // ── Active session ───────────────────────────────────────
   if (!sessionData) return null
-  const currentQuestion = sessionData.questions[currentIndex]
+  const currentQuestion = sessionData.questions?.[currentIndex]
+  if (!currentQuestion) return null
 
   // Exit confirmation overlay
   const exitOverlay = showExitConfirm && (

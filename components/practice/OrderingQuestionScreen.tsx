@@ -54,7 +54,7 @@ export default function OrderingQuestionScreen({
   onNext,
 }: OrderingQuestionScreenProps) {
   const [items, setItems] = useState(
-    question.items.map((label, i) => ({ id: `i${i}`, label }))
+    (question.items || []).map((label, i) => ({ id: `i${i}`, label }))
   )
   const [checked, setChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)

@@ -2,7 +2,8 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Pencil, Plus, Search, Trash2, Upload, Eye, X, Check, Image as ImageIcon } from "lucide-react"
+import { Pencil, Plus, Search, Trash2, Upload, Eye, X, Check, Image as ImageIcon } from 'lucide-react'
+import PracticeQuestionEditModal from './PracticeQuestionEditModal'
 
 interface PracticeUnit {
   id: number
@@ -94,8 +95,8 @@ export default function PracticeQuestionManagement({ onImport, onAdd }: Props) {
     }
   }
 
-  const handleSaveEdit = async () => {
-    if (!editingQuestion) return
+  const handleSaveEdit = async (updatedQuestion: Partial<PracticeQuestion>) => {
+      if (!updatedQuestion) return
     setSavingEdit(true)
     setEditError("")
 
@@ -103,7 +104,7 @@ export default function PracticeQuestionManagement({ onImport, onAdd }: Props) {
       const res = await fetch("/api/admin/practice/questions", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editingQuestion),
+        body: JSON.stringify(updatedQuestion),
       })
 
       if (!res.ok) {
@@ -374,345 +375,14 @@ export default function PracticeQuestionManagement({ onImport, onAdd }: Props) {
       </div>
 
       {/* Edit Question Modal */}
-      {editingQuestion && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-              <h3 className="text-lg font-black text-slate-900">
-                Edit Practice Question #{editingQuestion.id}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setEditingQuestion(null)}
-                className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {editError && (
-              <div className="mb-4 rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs font-bold text-rose-700">
-                {editError}
-              </div>
-            )}
-
-            <div className="space-y-4 text-sm">
-              {/* Question Text */}
-              <div>
-                <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                  Question Text:
-                </label>
-                <textarea
-                  rows={3}
-                  value={editingQuestion.question_text}
-                  onChange={(e) =>
-                    setEditingQuestion({ ...editingQuestion, question_text: e.target.value })
-                  }
-                  className="w-full rounded-xl border border-slate-300 p-3 text-slate-900 font-medium focus:border-blue-500 focus:outline-none"
-                />
-              </div>
-
-              {/* Instruction */}
-              <div>
-                <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                  Instruction / Hint (optional):
-                </label>
-                <input
-                  type="text"
-                  value={editingQuestion.instruction || ""}
-                  onChange={(e) =>
-                    setEditingQuestion({ ...editingQuestion, instruction: e.target.value })
-                  }
-                  className="w-full rounded-xl border border-slate-300 p-2.5 text-slate-900 font-medium focus:border-blue-500 focus:outline-none"
-                />
-              </div>
-
-              {/* Unit and Type */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                    Unit:
-                  </label>
-                  <select
-                    value={editingQuestion.unit_id || ""}
-                    onChange={(e) =>
-                      setEditingQuestion({ ...editingQuestion, unit_id: Number(e.target.value) })
-                    }
-                    className="w-full rounded-xl border border-slate-300 p-2.5 text-slate-900 font-bold focus:border-blue-500 focus:outline-none"
-                  >
-                    {units.map((u) => (
-                      <option key={u.id} value={u.id}>
-                        {u.unit_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                    Type:
-                  </label>
-                  <select
-                    value={editingQuestion.question_type}
-                    onChange={(e) =>
-                      setEditingQuestion({ ...editingQuestion, question_type: e.target.value })
-                    }
-                    className="w-full rounded-xl border border-slate-300 p-2.5 text-slate-900 font-bold focus:border-blue-500 focus:outline-none"
-                  >
-                    <option value="mcq">MCQ</option>
-                    <option value="fill">Fill in the blank</option>
-                    <option value="reorder">Ordering</option>
-                    <option value="matching">Matching</option>
-                    <option value="truefalse">True/False</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Image URL */}
-              <div>
-                <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                  Image URL (optional):
-                </label>
-                <input
-                  type="text"
-                  value={editingQuestion.image_url || ""}
-                  onChange={(e) =>
-                    setEditingQuestion({ ...editingQuestion, image_url: e.target.value })
-                  }
-                  placeholder="/api/images/filename.jpg or /uploads/filename.jpg"
-                  className="w-full rounded-xl border border-slate-300 p-2.5 text-slate-900 font-medium focus:border-blue-500 focus:outline-none"
-                />
-                {editingQuestion.image_url && (
-                  <div className="mt-2 flex justify-center bg-slate-50 p-2 rounded-xl border border-slate-200">
-                    <img
-                      src={editingQuestion.image_url}
-                      alt="Preview"
-                      className="max-h-32 object-contain rounded-lg"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Answer Data Editor */}
-              <div className="pt-4 border-t border-slate-100">
-                <label className="block text-xs font-bold uppercase text-slate-700 mb-3">
-                  Answer Data:
-                </label>
-                
-                {editingQuestion.question_type === "mcq" && (
-                  <div className="space-y-3">
-                    {(editingQuestion.answer_data?.options || []).map((opt: any, idx: number) => (
-                      <div key={idx} className="flex items-center gap-2">
-                        <input 
-                          type="radio" 
-                          name="mcq_correct" 
-                          className="h-4 w-4 text-blue-600"
-                          checked={opt.is_correct} 
-                          onChange={() => {
-                            const newOptions = [...(editingQuestion.answer_data.options || [])];
-                            newOptions.forEach(o => o.is_correct = false);
-                            newOptions[idx].is_correct = true;
-                            setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, options: newOptions }});
-                          }}
-                        />
-                        <input
-                          type="text"
-                          value={opt.text}
-                          onChange={(e) => {
-                            const newOptions = [...(editingQuestion.answer_data.options || [])];
-                            newOptions[idx].text = e.target.value;
-                            setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, options: newOptions }});
-                          }}
-                          className="flex-1 rounded-xl border border-slate-300 p-2.5 text-slate-900 font-medium focus:border-blue-500 focus:outline-none"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newOptions = [...(editingQuestion.answer_data.options || [])];
-                            newOptions.splice(idx, 1);
-                            setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, options: newOptions }});
-                          }}
-                          className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newOptions = [...(editingQuestion.answer_data?.options || [])];
-                        newOptions.push({ text: "", is_correct: newOptions.length === 0 });
-                        setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, options: newOptions }});
-                      }}
-                      className="text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 mt-2"
-                    >
-                      <Plus className="h-4 w-4" /> Add Option
-                    </button>
-                  </div>
-                )}
-
-                {editingQuestion.question_type === "truefalse" && (
-                  <div className="flex items-center gap-6">
-                    <label className="flex items-center gap-2 font-bold text-slate-700 cursor-pointer">
-                      <input 
-                        type="radio" 
-                        className="h-4 w-4 text-blue-600"
-                        checked={editingQuestion.answer_data?.correct_answer === true}
-                        onChange={() => setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, correct_answer: true }})}
-                      />
-                      True
-                    </label>
-                    <label className="flex items-center gap-2 font-bold text-slate-700 cursor-pointer">
-                      <input 
-                        type="radio" 
-                        className="h-4 w-4 text-blue-600"
-                        checked={editingQuestion.answer_data?.correct_answer === false}
-                        onChange={() => setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, correct_answer: false }})}
-                      />
-                      False
-                    </label>
-                  </div>
-                )}
-
-                {editingQuestion.question_type === "fill" && (
-                  <div>
-                    <input
-                      type="text"
-                      value={editingQuestion.answer_data?.answers?.[0] || ""}
-                      onChange={(e) => setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, answers: [e.target.value] }})}
-                      className="w-full rounded-xl border border-slate-300 p-2.5 text-slate-900 font-medium focus:border-blue-500 focus:outline-none"
-                      placeholder="Correct answer..."
-                    />
-                  </div>
-                )}
-
-                {editingQuestion.question_type === "matching" && (
-                  <div className="space-y-3">
-                    {(editingQuestion.answer_data?.pairs || []).map((pair: any, idx: number) => (
-                      <div key={idx} className="flex items-center gap-3">
-                        <input
-                          type="text"
-                          value={pair.left}
-                          onChange={(e) => {
-                            const newPairs = [...(editingQuestion.answer_data.pairs || [])];
-                            newPairs[idx].left = e.target.value;
-                            setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, pairs: newPairs }});
-                          }}
-                          placeholder="Left side"
-                          className="flex-1 rounded-xl border border-slate-300 p-2.5 text-slate-900 font-medium focus:border-blue-500 focus:outline-none"
-                        />
-                        <span className="text-slate-400 font-bold">-</span>
-                        <input
-                          type="text"
-                          value={pair.right}
-                          onChange={(e) => {
-                            const newPairs = [...(editingQuestion.answer_data.pairs || [])];
-                            newPairs[idx].right = e.target.value;
-                            setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, pairs: newPairs }});
-                          }}
-                          placeholder="Right side"
-                          className="flex-1 rounded-xl border border-slate-300 p-2.5 text-slate-900 font-medium focus:border-blue-500 focus:outline-none"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newPairs = [...(editingQuestion.answer_data.pairs || [])];
-                            newPairs.splice(idx, 1);
-                            setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, pairs: newPairs }});
-                          }}
-                          className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newPairs = [...(editingQuestion.answer_data?.pairs || [])];
-                        newPairs.push({ left: "", right: "" });
-                        setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, pairs: newPairs }});
-                      }}
-                      className="text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 mt-2"
-                    >
-                      <Plus className="h-4 w-4" /> Add Pair
-                    </button>
-                  </div>
-                )}
-
-                {editingQuestion.question_type === "reorder" && (
-                  <div className="space-y-3">
-                    {(editingQuestion.answer_data?.items || [])
-                      .sort((a:any, b:any) => a.correct_position - b.correct_position)
-                      .map((item: any, idx: number) => (
-                      <div key={idx} className="flex items-center gap-3">
-                        <span className="w-8 text-center font-black text-slate-400">{item.correct_position}.</span>
-                        <input
-                          type="text"
-                          value={item.text}
-                          onChange={(e) => {
-                            const newItems = [...(editingQuestion.answer_data.items || [])];
-                            const itemIndex = newItems.findIndex(i => i.correct_position === item.correct_position);
-                            if(itemIndex > -1) newItems[itemIndex].text = e.target.value;
-                            setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, items: newItems }});
-                          }}
-                          className="flex-1 rounded-xl border border-slate-300 p-2.5 text-slate-900 font-medium focus:border-blue-500 focus:outline-none"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newItems = [...(editingQuestion.answer_data.items || [])];
-                            const itemIndex = newItems.findIndex(i => i.correct_position === item.correct_position);
-                            if(itemIndex > -1) {
-                                newItems.splice(itemIndex, 1);
-                                newItems.sort((a,b) => a.correct_position - b.correct_position).forEach((it, i) => it.correct_position = i + 1);
-                            }
-                            setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, items: newItems }});
-                          }}
-                          className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newItems = [...(editingQuestion.answer_data?.items || [])];
-                        newItems.push({ text: "", correct_position: newItems.length + 1 });
-                        setEditingQuestion({...editingQuestion, answer_data: { ...editingQuestion.answer_data, items: newItems }});
-                      }}
-                      className="text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 mt-2"
-                    >
-                      <Plus className="h-4 w-4" /> Add Step
-                    </button>
-                  </div>
-                )}
-              </div>
-
-            </div>
-
-            {/* Modal Actions */}
-            <div className="mt-6 flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setEditingQuestion(null)}
-                className="rounded-xl px-5 py-2.5 font-bold text-slate-600 hover:bg-slate-100"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={savingEdit}
-                onClick={handleSaveEdit}
-                className="rounded-xl bg-blue-600 px-6 py-2.5 font-extrabold text-white shadow-md hover:bg-blue-700 transition-all disabled:opacity-50"
-              >
-                {savingEdit ? "Saving..." : "Save Changes"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Edit Modal */}
+      <PracticeQuestionEditModal
+        open={!!editingQuestion}
+        onClose={() => setEditingQuestion(null)}
+        onSave={handleSaveEdit}
+        question={editingQuestion}
+        units={units}
+      />
     </div>
   )
 }

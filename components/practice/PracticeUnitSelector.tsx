@@ -294,15 +294,15 @@ export default function PracticeUnitSelector({
   const [filter, setFilter] = useState<"g5" | "g6">("g5")
 
   const readyCount = useMemo(
-    () => units.filter((u) => Number(u.question_count) > 0).length,
+    () => (units || []).filter((u) => Number(u.question_count) > 0).length,
     [units]
   )
 
 
 
   const visibleUnits = useMemo(() => {
-    if (filter === "g5") return units.filter((u) => u.unit_no <= 5)
-    if (filter === "g6") return units.filter((u) => u.unit_no >= 6 && u.unit_no <= 10)
+    if (filter === "g5") return (units || []).filter((u) => u.unit_no <= 5)
+    if (filter === "g6") return (units || []).filter((u) => u.unit_no >= 6 && u.unit_no <= 10)
     return units
   }, [units, filter])
 
@@ -328,7 +328,7 @@ export default function PracticeUnitSelector({
             className="flex items-center gap-2 rounded-full bg-amber-100/80 px-4 py-2 font-display text-sm font-bold text-[#333a56] border border-amber-200 shadow-sm"
           >
             <Sparkles className="h-4 w-4 text-[#e8845a]" aria-hidden="true" />
-            {readyCount} of {units.length} quests ready
+            {readyCount} of {(units || []).length} quests ready
           </motion.div>
         </div>
 

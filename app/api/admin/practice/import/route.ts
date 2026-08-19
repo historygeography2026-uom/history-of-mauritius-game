@@ -124,6 +124,19 @@ export async function POST(req: NextRequest) {
     let successCount = 0
     let errorCount = 0
     const errors: string[] = []
+    const unitStats: Record<string, { success: number; errors: string[] }> = {}
+
+    const addUnitError = (q: any, errMsg: string) => {
+      const uKey = q.unit ? "Unit " + q.unit : "Unknown Unit"
+      if (!unitStats[uKey]) unitStats[uKey] = { success: 0, errors: [] }
+      unitStats[uKey].errors.push(errMsg)
+    }
+
+    const addUnitSuccess = (q: any) => {
+      const uKey = q.unit ? "Unit " + q.unit : "Unknown Unit"
+      if (!unitStats[uKey]) unitStats[uKey] = { success: 0, errors: [] }
+      unitStats[uKey].success++
+    }
 
     const VALID_TYPES = ["mcq", "matching", "fill", "reorder", "truefalse"]
 
@@ -135,7 +148,9 @@ export async function POST(req: NextRequest) {
         // Resolve unit
         const unitNum = Number(q.unit)
         if (!Number.isInteger(unitNum) || unitNum < 1) {
-          errors.push(createErrorMessage(rowNum, questionPreview, "unit", `Unit "${q.unit}" is not a valid integer`, "Enter a positive integer (e.g. 1, 2, 3)."))
+          const errMsg = createErrorMessage(rowNum, questionPreview, "unit", `Unit "${q.unit}" is not a valid integer`, "Enter a positive integer (e.g. 1, 2, 3).")
+          errors.push(errMsg)
+          addUnitError(q, errMsg)
           errorCount++
           continue
         }
@@ -145,7 +160,9 @@ export async function POST(req: NextRequest) {
           [unitNum]
         )
         if (unitResult.rows.length === 0) {
-          errors.push(createErrorMessage(rowNum, questionPreview, "unit", `Unit ${unitNum} does not exist`, `Available units: 1 through 6. Create the unit first in the admin panel.`))
+          const errMsg = createErrorMessage(rowNum, questionPreview, "unit", `Unit ${unitNum} does not exist`, `Available units: 1 through 6. Create the unit first in the admin panel.`)
+          errors.push(errMsg)
+          addUnitError(q, errMsg)
           errorCount++
           continue
         }
@@ -154,14 +171,18 @@ export async function POST(req: NextRequest) {
         // Validate type
         const type = String(q.type || "").trim().toLowerCase()
         if (!VALID_TYPES.includes(type)) {
-          errors.push(createErrorMessage(rowNum, questionPreview, "type", `Type "${q.type}" is not recognized`, `Must be one of: ${VALID_TYPES.join(", ")}`))
+          const errMsg = createErrorMessage(rowNum, questionPreview, "type", `Type "${q.type}" is not recognized`, `Must be one of: ${VALID_TYPES.join(", ")}`)
+          errors.push(errMsg)
+          addUnitError(q, errMsg)
           errorCount++
           continue
         }
 
         // Validate question text
         if (!q.question || String(q.question).trim().length === 0) {
-          errors.push(createErrorMessage(rowNum, questionPreview, "question", "Question text is empty"))
+          const errMsg = createErrorMessage(rowNum, questionPreview, "question", "Question text is empty")
+          errors.push(errMsg)
+          addUnitError(q, errMsg)
           errorCount++
           continue
         }
@@ -169,7 +190,9 @@ export async function POST(req: NextRequest) {
         // Validate imageUrl if present
         const imageUrl = String(q.imageUrl || "").trim()
         if (imageUrl && !isAllowedImportedImageUrl(imageUrl)) {
-          errors.push(createErrorMessage(rowNum, questionPreview, "imageUrl", `External image URLs are not allowed: "${imageUrl}"`, "Upload the image first via the admin panel, then use the /api/images/... path."))
+          const errMsg = createErrorMessage(rowNum, questionPreview, "imageUrl", `External image URLs are not allowed: "${imageUrl}"`, "Upload the image first via the admin panel, then use the /api/images/... path.")
+          errors.push(errMsg)
+          addUnitError(q, errMsg)
           errorCount++
           continue
         }
@@ -193,11 +216,14 @@ export async function POST(req: NextRequest) {
         )
 
         successCount++
+        addUnitSuccess(q)
       } catch (err: any) {
         const rowNum = questions.indexOf(q) + 2
         const questionPreview = String(q.question || "").substring(0, 40) || "[Empty Question]"
         console.error(`[practice-import] Error on row ${rowNum}:`, err)
-        errors.push(createErrorMessage(rowNum, questionPreview, "database", `Database error: ${err?.message || "Unknown"}`))
+        const errMsg = createErrorMessage(rowNum, questionPreview, "database", `Database error: ${err?.message || "Unknown"}`)
+        errors.push(errMsg)
+        addUnitError(q, errMsg)
         errorCount++
       }
     }
@@ -207,6 +233,7 @@ export async function POST(req: NextRequest) {
       errorCount,
       totalProcessed: questions.length,
       errors,
+      unitStats,
       message: errorCount === 0 ? "All questions imported successfully!" : undefined,
     })
   } catch (error: any) {

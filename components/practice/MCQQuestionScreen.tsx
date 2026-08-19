@@ -80,7 +80,7 @@ export default function MCQQuestionScreen({
       const correct = Boolean(result.is_correct)
       setIsCorrect(correct)
 
-      const cIdx = question.options.findIndex(
+      const cIdx = (question.options || []).findIndex(
         (o) => o.toLowerCase().trim() === String(result.correct_answer).toLowerCase().trim()
       )
       setCorrectIndex(cIdx >= 0 ? cIdx : null)
@@ -148,7 +148,7 @@ export default function MCQQuestionScreen({
 
           {/* Answer Options Grid */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Answer options">
-            {question.options.map((option, i) => {
+            {(question.options || []).map((option, i) => {
               const isSelected = selected === i
               const isRightAnswer = checked && correctIndex !== null && i === correctIndex
               const isWrongSelection = checked && isSelected && !isCorrect

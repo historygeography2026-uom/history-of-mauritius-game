@@ -54,7 +54,7 @@ export default function FillBlankQuestionScreen({
 
   // Split question_text on blank marker: "___", "[blank]", or "(blank)"
   const blankRegex = /_{2,}|\[blank\]|\(blank\)/i
-  const parts = question.question_text.split(blankRegex)
+  const parts = (question.question_text || "").split(blankRegex)
   const before = parts[0] || ""
   const after = parts[1] || ""
 

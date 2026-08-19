@@ -110,7 +110,7 @@ export default function PracticeAnalyticsDashboard({}: Props) {
 
   const filteredPivotTable = pivotTable.filter(row => {
     if (!searchQuery) return true
-    return row.learner.toLowerCase().includes(searchQuery.toLowerCase())
+    return (row.learner || "").toLowerCase().includes(searchQuery.toLowerCase())
   })
 
   const handleExportCSV = () => {

@@ -89,7 +89,7 @@ export default function GameAnalyticsDashboard({}: Props) {
 
   const filteredStats = stats.filter(row => {
     if (!searchQuery) return true
-    const searchDate = new Date(row.day).toLocaleDateString("en-GB", { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+    const searchDate = row.day ? new Date(row.day).toLocaleDateString("en-GB", { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : ""
     return searchDate.toLowerCase().includes(searchQuery.toLowerCase())
   })
 
