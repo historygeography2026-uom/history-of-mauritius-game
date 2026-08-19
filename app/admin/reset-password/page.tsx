@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Plus, Trash2, RefreshCw, UserPlus, Search } from "lucide-react"
+import { ArrowLeft, Plus, Trash2, RefreshCw, UserPlus, Search, ArrowUp, ArrowDown, ChevronsUpDown } from "lucide-react"
 import Link from "next/link"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
@@ -66,6 +66,24 @@ export default function ResetPasswordPage() {
   const [newPassword, setNewPassword] = useState("")
   const [isCreating, setIsCreating] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+
+  type SortColumn = "name" | "email" | "providers" | "created_at" | "last_seen" | null
+  const [sortColumn, setSortColumn] = useState<SortColumn>("created_at")
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
+
+  const handleSort = (col: SortColumn) => {
+    if (sortColumn === col) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc")
+    } else {
+      setSortColumn(col)
+      setSortDirection("asc")
+    }
+  }
+
+  const renderSortIcon = (col: SortColumn) => {
+    if (sortColumn !== col) return <ChevronsUpDown className="ml-1 h-3 w-3 inline-block opacity-30" />
+    return sortDirection === "asc" ? <ArrowUp className="ml-1 h-3 w-3 inline-block" /> : <ArrowDown className="ml-1 h-3 w-3 inline-block" />
+  }
 
   const handleSessionError = () => {
     setError("Admin session expired. Please go back to the admin dashboard and log in again.")
@@ -392,13 +410,38 @@ export default function ResetPasswordPage() {
               ) : (
                 (() => {
                   const q = searchQuery.trim().toLowerCase()
-                  const filtered = q
+                  let filtered = q
                     ? users.filter(
                         (u) =>
                           u.email.toLowerCase().includes(q) ||
                           (u.name ?? "").toLowerCase().includes(q)
                       )
-                    : users
+                    : [...users]
+
+                  if (sortColumn) {
+                    filtered.sort((a, b) => {
+                      let valA: any = a[sortColumn]
+                      let valB: any = b[sortColumn]
+
+                      if (sortColumn === "providers") {
+                        valA = a.providers.join(",")
+                        valB = b.providers.join(",")
+                      } else if (sortColumn === "name") {
+                        valA = (a.name || "").toLowerCase()
+                        valB = (b.name || "").toLowerCase()
+                      } else if (sortColumn === "email") {
+                        valA = a.email.toLowerCase()
+                        valB = b.email.toLowerCase()
+                      } else if (sortColumn === "created_at" || sortColumn === "last_seen") {
+                        valA = valA ? new Date(valA).getTime() : 0
+                        valB = valB ? new Date(valB).getTime() : 0
+                      }
+
+                      if (valA < valB) return sortDirection === "asc" ? -1 : 1
+                      if (valA > valB) return sortDirection === "asc" ? 1 : -1
+                      return 0
+                    })
+                  }
 
                   if (filtered.length === 0) {
                     return (
@@ -474,11 +517,21 @@ export default function ResetPasswordPage() {
                         <Table>
                           <TableHeader>
                             <TableRow className="bg-slate-50">
-                              <TableHead>Name</TableHead>
-                              <TableHead>Email</TableHead>
-                              <TableHead>Sign-in Method</TableHead>
-                              <TableHead>Created At</TableHead>
-                              <TableHead>Last Seen</TableHead>
+                              <TableHead className="cursor-pointer hover:bg-slate-100 select-none" onClick={() => handleSort("name")}>
+                                Name {renderSortIcon("name")}
+                              </TableHead>
+                              <TableHead className="cursor-pointer hover:bg-slate-100 select-none" onClick={() => handleSort("email")}>
+                                Email {renderSortIcon("email")}
+                              </TableHead>
+                              <TableHead className="cursor-pointer hover:bg-slate-100 select-none" onClick={() => handleSort("providers")}>
+                                Sign-in Method {renderSortIcon("providers")}
+                              </TableHead>
+                              <TableHead className="cursor-pointer hover:bg-slate-100 select-none" onClick={() => handleSort("created_at")}>
+                                Created At {renderSortIcon("created_at")}
+                              </TableHead>
+                              <TableHead className="cursor-pointer hover:bg-slate-100 select-none" onClick={() => handleSort("last_seen")}>
+                                Last Seen {renderSortIcon("last_seen")}
+                              </TableHead>
                               <TableHead className="min-w-[260px]">Replace Password</TableHead>
                               <TableHead className="w-[80px]">Delete</TableHead>
                             </TableRow>

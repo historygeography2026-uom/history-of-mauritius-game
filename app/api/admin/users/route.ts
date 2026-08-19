@@ -44,6 +44,21 @@ export async function GET(request: NextRequest) {
       console.warn("[admin/users] Could not load activity from user_progress table:", e)
     }
 
+    try {
+      const pract = await pool.query(
+        `SELECT user_id, MAX(created_at) AS last_seen FROM practice_attempts GROUP BY user_id`
+      )
+      for (const row of pract.rows) {
+        const existing = activityMap.get(Number(row.user_id))
+        const pDate = new Date(row.last_seen).getTime()
+        if (!existing || pDate > new Date(existing).getTime()) {
+          activityMap.set(Number(row.user_id), row.last_seen ?? null)
+        }
+      }
+    } catch (e) {
+      console.warn("[admin/users] Could not load activity from practice_attempts table:", e)
+    }
+
     // Fill in session-based last_seen for users with no game activity
     try {
       // Try snake_case userId first, then camelCase
@@ -52,12 +67,20 @@ export async function GET(request: NextRequest) {
         const sess = await pool.query(
           `SELECT user_id, MAX(expires) AS last_seen FROM sessions GROUP BY user_id`
         )
-        sessRows = sess.rows.map((r) => ({ user_id: Number(r.user_id), last_seen: r.last_seen ?? null }))
+        sessRows = sess.rows.map((r) => {
+          // expires is 30 days in the future by default
+          const createdDate = new Date(new Date(r.last_seen).getTime() - 30 * 24 * 60 * 60 * 1000)
+          return { user_id: Number(r.user_id), last_seen: createdDate.toISOString() }
+        })
       } catch {
         const sess = await pool.query(
           `SELECT "userId" AS user_id, MAX(expires) AS last_seen FROM sessions GROUP BY "userId"`
         )
-        sessRows = sess.rows.map((r) => ({ user_id: Number(r.user_id), last_seen: r.last_seen ?? null }))
+        sessRows = sess.rows.map((r) => {
+          // expires is 30 days in the future by default
+          const createdDate = new Date(new Date(r.last_seen).getTime() - 30 * 24 * 60 * 60 * 1000)
+          return { user_id: Number(r.user_id), last_seen: createdDate.toISOString() }
+        })
       }
       for (const row of sessRows) {
         if (!activityMap.has(row.user_id)) {
