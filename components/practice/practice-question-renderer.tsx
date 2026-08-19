@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { CheckCircle, XCircle } from "lucide-react"
+import { motion } from "framer-motion"
+import { DodoMascot } from "./dodo-mascot"
 
 /**
  * Practice Question Renderer
@@ -88,35 +90,50 @@ export default function PracticeQuestionRenderer({
 
   return (
     <div className="space-y-6">
-      {/* Question counter */}
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold text-slate-500">
-          Question {questionNumber} of {totalQuestions}
-        </span>
-        <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold">
+      {/* Segmented progress bar — one segment per question */}
+      <div className="flex items-center gap-4 mb-2">
+        <div
+          className="flex flex-1 items-center gap-1.5"
+          role="progressbar"
+          aria-valuenow={questionNumber - 1}
+          aria-valuemin={0}
+          aria-valuemax={totalQuestions}
+          aria-label={`Question ${questionNumber} of ${totalQuestions}`}
+        >
+          {Array.from({ length: totalQuestions }).map((_, i) => (
+            <div key={i} className="h-3 flex-1 overflow-hidden rounded-full bg-slate-200">
+              <motion.div
+                className="h-full rounded-full bg-emerald-500"
+                initial={false}
+                animate={{ width: i < (questionNumber - 1) ? '100%' : i === (questionNumber - 1) ? (isAnswered ? '100%' : '50%') : '0%' }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              />
+            </div>
+          ))}
+        </div>
+        <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold shrink-0">
           {question.question_type.toUpperCase()}
         </span>
       </div>
 
-      {/* Progress bar */}
-      <div className="w-full bg-slate-200 rounded-full h-2">
-        <div
-          className="bg-gradient-to-r from-emerald-400 to-teal-500 h-2 rounded-full transition-all duration-500"
-          style={{ width: `${(questionNumber / totalQuestions) * 100}%` }}
-        />
-      </div>
-
       {/* Question card */}
       <Card className="p-6 border-0 shadow-lg">
-        {/* Instruction */}
-        {question.instruction && (
-          <p className="text-sm text-slate-500 italic mb-2">{question.instruction}</p>
-        )}
+        <div className="flex flex-col sm:flex-row sm:items-start gap-4 mb-4">
+          <div className="hidden sm:block shrink-0">
+            <DodoMascot mood={feedback === null ? 'thinking' : (feedback.is_correct ? 'happy' : 'sad')} size={80} />
+          </div>
+          <div className="flex-1">
+            {/* Instruction */}
+            {question.instruction && (
+              <p className="text-sm text-slate-500 italic mb-2">{question.instruction}</p>
+            )}
 
-        {/* Question text */}
-        <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-4 leading-relaxed">
-          {question.question_text}
-        </h2>
+            {/* Question text */}
+            <h2 className="text-xl md:text-2xl font-bold text-slate-900 leading-relaxed">
+              {question.question_text}
+            </h2>
+          </div>
+        </div>
 
         {/* Image */}
         {question.image_url && (
