@@ -32,6 +32,7 @@ export default function GameAnalyticsDashboard({}: Props) {
   const [loading, setLoading] = useState(true)
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | 'all'>('7d')
   const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 10
   const [searchQuery, setSearchQuery] = useState("")
 
   const [hiddenSeries, setHiddenSeries] = useState<Record<string, boolean>>({})
