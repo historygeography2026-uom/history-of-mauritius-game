@@ -85,17 +85,27 @@ export default function FillBlankQuestionScreen({
     <main className="relative z-10 min-h-screen px-4 py-6 font-sans">
       <div className="mx-auto max-w-2xl">
         {/* Header */}
-        <header className="mb-6 flex items-center justify-between">
+        <header className="mb-6 flex items-center justify-between gap-4">
           <button
             type="button"
             onClick={onExit}
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-400 to-amber-500 px-5 py-2 text-sm font-bold text-white shadow-sm transition-all hover:scale-105"
+            className="shrink-0 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-400 to-amber-500 px-5 py-2 text-sm font-bold text-white shadow-sm transition-all hover:scale-105"
           >
             🚪 Exit
           </button>
-          <span className="rounded-full border border-amber-200 bg-white/90 px-5 py-2 text-sm font-bold text-amber-900 shadow-xs">
-            ⭐ Question {questionNumber} of {totalQuestions}
-          </span>
+          
+          <div className="flex-1 max-w-sm mx-auto ml-2 sm:ml-6" role="progressbar" aria-valuenow={questionNumber - 1} aria-valuemin={0} aria-valuemax={totalQuestions}>
+             <div className="flex items-center gap-1 sm:gap-1.5 h-2.5 sm:h-3">
+               {Array.from({ length: totalQuestions }).map((_, i) => (
+                  <div key={i} className="h-full flex-1 overflow-hidden rounded-full bg-slate-200 shadow-inner">
+                    <div className={`h-full rounded-full transition-all duration-500 ease-out ${i < questionNumber ? 'bg-gradient-to-r from-emerald-400 to-green-500' : 'bg-transparent'}`} />
+                  </div>
+               ))}
+             </div>
+             <p className="text-right text-[10px] sm:text-xs font-bold text-slate-500 mt-1 sm:mt-1.5 drop-shadow-sm">
+               Question {questionNumber} of {totalQuestions}
+             </p>
+          </div>
         </header>
 
         {/* Question Card */}
@@ -104,9 +114,11 @@ export default function FillBlankQuestionScreen({
           className="rounded-3xl border-2 border-pink-100 bg-white/95 p-6 shadow-xl backdrop-blur-sm sm:p-8"
         >
           <div className="mb-6 flex items-start gap-3">
-            <span className="text-3xl sm:text-4xl" aria-hidden="true">
-              ✏️
-            </span>
+            <img 
+              src="/images/dodo-mascot.jpeg" 
+              alt="Dodo mascot" 
+              className="h-10 w-10 sm:h-12 sm:w-12 object-cover rounded-full shadow-md border-2 border-white ring-2 ring-emerald-200" 
+            />
             <div className="flex-1">
               <div className="flex items-start justify-between gap-2">
                 <h1 id="fb-prompt" className="text-xl font-black leading-snug text-slate-800 sm:text-2xl">
