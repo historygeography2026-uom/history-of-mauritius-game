@@ -4,6 +4,7 @@
 import { useState } from "react"
 import { motion } from "framer-motion"
 import { DodoMascot } from "./dodo-mascot"
+import { PracticeHeader } from "./PracticeHeader"
 import { ArrowDown, ArrowUp, Volume2 } from "lucide-react"
 import { useGameSounds, isGameMuted } from "@/hooks/use-game-sounds"
 
@@ -106,33 +107,7 @@ export default function OrderingQuestionScreen({
     <main className="relative z-10 min-h-screen px-4 py-6 font-sans">
       <div className="mx-auto max-w-2xl">
         {/* Header */}
-        <header className="mb-6 flex items-center justify-between gap-4">
-          <button
-            type="button"
-            onClick={onExit}
-            className="shrink-0 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-400 to-amber-500 px-5 py-2 text-sm font-bold text-white shadow-sm transition-all hover:scale-105"
-          >
-            🚪 Exit
-          </button>
-          
-          <div className="flex-1 max-w-sm mx-auto ml-2 sm:ml-6" role="progressbar" aria-valuenow={questionNumber - 1} aria-valuemin={0} aria-valuemax={totalQuestions}>
-             <div className="flex items-center gap-1 sm:gap-1.5 h-2.5 sm:h-3">
-               {Array.from({ length: totalQuestions }).map((_, i) => (
-                  <div key={i} className="h-full flex-1 overflow-hidden rounded-full bg-slate-200 shadow-inner">
-                    <motion.div
-                      className="h-full rounded-full bg-emerald-500"
-                      initial={false}
-                      animate={{ width: i < (questionNumber - 1) ? '100%' : i === (questionNumber - 1) ? (checked ? '100%' : '50%') : '0%' }}
-                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                    />
-                  </div>
-               ))}
-             </div>
-             <p className="text-right text-[10px] sm:text-xs font-bold text-slate-500 mt-1 sm:mt-1.5 drop-shadow-sm">
-               Question {questionNumber} of {totalQuestions}
-             </p>
-          </div>
-        </header>
+        <PracticeHeader currentQuestionIndex={questionNumber - 1} totalQuestions={totalQuestions} isCurrentAnswered={checked} onExit={onExit} />
 
         {/* Card */}
         <section
