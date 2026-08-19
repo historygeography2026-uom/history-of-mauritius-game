@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Users, BookOpen, Target, TrendingUp } from "lucide-react"
+import { Users, BookOpen, Target, TrendingUp, Download, Search } from "lucide-react"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts'
 
 interface LearnerUnitStat {
@@ -19,6 +19,7 @@ export default function PracticeAnalyticsDashboard({}: Props) {
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly'>('weekly')
   const [currentPage, setCurrentPage] = useState(1)
+  const [searchQuery, setSearchQuery] = useState("")
   const pageSize = 10
 
   const fetchStats = useCallback(async () => {
@@ -95,6 +96,32 @@ export default function PracticeAnalyticsDashboard({}: Props) {
     displayDate: new Date(d.day).toLocaleDateString("en-GB", { day: 'numeric', month: 'short' }),
     Attempts: Number(d.attempts) || 0
   }))
+
+  const filteredPivotTable = pivotTable.filter(row => {
+    if (!searchQuery) return true
+    return row.learner.toLowerCase().includes(searchQuery.toLowerCase())
+  })
+
+  const handleExportCSV = () => {
+    if (filteredPivotTable.length === 0) return
+    const headers = ["Learner Name", "Total", ...allUnits]
+    const csvRows = [headers.join(",")]
+    filteredPivotTable.forEach(row => {
+      const rowData = [
+        `"${row.learner}"`,
+        row.total,
+        ...allUnits.map(unit => row[unit] || 0)
+      ]
+      csvRows.push(rowData.join(","))
+    })
+    const blob = new Blob([csvRows.join("\n")], { type: "text/csv" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `practice-analytics.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <div className="bg-gray-50 px-4 py-8 font-sans">
@@ -209,9 +236,28 @@ export default function PracticeAnalyticsDashboard({}: Props) {
         </div>
 
         {/* Pivot Table */}
-        <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="border-b border-gray-200 px-5 py-4 flex items-center justify-between bg-gray-50">
-            <h2 className="text-sm font-semibold text-gray-900">Learner vs Unit Attempts</h2>
+        <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm mt-6">
+          <div className="border-b border-gray-200 px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between bg-gray-50 gap-4">
+            <h2 className="text-sm font-semibold text-gray-900 whitespace-nowrap">Learner vs Unit Attempts</h2>
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input 
+                  type="search" 
+                  placeholder="Search learner..." 
+                  value={searchQuery}
+                  onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                  className="pl-9 pr-4 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
+                />
+              </div>
+              <button 
+                onClick={handleExportCSV}
+                className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-md transition-colors shadow-sm whitespace-nowrap"
+              >
+                <Download className="h-4 w-4" />
+                Export CSV
+              </button>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm min-w-max">
@@ -225,7 +271,7 @@ export default function PracticeAnalyticsDashboard({}: Props) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {pivotTable.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((row) => (
+                {filteredPivotTable.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((row) => (
                   <tr key={row.learner} className="hover:bg-gray-50 transition-colors">
                     <td className="px-5 py-3 font-medium text-gray-900 border-r border-gray-100 bg-white sticky left-0 z-10 shadow-[1px_0_0_0_#f3f4f6]">
                       {row.learner}
@@ -240,20 +286,20 @@ export default function PracticeAnalyticsDashboard({}: Props) {
                     ))}
                   </tr>
                 ))}
-                {pivotTable.length === 0 && (
+                {filteredPivotTable.length === 0 && (
                   <tr>
                     <td colSpan={allUnits.length + 2} className="px-5 py-12 text-center text-sm text-gray-500">
-                      No practice data recorded yet.
+                      No practice data matches your search.
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
-          {Math.ceil(pivotTable.length / pageSize) > 1 && (
+          {Math.ceil(filteredPivotTable.length / pageSize) > 1 && (
             <div className="border-t border-gray-200 px-5 py-3 flex items-center justify-between bg-gray-50">
               <span className="text-sm text-gray-500">
-                Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to <span className="font-medium">{Math.min(currentPage * pageSize, pivotTable.length)}</span> of <span className="font-medium">{pivotTable.length}</span> results
+                Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to <span className="font-medium">{Math.min(currentPage * pageSize, filteredPivotTable.length)}</span> of <span className="font-medium">{filteredPivotTable.length}</span> results
               </span>
               <div className="flex items-center gap-2">
                 <button
@@ -264,8 +310,8 @@ export default function PracticeAnalyticsDashboard({}: Props) {
                   Previous
                 </button>
                 <button
-                  onClick={() => setCurrentPage(p => Math.min(Math.ceil(pivotTable.length / pageSize), p + 1))}
-                  disabled={currentPage === Math.ceil(pivotTable.length / pageSize)}
+                  onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredPivotTable.length / pageSize), p + 1))}
+                  disabled={currentPage === Math.ceil(filteredPivotTable.length / pageSize)}
                   className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 hover:bg-gray-100 transition-colors font-medium text-gray-700 bg-white"
                 >
                   Next

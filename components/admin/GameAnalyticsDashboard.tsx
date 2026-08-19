@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Calendar, TrendingUp, Trophy, Gamepad2 } from "lucide-react"
+import { Calendar, TrendingUp, Trophy, Gamepad2, Download, Search } from "lucide-react"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts'
 
 interface DailyGameStat {
@@ -23,6 +23,7 @@ export default function GameAnalyticsDashboard({}: Props) {
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly'>('weekly')
   const [currentPage, setCurrentPage] = useState(1)
+  const [searchQuery, setSearchQuery] = useState("")
   const pageSize = 10
 
   const fetchStats = useCallback(async () => {
@@ -66,6 +67,38 @@ export default function GameAnalyticsDashboard({}: Props) {
     // Add readable date for chart
     displayDate: new Date(d.day).toLocaleDateString("en-GB", { day: 'numeric', month: 'short' })
   }))
+
+  const filteredStats = stats.filter(row => {
+    if (!searchQuery) return true
+    const searchDate = new Date(row.day).toLocaleDateString("en-GB", { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+    return searchDate.toLowerCase().includes(searchQuery.toLowerCase())
+  })
+
+  const handleExportCSV = () => {
+    if (filteredStats.length === 0) return
+    const headers = ["Period Start", "Total Attempts", "History", "Geography", "Combined", "Level 1", "Level 2", "Level 3"]
+    const csvRows = [headers.join(",")]
+    filteredStats.forEach(row => {
+      const date = new Date(row.day).toLocaleDateString("en-GB", { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+      csvRows.push([
+        `"${date}"`,
+        row.total_attempts,
+        row.subject_history,
+        row.subject_geography,
+        row.subject_combined,
+        row.level_1,
+        row.level_2,
+        row.level_3
+      ].join(","))
+    })
+    const blob = new Blob([csvRows.join("\n")], { type: "text/csv" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `game-analytics-${period}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <div className="bg-gray-50 px-4 py-8 font-sans">
@@ -177,9 +210,28 @@ export default function GameAnalyticsDashboard({}: Props) {
         </div>
 
         {/* Daily Data Table */}
-        <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="border-b border-gray-200 px-5 py-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-gray-900">Game Attempts Timeline</h2>
+        <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm mt-6">
+          <div className="border-b border-gray-200 px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h2 className="text-sm font-semibold text-gray-900 whitespace-nowrap">Game Attempts Timeline</h2>
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input 
+                  type="search" 
+                  placeholder="Search date..." 
+                  value={searchQuery}
+                  onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                  className="pl-9 pr-4 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <button 
+                onClick={handleExportCSV}
+                className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-md transition-colors whitespace-nowrap"
+              >
+                <Download className="h-4 w-4" />
+                Export CSV
+              </button>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
@@ -196,7 +248,7 @@ export default function GameAnalyticsDashboard({}: Props) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {stats.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((row) => (
+                {filteredStats.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((row) => (
                   <tr key={row.day} className="hover:bg-gray-50 transition-colors">
                     <td className="px-5 py-3 font-medium text-gray-900 whitespace-nowrap">
                       {new Date(row.day).toLocaleDateString("en-GB", { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
@@ -210,20 +262,20 @@ export default function GameAnalyticsDashboard({}: Props) {
                     <td className="px-5 py-3 text-right text-gray-600 bg-gray-50/50">{row.level_3}</td>
                   </tr>
                 ))}
-                {stats.length === 0 && (
+                {filteredStats.length === 0 && (
                   <tr>
                     <td colSpan={8} className="px-5 py-12 text-center text-sm text-gray-500">
-                      No game data recorded yet.
+                      No game data matches your search.
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
-          {Math.ceil(stats.length / pageSize) > 1 && (
+          {Math.ceil(filteredStats.length / pageSize) > 1 && (
             <div className="border-t border-gray-200 px-5 py-3 flex items-center justify-between bg-gray-50">
               <span className="text-sm text-gray-500">
-                Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to <span className="font-medium">{Math.min(currentPage * pageSize, stats.length)}</span> of <span className="font-medium">{stats.length}</span> results
+                Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to <span className="font-medium">{Math.min(currentPage * pageSize, filteredStats.length)}</span> of <span className="font-medium">{filteredStats.length}</span> results
               </span>
               <div className="flex items-center gap-2">
                 <button
@@ -234,8 +286,8 @@ export default function GameAnalyticsDashboard({}: Props) {
                   Previous
                 </button>
                 <button
-                  onClick={() => setCurrentPage(p => Math.min(Math.ceil(stats.length / pageSize), p + 1))}
-                  disabled={currentPage === Math.ceil(stats.length / pageSize)}
+                  onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredStats.length / pageSize), p + 1))}
+                  disabled={currentPage === Math.ceil(filteredStats.length / pageSize)}
                   className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 hover:bg-gray-100 transition-colors font-medium text-gray-700 bg-white"
                 >
                   Next
