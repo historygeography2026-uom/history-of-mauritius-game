@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { CheckCircle, XCircle } from "lucide-react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { DodoMascot } from "./dodo-mascot"
 
 /**
@@ -116,9 +116,17 @@ export default function PracticeQuestionRenderer({
         </span>
       </div>
 
-      {/* Question card */}
-      <Card className="p-6 border-0 shadow-lg">
-        <div className="flex flex-col sm:flex-row sm:items-start gap-4 mb-4">
+      {/* Question card wrapper with animation */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={questionNumber}
+          initial={{ x: 40, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: -40, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        >
+          <Card className="p-6 border-0 shadow-lg">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-4 mb-4">
           <div className="hidden sm:block shrink-0">
             <DodoMascot mood={feedback === null ? 'thinking' : (feedback.is_correct ? 'happy' : 'sad')} size={80} />
           </div>
@@ -430,6 +438,8 @@ export default function PracticeQuestionRenderer({
           </Button>
         )}
       </div>
+        </motion.div>
+      </AnimatePresence>
     </div>
   )
 }
