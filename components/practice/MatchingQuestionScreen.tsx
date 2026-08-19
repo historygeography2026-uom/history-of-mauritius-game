@@ -166,7 +166,7 @@ export default function MatchingQuestionScreen({
           className="rounded-3xl border-2 border-pink-100 bg-white/95 p-6 shadow-xl backdrop-blur-sm sm:p-8"
         >
           <div className="mb-4 flex items-start gap-3">
-            <DodoMascot mood={!checked ? 'thinking' : (isCorrect ? 'happy' : 'sad')} size={64} />
+            <DodoMascot mood={!checked ? 'thinking' : (isAllCorrect ? 'happy' : 'sad')} size={64} />
             <div className="flex-1">
               <div className="flex items-start justify-between gap-2">
                 <h1 id="match-prompt" className="text-xl font-black leading-snug text-slate-800 sm:text-2xl">
