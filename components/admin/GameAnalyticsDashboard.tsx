@@ -206,9 +206,9 @@ export default function GameAnalyticsDashboard({}: Props) {
                     <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} />
                     <RechartsTooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} cursor={{ fill: '#f3f4f6' }} />
                     <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '12px', cursor: 'pointer' }} onClick={handleLegendClick} />
-                    <Bar dataKey="subject_history" name="History" stackId="a" fill="#3b82f6" radius={[0, 0, 4, 4]} hide={hiddenSeries['subject_history']} />
-                    <Bar dataKey="subject_geography" name="Geography" stackId="a" fill="#10b981" hide={hiddenSeries['subject_geography']} />
-                    <Bar dataKey="subject_combined" name="Combined" stackId="a" fill="#8b5cf6" radius={[4, 4, 0, 0]} hide={hiddenSeries['subject_combined']} />
+                    <Bar dataKey="subject_history" name="History" stackId="a" fill="#3b82f6" radius={[0, 0, 4, 4]} hide={!!hiddenSeries['subject_history']} />
+                    <Bar dataKey="subject_geography" name="Geography" stackId="a" fill="#10b981" hide={!!hiddenSeries['subject_geography']} />
+                    <Bar dataKey="subject_combined" name="Combined" stackId="a" fill="#8b5cf6" radius={[4, 4, 0, 0]} hide={!!hiddenSeries['subject_combined']} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
@@ -231,9 +231,9 @@ export default function GameAnalyticsDashboard({}: Props) {
                     <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} />
                     <RechartsTooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                     <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '12px', cursor: 'pointer' }} onClick={handleLegendClick} />
-                    <Line type="monotone" dataKey="level_1" name="Level 1" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} hide={hiddenSeries['level_1']} />
-                    <Line type="monotone" dataKey="level_2" name="Level 2" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} hide={hiddenSeries['level_2']} />
-                    <Line type="monotone" dataKey="level_3" name="Level 3" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} hide={hiddenSeries['level_3']} />
+                    <Line type="monotone" dataKey="level_1" name="Level 1" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} hide={!!hiddenSeries['level_1']} />
+                    <Line type="monotone" dataKey="level_2" name="Level 2" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} hide={!!hiddenSeries['level_2']} />
+                    <Line type="monotone" dataKey="level_3" name="Level 3" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} hide={!!hiddenSeries['level_3']} />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (

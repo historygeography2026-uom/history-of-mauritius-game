@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Plus, Trash2, RefreshCw, UserPlus, Search, ArrowUp, ArrowDown, ChevronsUpDown } from "lucide-react"
+import { ArrowLeft, Plus, Trash2, RefreshCw, UserPlus, Search, ArrowUp, ArrowDown, ChevronsUpDown, Download, ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
@@ -67,9 +67,16 @@ export default function ResetPasswordPage() {
   const [isCreating, setIsCreating] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
 
+  const ITEMS_PER_PAGE = 20
+  const [currentPage, setCurrentPage] = useState(1)
+
   type SortColumn = "name" | "email" | "providers" | "created_at" | "last_seen" | null
   const [sortColumn, setSortColumn] = useState<SortColumn>("created_at")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, sortColumn, sortDirection])
 
   const handleSort = (col: SortColumn) => {
     if (sortColumn === col) {
@@ -272,6 +279,63 @@ export default function ResetPasswordPage() {
     }
   }
 
+  // Compute filtered & paginated users
+  const q = searchQuery.trim().toLowerCase()
+  let filtered = q
+    ? users.filter(
+        (u) =>
+          u.email.toLowerCase().includes(q) ||
+          (u.name ?? "").toLowerCase().includes(q)
+      )
+    : [...users]
+
+  if (sortColumn) {
+    filtered.sort((a, b) => {
+      let valA: any = a[sortColumn]
+      let valB: any = b[sortColumn]
+
+      if (sortColumn === "providers") {
+        valA = a.providers.join(",")
+        valB = b.providers.join(",")
+      } else if (sortColumn === "name") {
+        valA = (a.name || "").toLowerCase()
+        valB = (b.name || "").toLowerCase()
+      } else if (sortColumn === "email") {
+        valA = a.email.toLowerCase()
+        valB = b.email.toLowerCase()
+      } else if (sortColumn === "created_at" || sortColumn === "last_seen") {
+        valA = valA ? new Date(valA).getTime() : 0
+        valB = valB ? new Date(valB).getTime() : 0
+      }
+
+      if (valA < valB) return sortDirection === "asc" ? -1 : 1
+      if (valA > valB) return sortDirection === "asc" ? 1 : -1
+      return 0
+    })
+  }
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE))
+  const paginatedUsers = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+
+  const handleExportCSV = () => {
+    const headers = ["Name", "Email", "Created At", "Last Seen"]
+    const rows = filtered.map(u => [
+      `"${(u.name || "").replace(/"/g, '""')}"`,
+      `"${(u.email || "").replace(/"/g, '""')}"`,
+      `"${formatDateTime(u.created_at)}"`,
+      `"${formatLastSeen(u.last_seen)}"`
+    ])
+    const csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\n")
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `users_export_${new Date().toISOString().split('T')[0]}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   return (
     <div className="min-h-screen bg-transparent p-4 md:p-8 relative z-10">
       <div className="mx-auto w-full max-w-6xl">
@@ -327,6 +391,15 @@ export default function ResetPasswordPage() {
                   >
                     <RefreshCw className={`h-4 w-4 ${isLoadingUsers ? "animate-spin" : ""}`} />
                     Refresh
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleExportCSV}
+                    className="gap-2 border-primary text-primary hover:bg-primary/10"
+                  >
+                    <Download className="h-4 w-4" />
+                    Export CSV
                   </Button>
                 </div>
                 <div className="relative w-full sm:w-72">
@@ -409,40 +482,6 @@ export default function ResetPasswordPage() {
                 </div>
               ) : (
                 (() => {
-                  const q = searchQuery.trim().toLowerCase()
-                  let filtered = q
-                    ? users.filter(
-                        (u) =>
-                          u.email.toLowerCase().includes(q) ||
-                          (u.name ?? "").toLowerCase().includes(q)
-                      )
-                    : [...users]
-
-                  if (sortColumn) {
-                    filtered.sort((a, b) => {
-                      let valA: any = a[sortColumn]
-                      let valB: any = b[sortColumn]
-
-                      if (sortColumn === "providers") {
-                        valA = a.providers.join(",")
-                        valB = b.providers.join(",")
-                      } else if (sortColumn === "name") {
-                        valA = (a.name || "").toLowerCase()
-                        valB = (b.name || "").toLowerCase()
-                      } else if (sortColumn === "email") {
-                        valA = a.email.toLowerCase()
-                        valB = b.email.toLowerCase()
-                      } else if (sortColumn === "created_at" || sortColumn === "last_seen") {
-                        valA = valA ? new Date(valA).getTime() : 0
-                        valB = valB ? new Date(valB).getTime() : 0
-                      }
-
-                      if (valA < valB) return sortDirection === "asc" ? -1 : 1
-                      if (valA > valB) return sortDirection === "asc" ? 1 : -1
-                      return 0
-                    })
-                  }
-
                   if (filtered.length === 0) {
                     return (
                       <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
@@ -457,7 +496,7 @@ export default function ResetPasswordPage() {
                     <>
                       {/* Mobile: card list (hidden on sm+) */}
                       <div className="sm:hidden flex flex-col gap-3">
-                        {filtered.map((user) => {
+                        {paginatedUsers.map((user) => {
                           const isOAuthOnly = !user.has_password
                           return (
                             <div key={user.id} className="rounded-xl border border-slate-200 bg-white p-4 flex flex-col gap-3">
@@ -537,7 +576,7 @@ export default function ResetPasswordPage() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {filtered.map((user) => {
+                            {paginatedUsers.map((user) => {
                               const isOAuthOnly = !user.has_password
                               return (
                                 <TableRow key={user.id} className="hover:bg-slate-50/70">
@@ -596,6 +635,36 @@ export default function ResetPasswordPage() {
                           </TableBody>
                         </Table>
                       </div>
+
+                      {/* Pagination Controls */}
+                      {totalPages > 1 && (
+                        <div className="flex items-center justify-between mt-4">
+                          <div className="text-sm text-slate-500">
+                            Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} of {filtered.length} entries
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                              disabled={currentPage === 1}
+                            >
+                              <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            <span className="text-sm font-medium text-slate-700">
+                              Page {currentPage} of {totalPages}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                              disabled={currentPage === totalPages}
+                            >
+                              <ChevronRight className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </>
                   )
                 })()
