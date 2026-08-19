@@ -55,9 +55,12 @@ export default function GameAnalyticsDashboard({}: Props) {
 
   // Summary logic
   const totalGamesEver = stats.reduce((acc, curr) => acc + curr.total_attempts, 0)
-  const mostActiveDay = stats.length > 0 ? stats.reduce((a, b) => (b.total_attempts > a.total_attempts ? b : a)) : null
-
-  // Recharts data expects chronological order usually, so we reverse it if the API returned DESC
+  const totalHistory = stats.reduce((acc, curr) => acc + curr.subject_history, 0)
+  const totalGeography = stats.reduce((acc, curr) => acc + curr.subject_geography, 0)
+  const totalCombined = stats.reduce((acc, curr) => acc + curr.subject_combined, 0)
+  const totalLevel1 = stats.reduce((acc, curr) => acc + curr.level_1, 0)
+  const totalLevel2 = stats.reduce((acc, curr) => acc + curr.level_2, 0)
+  const totalLevel3 = stats.reduce((acc, curr) => acc + curr.level_3, 0)
   const chartData = [...stats].reverse().map(d => ({
     ...d,
     // Add readable date for chart
@@ -88,28 +91,35 @@ export default function GameAnalyticsDashboard({}: Props) {
           </div>
         </header>
 
-        {/* Summary cards */}
-        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="rounded-xl border border-gray-200 bg-white p-5 flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-              <Gamepad2 className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Total Games Played</p>
-              <p className="text-2xl font-bold text-gray-900">{totalGamesEver}</p>
-            </div>
+        {/* Statistics Bar */}
+        <div className="mb-6 flex flex-wrap gap-2">
+          <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm shadow-sm flex items-center gap-2">
+            <span className="font-bold text-blue-700">Total Attempts:</span>
+            <span className="font-black text-blue-900">{totalGamesEver}</span>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-5 flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
-              <Calendar className="h-6 w-6 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Most Active Period</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {mostActiveDay ? new Date(mostActiveDay.day).toLocaleDateString("en-GB", { day: 'numeric', month: 'short', year: 'numeric' }) : "—"}
-              </p>
-              <p className="text-xs text-gray-500">with {mostActiveDay?.total_attempts || 0} games</p>
-            </div>
+          <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-sm flex items-center gap-2">
+            <span className="font-bold text-slate-700">History</span>
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 font-black text-slate-600">{totalHistory}</span>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-sm flex items-center gap-2">
+            <span className="font-bold text-slate-700">Geography</span>
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 font-black text-slate-600">{totalGeography}</span>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-sm flex items-center gap-2">
+            <span className="font-bold text-slate-700">Combined</span>
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 font-black text-slate-600">{totalCombined}</span>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-sm flex items-center gap-2">
+            <span className="font-bold text-slate-700">Level 1</span>
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 font-black text-slate-600">{totalLevel1}</span>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-sm flex items-center gap-2">
+            <span className="font-bold text-slate-700">Level 2</span>
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 font-black text-slate-600">{totalLevel2}</span>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-sm flex items-center gap-2">
+            <span className="font-bold text-slate-700">Level 3</span>
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 font-black text-slate-600">{totalLevel3}</span>
           </div>
         </div>
 

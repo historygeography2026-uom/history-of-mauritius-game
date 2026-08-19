@@ -1316,6 +1316,27 @@ ${errorMessages}
 
           {viewMode === "all" && (
             <div className="space-y-4">
+              {/* Statistics Bar */}
+              <div className="flex flex-wrap gap-2 mb-2">
+                <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm shadow-sm flex items-center gap-2">
+                  <span className="font-bold text-blue-700">Displaying:</span>
+                  <span className="font-black text-blue-900">{filteredAllQuestionsForCheckbox.length}</span>
+                  <span className="text-blue-600">/ {allQuestions.length} total</span>
+                </div>
+                {subjects.map(s => 
+                  levels.map(l => {
+                    const count = allQuestions.filter(q => q.subject.toLowerCase() === s.toLowerCase() && Number(q.level) === l).length;
+                    if (count === 0) return null;
+                    return (
+                      <div key={`${s}-${l}`} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-sm flex items-center gap-2">
+                        <span className="font-bold text-slate-700 capitalize">{s} Lvl {l}</span>
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 font-black text-slate-600">{count}</span>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+
               {/* Search and Filters */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-slate-50 rounded-lg">
                 <div className="md:col-span-4">

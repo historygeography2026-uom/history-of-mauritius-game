@@ -120,35 +120,22 @@ export default function PracticeAnalyticsDashboard({}: Props) {
           </div>
         </header>
 
-        {/* Summary cards */}
-        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="rounded-xl border border-gray-200 bg-white p-5 flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
-              <Target className="h-6 w-6 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Total Practice Attempts</p>
-              <p className="text-2xl font-bold text-gray-900">{totalPracticeAttempts}</p>
-            </div>
+        {/* Statistics Bar */}
+        <div className="mb-6 flex flex-wrap gap-2">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm shadow-sm flex items-center gap-2">
+            <span className="font-bold text-emerald-700">Total Attempts:</span>
+            <span className="font-black text-emerald-900">{totalPracticeAttempts}</span>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-5 flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-              <Users className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Active Learners</p>
-              <p className="text-2xl font-bold text-gray-900">{allLearners.length}</p>
-            </div>
+          <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm shadow-sm flex items-center gap-2">
+            <span className="font-bold text-blue-700">Active Learners:</span>
+            <span className="font-black text-blue-900">{allLearners.length}</span>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-5 flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
-              <BookOpen className="h-6 w-6 text-amber-600" />
+          {unitChartData.map(u => (
+            <div key={u.name} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-sm flex items-center gap-2">
+              <span className="font-bold text-slate-700">{u.name}</span>
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 font-black text-slate-600">{u.Attempts}</span>
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Active Units</p>
-              <p className="text-2xl font-bold text-gray-900">{allUnits.length}</p>
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* Practice Timeline Chart */}
