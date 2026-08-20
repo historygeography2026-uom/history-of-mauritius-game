@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-import { useState, useEffect, useRef, useMemo } from "react"
+import React, { useState, useEffect, useRef, useMemo, Component } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ArrowLeft, Plus, Trash2, Edit2, X, LogOut, Search, Database, FileSpreadsheet } from "lucide-react"
@@ -44,6 +43,48 @@ interface Question {
   createdAt?: number
   updatedAt?: number
   createdBy?: string
+}
+
+class AdminTabErrorBoundary extends Component<
+  { children: React.ReactNode; tabName: string },
+  { hasError: boolean; error: any }
+> {
+  constructor(props: { children: React.ReactNode; tabName: string }) {
+    super(props)
+    this.state = { hasError: false, error: null }
+  }
+
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error(`[AdminTabErrorBoundary] Error in ${this.props.tabName}:`, error, errorInfo)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <Card className="p-8 text-center border-amber-200 bg-amber-50 rounded-2xl">
+          <p className="text-3xl mb-2">⚠️</p>
+          <h3 className="text-lg font-bold text-slate-800 mb-1">
+            Failed to load {this.props.tabName}
+          </h3>
+          <p className="text-sm text-slate-600 mb-4">
+            An error occurred while rendering this section. Other admin features remain functional.
+          </p>
+          <Button
+            onClick={() => this.setState({ hasError: false, error: null })}
+            variant="outline"
+            className="bg-white hover:bg-slate-100"
+          >
+            Retry Loading Section
+          </Button>
+        </Card>
+      )
+    }
+    return this.props.children
+  }
 }
 
 export default function AdminPage() {
@@ -1247,7 +1288,7 @@ ${errorMessages}
         />
 
         {activeAdminTab === "practice" && (
-          <>
+          <AdminTabErrorBoundary tabName="Practice Question Management">
             <PracticeQuestionManagement
               onImport={() => setShowPracticeImport(true)}
             />
@@ -1261,17 +1302,21 @@ ${errorMessages}
                 setTimeout(() => setActiveAdminTab("practice"), 50)
               }}
             />
-          </>
+          </AdminTabErrorBoundary>
         )}
         {activeAdminTab === "stats_game" && (
-          <div className="space-y-8">
-            <GameAnalyticsDashboard />
-          </div>
+          <AdminTabErrorBoundary tabName="Game Analytics Dashboard">
+            <div className="space-y-8">
+              <GameAnalyticsDashboard />
+            </div>
+          </AdminTabErrorBoundary>
         )}
         {activeAdminTab === "stats_practice" && (
-          <div className="space-y-8">
-            <PracticeAnalyticsDashboard />
-          </div>
+          <AdminTabErrorBoundary tabName="Practice Analytics Dashboard">
+            <div className="space-y-8">
+              <PracticeAnalyticsDashboard />
+            </div>
+          </AdminTabErrorBoundary>
         )}
 
         {activeAdminTab === "game" && (
