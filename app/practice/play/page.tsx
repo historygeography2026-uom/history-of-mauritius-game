@@ -1,9 +1,8 @@
 // app/practice/play/page.tsx — Play orchestrator: dispatches to Fable question screens
 "use client"
 
-import { useState, useEffect, useRef, Suspense } from "react"
+import React, { useState, useEffect, useRef, Suspense, Component } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useSession } from "next-auth/react"
 import MCQQuestionScreen from "@/components/practice/MCQQuestionScreen"
 import FillBlankQuestionScreen from "@/components/practice/FillBlankQuestionScreen"
 import OrderingQuestionScreen from "@/components/practice/OrderingQuestionScreen"
@@ -29,6 +28,37 @@ interface SessionData {
   questions: SessionQuestion[]
 }
 
+interface ErrorBoundaryProps {
+  children: React.ReactNode
+  fallback: React.ReactNode
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean
+}
+
+class QuestionErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("[QuestionErrorBoundary] Caught rendering error:", error, errorInfo)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback
+    }
+    return this.props.children
+  }
+}
+
 function PracticePlayContent() {
   const [sessionData, setSessionData] = useState<SessionData | null>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -38,28 +68,59 @@ function PracticePlayContent() {
   const hasEndedRef = useRef(false)
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { status } = useSession()
-
   const sessionId = searchParams.get("session")
 
-  // Load session on mount
+  // Load session on mount with local storage + server fallback
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/practice")
-      return
-    }
     if (!sessionId) {
       router.push("/practice")
       return
     }
-    const storedSession = sessionStorage.getItem(`practice_session_${sessionId}`)
-    if (storedSession) {
-      setSessionData(JSON.parse(storedSession))
-      setLoading(false)
-    } else {
-      router.push("/practice")
+
+    let isMounted = true
+
+    const loadSession = async () => {
+      // 1. Try reading from sessionStorage
+      try {
+        const storedSession = sessionStorage.getItem(`practice_session_${sessionId}`)
+        if (storedSession) {
+          const parsed = JSON.parse(storedSession)
+          if (parsed && Array.isArray(parsed.questions) && parsed.questions.length > 0) {
+            if (isMounted) {
+              setSessionData(parsed)
+              setLoading(false)
+            }
+            return
+          }
+        }
+      } catch (e) {
+        console.warn("Could not parse local session storage:", e)
+      }
+
+      // 2. Fallback to fetching from server if missing or direct link
+      try {
+        const res = await fetch(`/api/practice/session?id=${sessionId}`)
+        if (!res.ok) throw new Error("Session not found")
+        const data = await res.json()
+        if (isMounted) {
+          sessionStorage.setItem(`practice_session_${sessionId}`, JSON.stringify(data))
+          setSessionData(data)
+          setLoading(false)
+        }
+      } catch (err) {
+        console.error("Failed to load practice session:", err)
+        if (isMounted) {
+          router.push("/practice")
+        }
+      }
     }
-  }, [sessionId, status])
+
+    loadSession()
+
+    return () => {
+      isMounted = false
+    }
+  }, [sessionId, router])
 
   // End session on unmount if not already ended
   useEffect(() => {
@@ -286,7 +347,28 @@ function PracticePlayContent() {
   return (
     <>
       {exitOverlay}
-      {questionScreen}
+      <QuestionErrorBoundary
+        key={`error_boundary_${currentQuestion.id}_${currentIndex}`}
+        fallback={
+          <main className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-amber-50 flex items-center justify-center p-6">
+            <div className="text-center max-w-md bg-white p-8 rounded-3xl shadow-xl border border-slate-200">
+              <p className="text-4xl mb-3">⚠️</p>
+              <h2 className="text-xl font-bold text-slate-800 mb-2">Question Display Issue</h2>
+              <p className="text-slate-500 text-sm mb-6">
+                This question could not be displayed properly. Click below to continue to the next question.
+              </p>
+              <button
+                onClick={handleNext}
+                className="w-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-3.5 text-base font-bold text-white shadow-md hover:scale-[1.02] transition-all"
+              >
+                Skip to Next Question 🚀
+              </button>
+            </div>
+          </main>
+        }
+      >
+        {questionScreen}
+      </QuestionErrorBoundary>
     </>
   )
 }

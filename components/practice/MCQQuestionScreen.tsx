@@ -76,12 +76,14 @@ export default function MCQQuestionScreen({
     setSubmitting(true)
 
     try {
-      const result = await onAnswer(question.options[selected])
+      const selectedOption = (question.options || [])[selected] ?? ""
+      const result = await onAnswer(selectedOption)
       const correct = Boolean(result.is_correct)
       setIsCorrect(correct)
 
+      const targetAnswer = String(result?.correct_answer ?? "").toLowerCase().trim()
       const cIdx = (question.options || []).findIndex(
-        (o) => o.toLowerCase().trim() === String(result.correct_answer).toLowerCase().trim()
+        (o) => String(o ?? "").toLowerCase().trim() === targetAnswer
       )
       setCorrectIndex(cIdx >= 0 ? cIdx : null)
       setChecked(true)
