@@ -117,14 +117,14 @@ function checkMatching(answerData: any, studentAnswer: any): CheckResult {
 
   // Build a Set of "left→right" for correct answers
   const correctSet = new Set(
-    correctPairs.map((p) => `${p.left.trim().toLowerCase()}→${p.right.trim().toLowerCase()}`)
+    correctPairs.map((p: any) => `${String(p?.left ?? "").trim().toLowerCase()}→${String(p?.right ?? "").trim().toLowerCase()}`)
   )
 
   // Check that every student pair is in the correct set and count matches
   const studentPairs: Array<{ left: string; right: string }> = studentAnswer
   const studentSet = new Set(
     studentPairs.map(
-      (p: any) => `${String(p.left || "").trim().toLowerCase()}→${String(p.right || "").trim().toLowerCase()}`
+      (p: any) => `${String(p?.left ?? "").trim().toLowerCase()}→${String(p?.right ?? "").trim().toLowerCase()}`
     )
   )
 
@@ -145,16 +145,16 @@ function checkMatching(answerData: any, studentAnswer: any): CheckResult {
  * answerData.answers = [string, ...]
  */
 function checkFill(answerData: any, studentAnswer: any): CheckResult {
-  const acceptedAnswers: string[] = answerData?.answers || []
-  const studentText = String(studentAnswer || "").trim().toLowerCase()
+  const acceptedAnswers: any[] = answerData?.answers || []
+  const studentText = String(studentAnswer ?? "").trim().toLowerCase()
 
   const isCorrect = acceptedAnswers.some(
-    (a) => a.trim().toLowerCase() === studentText
+    (a) => String(a ?? "").trim().toLowerCase() === studentText
   )
 
   return {
     is_correct: isCorrect,
-    correct_answer: acceptedAnswers[0] ?? null,
+    correct_answer: acceptedAnswers[0] != null ? String(acceptedAnswers[0]) : null,
   }
 }
 
@@ -164,10 +164,10 @@ function checkFill(answerData: any, studentAnswer: any): CheckResult {
  * Student submits an array of texts in order.
  */
 function checkReorder(answerData: any, studentAnswer: any): CheckResult {
-  const items: Array<{ text: string; correct_position: number }> = answerData?.items || []
+  const items: Array<{ text: any; correct_position: number }> = answerData?.items || []
   const correctOrder = [...items]
-    .sort((a, b) => a.correct_position - b.correct_position)
-    .map((i) => i.text.trim().toLowerCase())
+    .sort((a, b) => (Number(a?.correct_position) || 0) - (Number(b?.correct_position) || 0))
+    .map((i) => String(i?.text ?? "").trim().toLowerCase())
 
   if (!Array.isArray(studentAnswer)) {
     return {
@@ -176,7 +176,7 @@ function checkReorder(answerData: any, studentAnswer: any): CheckResult {
     }
   }
 
-  const studentOrder = studentAnswer.map((s: any) => String(s).trim().toLowerCase())
+  const studentOrder = studentAnswer.map((s: any) => String(s ?? "").trim().toLowerCase())
 
   const isCorrect =
     correctOrder.length === studentOrder.length &&

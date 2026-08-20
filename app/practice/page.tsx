@@ -38,11 +38,6 @@ export default function PracticePage() {
   }, [])
 
   const handleStart = async (unitId: number) => {
-    if (status === "unauthenticated") {
-      router.push("/auth/login?callbackUrl=/practice")
-      return
-    }
-
     if (starting) return
     setStarting(true)
     setError("")
@@ -55,13 +50,21 @@ export default function PracticePage() {
       })
 
       if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error || "Failed to start session")
+        let errMsg = "Failed to start session"
+        try {
+          const err = await res.json()
+          errMsg = err.error || errMsg
+        } catch {}
+        throw new Error(errMsg)
       }
 
       const data = await res.json()
       // Store session data for the play page to retrieve
-      sessionStorage.setItem(`practice_session_${data.session_id}`, JSON.stringify(data))
+      try {
+        sessionStorage.setItem(`practice_session_${data.session_id}`, JSON.stringify(data))
+      } catch (e) {
+        console.warn("Could not save to sessionStorage:", e)
+      }
       // Navigate to play page
       router.push(`/practice/play?session=${data.session_id}`)
     } catch (e: any) {

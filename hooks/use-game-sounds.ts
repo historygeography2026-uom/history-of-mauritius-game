@@ -62,10 +62,11 @@ function notifyMuteChange() {
  */
 function playSynthesizedSound(type: SoundType, volume = 0.5) {
   if (globalIsMuted) return
-  const ctx = getAudioContext()
-  if (!ctx) return
+  try {
+    const ctx = getAudioContext()
+    if (!ctx) return
 
-  const now = ctx.currentTime
+    const now = ctx.currentTime
 
   if (type === "click") {
     // Crisp energetic pop / bubble chirp
@@ -185,6 +186,9 @@ function playSynthesizedSound(type: SoundType, volume = 0.5) {
       osc.start(t)
       osc.stop(t + 0.13)
     })
+  }
+  } catch (e) {
+    // Gracefully ignore audio synthesis / autoplay policy restrictions
   }
 }
 

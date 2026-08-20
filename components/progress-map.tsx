@@ -54,8 +54,13 @@ export function ProgressMap({ subject, subjectColor, subjectIcon, onSelectLevel,
         }
       } else {
         // Load progress from localStorage for guest users
-        const savedProgress = localStorage.getItem(`progress_${subject}`)
-        progress = savedProgress ? JSON.parse(savedProgress) : {}
+        try {
+          const savedProgress = localStorage.getItem(`progress_${subject}`)
+          progress = savedProgress ? JSON.parse(savedProgress) : {}
+        } catch (e) {
+          console.warn("Corrupted localStorage progress, defaulting to empty:", e)
+          progress = {}
+        }
       }
 
       const levelData: LevelData[] = [
@@ -308,9 +313,13 @@ export function ProgressMap({ subject, subjectColor, subjectIcon, onSelectLevel,
 // Helper function to save progress (both localStorage and database)
 export async function saveProgress(subject: string, level: number, stars: number, completed: boolean, userId?: string) {
   // Always save to localStorage for offline access
-  const key = `progress_${subject}`
-  const existing = localStorage.getItem(key)
-  const progress = existing ? JSON.parse(existing) : {}
+  let progress: any = {}
+  try {
+    const existing = localStorage.getItem(key)
+    progress = existing ? JSON.parse(existing) : {}
+  } catch (e) {
+    progress = {}
+  }
   
   progress[level] = {
     stars: Math.max(progress[level]?.stars || 0, stars),
