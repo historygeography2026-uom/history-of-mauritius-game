@@ -132,7 +132,7 @@ export default function PracticeImportModal({ open, onClose, onImportComplete }:
         onImportComplete()
       }
     } catch (err) {
-      setImportResult({ inserted: 0, errors: 1 })
+      setImportResult({ inserted: 0, errors: 1, unitStats: {} })
     } finally {
       setImporting(false)
     }
@@ -209,9 +209,9 @@ export default function PracticeImportModal({ open, onClose, onImportComplete }:
                 <div className="mt-4 border-t pt-3 border-green-200/50">
                   <h3 className="font-semibold text-green-900 mb-2 flex items-center gap-1"><LayoutList className="w-4 h-4" /> Summary by Unit</h3>
                   <div className="grid gap-2 sm:grid-cols-2">
-                    {Object.entries(importResult.unitStats).map(([unitName, stats]) => (
-                      <div key={unitName} className="bg-white/60 p-2 rounded border border-green-100 shadow-sm">
-                        <div className="font-bold text-gray-700">{unitName}</div>
+                    {Object.entries(importResult.unitStats || {}).map(([unit, stats]) => (
+                      <div key={unit} className="bg-white/60 p-2 rounded border border-green-100 shadow-sm">
+                        <div className="font-bold text-gray-700">{unit}</div>
                         <div className="text-xs mt-1 flex justify-between">
                           <span className="text-emerald-600 font-medium">{stats.success} Success</span>
                           {stats.errors.length > 0 && <span className="text-red-500 font-medium">{stats.errors.length} Failed</span>}
