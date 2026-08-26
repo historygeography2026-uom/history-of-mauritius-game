@@ -132,9 +132,18 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // Validate unit if provided
-    if (unit_id) {
-      const unitResult = await pool.query("SELECT id FROM practice_units WHERE id = $1", [unit_id])
+    // Resolve unit_id from unit_no if not provided directly
+    let resolvedUnitId = unit_id || null
+    if (!resolvedUnitId && body.unit_no) {
+      const unitLookup = await pool.query("SELECT id FROM practice_units WHERE unit_no = $1 LIMIT 1", [body.unit_no])
+      if (unitLookup.rows.length > 0) {
+        resolvedUnitId = unitLookup.rows[0].id
+      }
+    }
+
+    // Validate unit if resolved
+    if (resolvedUnitId) {
+      const unitResult = await pool.query("SELECT id FROM practice_units WHERE id = $1", [resolvedUnitId])
       if (unitResult.rows.length === 0) {
         return NextResponse.json({ error: "Invalid unit_id" }, { status: 400 })
       }
@@ -148,12 +157,12 @@ export async function PUT(request: NextRequest) {
          instruction = COALESCE($4, instruction),
          image_url = COALESCE($5, image_url),
          answer_data = COALESCE($6, answer_data),
-         is_active = COALESCE($7, is_active) = COALESCE($8),
+         is_active = COALESCE($7, is_active),
          updated_at = NOW()
-       WHERE id = $9
+       WHERE id = $8
        RETURNING *`,
       [
-        unit_id || null,
+        resolvedUnitId,
         question_type || null,
         question_text?.trim() || null,
         instruction !== undefined ? instruction : null,
