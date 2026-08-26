@@ -156,9 +156,10 @@ export async function POST(req: NextRequest) {
 
       try {
         // Resolve unit number
-        let unitNum: number | null = null
-        if (q.unit !== undefined && q.unit !== null && String(q.unit).trim() !== "") {
-          const rawUnit = String(q.unit).trim()
+        let unitNum: number = 1
+        const rawUnitVal = q.unit ?? (q as any).Unit ?? (q as any).unitno ?? (q as any).unit_no ?? (q as any)["Unit No"] ?? (q as any)["Unit Number"] ?? (q as any).theme
+        if (rawUnitVal !== undefined && rawUnitVal !== null && String(rawUnitVal).trim() !== "") {
+          const rawUnit = String(rawUnitVal).trim()
           const g6Match = rawUnit.match(/grade\s*6\s*unit\s*(\d+)/i)
           const g5Match = rawUnit.match(/grade\s*5\s*unit\s*(\d+)/i)
           if (g6Match) {
@@ -177,18 +178,8 @@ export async function POST(req: NextRequest) {
           unitNum = subj.includes("geo") ? Math.min(2 + lvl, 5) : Math.min(lvl, 5)
         }
 
-        if (!unitNum || !Number.isInteger(unitNum) || unitNum < 1 || unitNum > 10) {
-          const errMsg = createErrorMessage(
-            rowNum,
-            questionPreview,
-            "unit",
-            `Unit "${q.unit ?? q.level ?? ""}" is invalid`,
-            "Enter a unit number between 1 and 10."
-          )
-          errors.push(errMsg)
-          addUnitError(q.unit, errMsg)
-          errorCount++
-          continue
+        if (unitNum < 1 || unitNum > 10) {
+          unitNum = 1
         }
 
         // Query database for unit ID

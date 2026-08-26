@@ -325,6 +325,32 @@ export const parseExcelFile = async (file: File): Promise<ExcelQuestion[]> => {
       return
     }
 
+    // Extract unit from sheet name if sheet is named e.g. "Unit 1", "Grade 5 Unit 2", "Unit 6"
+    const sheetNameLower = worksheet.name.toLowerCase()
+    let sheetUnit: number | null = null
+    const g6Match = sheetNameLower.match(/grade\s*6\s*unit\s*(\d+)/) || sheetNameLower.match(/g6\s*u\s*(\d+)/)
+    if (g6Match) {
+      sheetUnit = 5 + parseInt(g6Match[1], 10)
+    } else {
+      const g5Match = sheetNameLower.match(/grade\s*5\s*unit\s*(\d+)/) || sheetNameLower.match(/g5\s*u\s*(\d+)/)
+      if (g5Match) {
+        sheetUnit = parseInt(g5Match[1], 10)
+      } else {
+        const uMatch = sheetNameLower.match(/unit\s*(\d+)/)
+        if (uMatch) {
+          sheetUnit = parseInt(uMatch[1], 10)
+        }
+      }
+    }
+
+    // Extract question type from sheet name if sheet is named e.g. "MCQ", "Matching", "Fill", "Reorder", "TrueFalse"
+    let sheetType: string | null = null
+    if (sheetNameLower.includes("mcq") || sheetNameLower.includes("multiple")) sheetType = "mcq"
+    else if (sheetNameLower.includes("match")) sheetType = "matching"
+    else if (sheetNameLower.includes("fill") || sheetNameLower.includes("blank")) sheetType = "fill"
+    else if (sheetNameLower.includes("order") || sheetNameLower.includes("reorder")) sheetType = "reorder"
+    else if (sheetNameLower.includes("true") || sheetNameLower.includes("tf")) sheetType = "truefalse"
+
     const headerCount = Math.max(worksheet.columnCount, worksheet.getRow(1).cellCount)
     const headers = Array.from({ length: headerCount }, (_, index) => {
       const headerValue = normalizeCellValue(worksheet.getRow(1).getCell(index + 1).value)
@@ -347,10 +373,25 @@ export const parseExcelFile = async (file: File): Promise<ExcelQuestion[]> => {
         }
 
         rowData[header] = cellValue
+
+        // Normalize header to canonical lowercase alphanumeric key (e.g. "Unit No" -> "unitno", "Option A" -> "optiona")
+        const canonKey = header.toLowerCase().replace(/[^a-z0-9]/g, "")
+        if (canonKey && !(canonKey in rowData)) {
+          rowData[canonKey] = cellValue
+        }
+
         hasValues = true
       })
 
       if (hasValues) {
+        // Fallback type and unit from worksheet name if not present in row data
+        if (sheetType && !rowData.type && !rowData.question_type && !rowData.questiontype) {
+          rowData.type = sheetType
+        }
+        if (sheetUnit && !rowData.unit && !rowData.unitno && !rowData.unit_no && !rowData.level) {
+          rowData.unit = sheetUnit
+        }
+
         allQuestions.push(rowData as unknown as ExcelQuestion)
       }
     }

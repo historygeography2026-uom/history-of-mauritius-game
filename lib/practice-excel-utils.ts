@@ -392,21 +392,23 @@ export function normalizeQuestionType(rawType: any): PracticeExcelQuestion["type
  * - Strings like "Unit 1", "Grade 5 Unit 2", "G6U3"
  * - Fallback to subject + level if using game questions template
  */
-export function parseUnitNumber(q: any): number | null {
-  // 1. Direct unit property
-  if (q.unit !== undefined && q.unit !== null && q.unit !== "") {
-    const rawUnit = String(q.unit).trim()
-    const g6Match = rawUnit.match(/grade\s*6\s*unit\s*(\d+)/i) || rawUnit.match(/g6\s*u\s*(\d+)/i)
+export function parseUnitNumber(q: any): number {
+  // 1. Direct unit property or common aliases
+  const rawUnit = q.unit ?? q.Unit ?? q.UNIT ?? q.unitno ?? q.unit_no ?? q["Unit No"] ?? q["Unit Number"] ?? q["Unit #"] ?? q.level ?? q.Level ?? q.LEVEL ?? q.theme ?? q.Theme
+
+  if (rawUnit !== undefined && rawUnit !== null && String(rawUnit).trim() !== "") {
+    const rawStr = String(rawUnit).trim()
+    const g6Match = rawStr.match(/grade\s*6\s*unit\s*(\d+)/i) || rawStr.match(/g6\s*u\s*(\d+)/i)
     if (g6Match) {
       const u = parseInt(g6Match[1], 10)
       if (u >= 1 && u <= 5) return 5 + u
     }
-    const g5Match = rawUnit.match(/grade\s*5\s*unit\s*(\d+)/i) || rawUnit.match(/g5\s*u\s*(\d+)/i)
+    const g5Match = rawStr.match(/grade\s*5\s*unit\s*(\d+)/i) || rawStr.match(/g5\s*u\s*(\d+)/i)
     if (g5Match) {
       const u = parseInt(g5Match[1], 10)
       if (u >= 1 && u <= 5) return u
     }
-    const numMatch = rawUnit.match(/\d+/)
+    const numMatch = rawStr.match(/\d+/)
     if (numMatch) {
       const val = parseInt(numMatch[0], 10)
       if (val >= 1 && val <= 10) return val
@@ -416,7 +418,7 @@ export function parseUnitNumber(q: any): number | null {
   // 2. Separate Grade and Unit columns
   if (q.grade !== undefined && q.grade !== null) {
     const gradeNum = parseInt(String(q.grade).replace(/\D/g, ""), 10)
-    const unitPart = parseInt(String(q.unit || "1").replace(/\D/g, ""), 10) || 1
+    const unitPart = parseInt(String(q.unit || q.Unit || "1").replace(/\D/g, ""), 10) || 1
     if (gradeNum === 6) {
       return 5 + Math.min(Math.max(unitPart, 1), 5)
     }
@@ -425,20 +427,17 @@ export function parseUnitNumber(q: any): number | null {
     }
   }
 
-  // 3. Fallback: If using the Game Questions template (has subject & level)
-  if (q.level !== undefined && q.level !== null && q.level !== "") {
-    const levelNum = parseInt(String(q.level).replace(/\D/g, ""), 10) || 1
-    const subject = toStr(q.subject).toLowerCase()
-    if (subject.includes("geo")) {
-      // Geography maps to units 3, 4, 5
-      return Math.min(2 + levelNum, 5)
-    } else {
-      // History maps to units 1, 2, 3
-      return Math.min(levelNum, 5)
-    }
+  // 3. Subject + Level fallback
+  const subject = toStr(q.subject || q.Subject).toLowerCase()
+  const levelNum = parseInt(String(q.level || q.Level || "1").replace(/\D/g, ""), 10) || 1
+  if (subject.includes("geo")) {
+    return Math.min(2 + levelNum, 5)
+  } else if (subject.includes("his")) {
+    return Math.min(levelNum, 5)
   }
 
-  return null
+  // Safe fallback to Unit 1
+  return 1
 }
 
 /**
@@ -456,12 +455,13 @@ export const validatePracticeExcelQuestions = (
   for (let i = 0; i < questions.length; i++) {
     const q = questions[i]
     const rowNum = i + 2 // Excel row (1-indexed + header)
-    const questionPreview = toStr(q.question).substring(0, 40) || "[Empty Question]"
+    const rawQuestion = q.question ?? q.Question ?? q.QUESTION ?? q.question_text ?? q.prompt ?? q.Prompt ?? ""
+    const questionPreview = toStr(rawQuestion).substring(0, 40) || "[Empty Question]"
     let hasError = false
 
     // Validate and resolve unit
     const unitNum = parseUnitNumber(q)
-    if (unitNum === null || unitNum < 1 || unitNum > MAX_UNIT) {
+    if (unitNum < 1 || unitNum > MAX_UNIT) {
       errors.push({
         row: rowNum,
         field: "unit",
@@ -472,19 +472,20 @@ export const validatePracticeExcelQuestions = (
     }
 
     // Validate and normalize question type
-    const normalizedType = normalizeQuestionType(q.type)
+    const rawType = q.type ?? q.Type ?? q.TYPE ?? q.question_type ?? q.questiontype ?? ""
+    const normalizedType = normalizeQuestionType(rawType)
     if (!normalizedType) {
       errors.push({
         row: rowNum,
         field: "type",
-        message: `Type must be one of: ${VALID_TYPES.join(", ")}. Got: "${q.type}"`,
+        message: `Type must be one of: ${VALID_TYPES.join(", ")}. Got: "${rawType}"`,
         question: questionPreview,
       })
       hasError = true
     }
 
     // Validate question text
-    if (isEmpty(q.question)) {
+    if (isEmpty(rawQuestion)) {
       errors.push({
         row: rowNum,
         field: "question",
@@ -495,11 +496,12 @@ export const validatePracticeExcelQuestions = (
     }
 
     // Validate imageUrl if present
-    if (!isEmpty(q.imageUrl) && !isAllowedImageUrl(q.imageUrl)) {
+    const rawImage = q.imageUrl ?? q.image ?? q.Image ?? q.ImageUrl ?? q.image_url ?? ""
+    if (!isEmpty(rawImage) && !isAllowedImageUrl(rawImage)) {
       warnings.push({
         row: rowNum,
         field: "imageUrl",
-        message: `External image URL will be stored as-is: "${toStr(q.imageUrl).substring(0, 60)}"`,
+        message: `External image URL will be stored as-is: "${toStr(rawImage).substring(0, 60)}"`,
         question: questionPreview,
       })
     }
@@ -510,17 +512,17 @@ export const validatePracticeExcelQuestions = (
 
     if (!hasError && normalizedType) {
       if (normalizedType === "mcq") {
-        const optA = toStr(q.optionA || q.option1 || q.optA)
-        const optB = toStr(q.optionB || q.option2 || q.optB)
-        const optC = toStr(q.optionC || q.option3 || q.optC)
-        const optD = toStr(q.optionD || q.option4 || q.optD)
+        const optA = toStr(q.optionA ?? q.optiona ?? q.OptionA ?? q.option1 ?? q.optA ?? q["Option A"] ?? q["option A"])
+        const optB = toStr(q.optionB ?? q.optionb ?? q.OptionB ?? q.option2 ?? q.optB ?? q["Option B"] ?? q["option B"])
+        const optC = toStr(q.optionC ?? q.optionc ?? q.OptionC ?? q.option3 ?? q.optC ?? q["Option C"] ?? q["option C"])
+        const optD = toStr(q.optionD ?? q.optiond ?? q.OptionD ?? q.option4 ?? q.optD ?? q["Option D"] ?? q["option D"])
 
         if (isEmpty(optA) || isEmpty(optB)) {
           errors.push({ row: rowNum, field: "options", message: "MCQ requires at least optionA and optionB", question: questionPreview })
           hasError = true
         }
 
-        const rawCorrect = toStr(q.correctAnswer || q.answer || q.correct)
+        const rawCorrect = toStr(q.correctAnswer ?? q.correctanswer ?? q.CorrectAnswer ?? q.answer ?? q.Answer ?? q.correct ?? q.Correct ?? q["Correct Answer"])
         if (isEmpty(rawCorrect)) {
           errors.push({ row: rowNum, field: "correctAnswer", message: "MCQ requires a correctAnswer", question: questionPreview })
           hasError = true
@@ -553,69 +555,70 @@ export const validatePracticeExcelQuestions = (
           }
         }
       } else if (normalizedType === "matching") {
-        const l1 = toStr(q.leftItem1 || q.left1 || q.left_item_1)
-        const r1 = toStr(q.rightItem1 || q.right1 || q.right_item_1)
-        const l2 = toStr(q.leftItem2 || q.left2 || q.left_item_2)
-        const r2 = toStr(q.rightItem2 || q.right2 || q.right_item_2)
+        const l1 = toStr(q.leftItem1 ?? q.leftitem1 ?? q["Left Item 1"] ?? q.left1 ?? q.left_item_1)
+        const r1 = toStr(q.rightItem1 ?? q.rightitem1 ?? q["Right Item 1"] ?? q.right1 ?? q.right_item_1)
+        const l2 = toStr(q.leftItem2 ?? q.leftitem2 ?? q["Left Item 2"] ?? q.left2 ?? q.left_item_2)
+        const r2 = toStr(q.rightItem2 ?? q.rightitem2 ?? q["Right Item 2"] ?? q.right2 ?? q.right_item_2)
         if (isEmpty(l1) || isEmpty(r1) || isEmpty(l2) || isEmpty(r2)) {
           errors.push({ row: rowNum, field: "pairs", message: "Matching requires at least 2 pairs (leftItem1/rightItem1 & leftItem2/rightItem2)", question: questionPreview })
           hasError = true
         }
       } else if (normalizedType === "fill") {
-        const ans = toStr(q.answer || q.correctAnswer || q.missingWord)
+        const ans = toStr(q.answer ?? q.Answer ?? q.correctAnswer ?? q.correctanswer ?? q.missingWord)
         if (isEmpty(ans)) {
           errors.push({ row: rowNum, field: "answer", message: "Fill questions require an answer", question: questionPreview })
           hasError = true
         }
       } else if (normalizedType === "reorder") {
-        const s1 = toStr(q.step1 || q.item1)
-        const s2 = toStr(q.step2 || q.item2)
+        const s1 = toStr(q.step1 ?? q.step1 ?? q["Step 1"] ?? q.item1 ?? q["Item 1"])
+        const s2 = toStr(q.step2 ?? q.step2 ?? q["Step 2"] ?? q.item2 ?? q["Item 2"])
         if (isEmpty(s1) || isEmpty(s2)) {
           errors.push({ row: rowNum, field: "steps", message: "Reorder requires at least 2 steps (step1, step2)", question: questionPreview })
           hasError = true
         }
       } else if (normalizedType === "truefalse") {
-        const rawTf = toStr(q.isTrue || q.answer || q.correctAnswer).toLowerCase()
+        const rawTf = toStr(q.isTrue ?? q.istrue ?? q.IsTrue ?? q["Is True"] ?? q.answer ?? q.Answer ?? q.correctAnswer).toLowerCase()
         if (rawTf === "true" || rawTf === "t" || rawTf === "1" || rawTf === "yes" || rawTf === "vrai") {
           resolvedIsTrue = "True"
         } else if (rawTf === "false" || rawTf === "f" || rawTf === "0" || rawTf === "no" || rawTf === "faux") {
           resolvedIsTrue = "False"
         } else {
-          errors.push({ row: rowNum, field: "isTrue", message: `isTrue must be "True" or "False". Got: "${q.isTrue}"`, question: questionPreview })
+          errors.push({ row: rowNum, field: "isTrue", message: `isTrue must be "True" or "False". Got: "${rawTf}"`, question: questionPreview })
           hasError = true
         }
       }
     }
 
-    if (hasError || !normalizedType || unitNum === null) {
+    if (hasError || !normalizedType) {
       skippedCount++
     } else {
+      const rawInstruction = q.instruction ?? q.Instruction ?? q.instructions ?? q.Instructions ?? ""
       validQuestions.push({
         unit: unitNum,
         type: normalizedType,
-        question: toStr(q.question),
-        instruction: toStr(q.instruction) || undefined,
-        imageUrl: toStr(q.imageUrl) || undefined,
-        timer: Number(q.timer) || 30,
-        optionA: toStr(q.optionA || q.option1 || q.optA) || undefined,
-        optionB: toStr(q.optionB || q.option2 || q.optB) || undefined,
-        optionC: toStr(q.optionC || q.option3 || q.optC) || undefined,
-        optionD: toStr(q.optionD || q.option4 || q.optD) || undefined,
-        correctAnswer: resolvedCorrectAnswer || toStr(q.correctAnswer) || undefined,
-        leftItem1: toStr(q.leftItem1 || q.left1) || undefined,
-        rightItem1: toStr(q.rightItem1 || q.right1) || undefined,
-        leftItem2: toStr(q.leftItem2 || q.left2) || undefined,
-        rightItem2: toStr(q.rightItem2 || q.right2) || undefined,
-        leftItem3: toStr(q.leftItem3 || q.left3) || undefined,
-        rightItem3: toStr(q.rightItem3 || q.right3) || undefined,
-        leftItem4: toStr(q.leftItem4 || q.left4) || undefined,
-        rightItem4: toStr(q.rightItem4 || q.right4) || undefined,
-        answer: toStr(q.answer || q.correctAnswer) || undefined,
-        step1: toStr(q.step1 || q.item1) || undefined,
-        step2: toStr(q.step2 || q.item2) || undefined,
-        step3: toStr(q.step3 || q.item3) || undefined,
-        step4: toStr(q.step4 || q.item4) || undefined,
-        isTrue: resolvedIsTrue || toStr(q.isTrue) || undefined,
+        question: toStr(rawQuestion),
+        instruction: toStr(rawInstruction) || undefined,
+        imageUrl: toStr(rawImage) || undefined,
+        timer: Number(q.timer ?? q.Timer) || 30,
+        optionA: toStr(q.optionA ?? q.optiona ?? q.OptionA ?? q.option1 ?? q.optA) || undefined,
+        optionB: toStr(q.optionB ?? q.optionb ?? q.OptionB ?? q.option2 ?? q.optB) || undefined,
+        optionC: toStr(q.optionC ?? q.optionc ?? q.OptionC ?? q.option3 ?? q.optC) || undefined,
+        optionD: toStr(q.optionD ?? q.optiond ?? q.OptionD ?? q.option4 ?? q.optD) || undefined,
+        correctAnswer: resolvedCorrectAnswer || toStr(q.correctAnswer ?? q.correctanswer ?? q.answer) || undefined,
+        leftItem1: toStr(q.leftItem1 ?? q.leftitem1 ?? q.left1) || undefined,
+        rightItem1: toStr(q.rightItem1 ?? q.rightitem1 ?? q.right1) || undefined,
+        leftItem2: toStr(q.leftItem2 ?? q.leftitem2 ?? q.left2) || undefined,
+        rightItem2: toStr(q.rightItem2 ?? q.rightitem2 ?? q.right2) || undefined,
+        leftItem3: toStr(q.leftItem3 ?? q.leftitem3 ?? q.left3) || undefined,
+        rightItem3: toStr(q.rightItem3 ?? q.rightitem3 ?? q.right3) || undefined,
+        leftItem4: toStr(q.leftItem4 ?? q.leftitem4 ?? q.left4) || undefined,
+        rightItem4: toStr(q.rightItem4 ?? q.rightitem4 ?? q.right4) || undefined,
+        answer: toStr(q.answer ?? q.Answer ?? q.correctAnswer) || undefined,
+        step1: toStr(q.step1 ?? q.step1 ?? q.item1) || undefined,
+        step2: toStr(q.step2 ?? q.step2 ?? q.item2) || undefined,
+        step3: toStr(q.step3 ?? q.step3 ?? q.item3) || undefined,
+        step4: toStr(q.step4 ?? q.step4 ?? q.item4) || undefined,
+        isTrue: resolvedIsTrue || toStr(q.isTrue ?? q.istrue) || undefined,
       })
     }
   }
