@@ -72,9 +72,9 @@ const GamePage = () => {
   const { questions, isLoading: qLoading, error: qError } = useQuestions(subject, level)
 
   // PERF FIX: Track all pending timeouts/intervals to clear on unmount
-  const pendingTimeoutsRef = useRef<NodeJS.Timeout[]>([])
-  const pendingIntervalsRef = useRef<NodeJS.Timer[]>([])
-  const timerIntervalRef = useRef<NodeJS.Timer | null>(null) // Store main timer for direct access
+  const pendingTimeoutsRef = useRef<number[]>([])
+  const pendingIntervalsRef = useRef<number[]>([])
+  const timerIntervalRef = useRef<number | null>(null) // Store main timer for direct access
   const abortControllerRef = useRef<AbortController | null>(null) // For canceling fetch requests
 
   // PERF FIX: Listen for browser back button and immediate cleanup
@@ -174,7 +174,7 @@ const GamePage = () => {
 
       // For levels 2+ check if previous level is completed
       const previousLevel = levelNum - 1
-      let progress = {}
+      let progress: Record<string | number, any> = {}
 
       // Try to load from database if authenticated
       if (session?.user?.id) {
@@ -307,7 +307,7 @@ const GamePage = () => {
 
     // Use local variable to drive countdown — avoids putting levelTimeLeft in deps
     let remaining = totalTime
-    const timer = setInterval(() => {
+    const timer = window.setInterval(() => {
       // CRITICAL: Check unmounting flag FIRST - prevents any state updates during unmount
       if (isUnmountingRef.current || !isMountedRef.current) {
         clearInterval(timer)
@@ -348,7 +348,7 @@ const GamePage = () => {
   useEffect(() => {
     if (isUnmountingRef.current || !isMountedRef.current || !showTimeoutScreen || !levelTimedOut) return
 
-    const timeout = setTimeout(() => {
+    const timeout = window.setTimeout(() => {
       if (isUnmountingRef.current || !isMountedRef.current) return
       setShowTimeoutScreen(false)
       setAllCompleted(true) // End the exercise, points will be recorded
@@ -403,7 +403,7 @@ const GamePage = () => {
 
     if (currentQuestionIndex < mixedQuestions.length - 1) {
       // Auto-advance to next question after showing result (2 seconds)
-      const timeout = setTimeout(
+      const timeout = window.setTimeout(
         () => {
           if (isUnmountingRef.current || !isMountedRef.current) return
           

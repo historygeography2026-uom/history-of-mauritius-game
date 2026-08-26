@@ -2,12 +2,8 @@
  * Practice Mode — Excel Utilities
  *
  * Generates, parses, and validates practice-mode Excel templates.
- * Adapts the existing gamified template format from lib/excel-utils.ts:
- *   - Replaces `subject` + `level` with a single `unit` column (integer 1–6)
- *   - Keeps `timer` column in template for familiarity but ignores it during import
- *   - All other columns (question, type, options, etc.) are identical
- *
- * Reuses parseExcelFile() from excel-utils.ts since it is column-agnostic.
+ * Populated with realistic dummy questions for all 5 question types across Grade 5 and Grade 6.
+ * Supports both Practice format (unit 1-10) and Game format (subject/level).
  */
 
 import ExcelJS from "exceljs"
@@ -19,7 +15,7 @@ export interface PracticeExcelQuestion {
   question: string
   instruction?: string
   imageUrl?: string
-  timer?: number // kept for compatibility, ignored on import
+  timer?: number // kept for compatibility, optional
   // MCQ fields
   optionA?: string
   optionB?: string
@@ -74,85 +70,141 @@ const addWorksheet = (
 
 /**
  * Generate and download a practice-mode Excel template.
- * Same structure as the gamified template but with `unit` instead of `subject`+`level`.
+ * Populated with realistic, curriculum-aligned dummy questions for all 5 question types across Grade 5 and Grade 6.
  */
 export const generatePracticeExcelTemplate = async () => {
   const workbook = new ExcelJS.Workbook()
 
   // Instructions Sheet
   const instructionsData = [
-    { Instructions: "📚 Practice Mode — Excel Import Guide" },
+    { Instructions: "📚 Mauritius History & Geography — Practice Mode Excel Import Guide" },
     { Instructions: "" },
     { Instructions: "HOW TO USE THIS TEMPLATE:" },
-    { Instructions: "1. Each sheet contains sample questions for a different question type" },
-    { Instructions: "2. Delete the sample questions and add your own" },
-    { Instructions: "3. Keep the column headers exactly as they are" },
-    { Instructions: "4. Save the file and upload it back to the admin panel" },
+    { Instructions: "1. Each sheet contains sample/dummy questions for a different question type (MCQ, Matching, Fill, Reorder, TrueFalse)." },
+    { Instructions: "2. You can edit or delete the sample questions and add your own new questions." },
+    { Instructions: "3. Keep the column headers exactly as they are in each sheet." },
+    { Instructions: "4. Save the file and upload it in the Admin Practice Questions -> Import Excel modal." },
+    { Instructions: "" },
+    { Instructions: "UNIT NUMBERING GUIDE:" },
+    { Instructions: "• Grade 5 Units: Unit 1, 2, 3, 4, 5" },
+    { Instructions: "• Grade 6 Units: Unit 6 (Grade 6 Unit 1), Unit 7 (Grade 6 Unit 2), Unit 8 (Grade 6 Unit 3), Unit 9 (Grade 6 Unit 4), Unit 10 (Grade 6 Unit 5)" },
+    { Instructions: "• Note: You can enter numbers 1 to 10 directly in the 'unit' column." },
     { Instructions: "" },
     { Instructions: "REQUIRED FIELDS FOR ALL QUESTIONS:" },
-    { Instructions: "• unit: Unit number (1 to 10) — 1-5 for Grade 5 (Units 1-5), 6-10 for Grade 6 (Units 1-5)" },
+    { Instructions: "• unit: Unit number (1 to 10)" },
     { Instructions: "• type: 'mcq', 'matching', 'fill', 'reorder', or 'truefalse'" },
-    { Instructions: "• question: The question text" },
+    { Instructions: "• question: The question text / prompt" },
     { Instructions: "" },
     { Instructions: "OPTIONAL FIELDS:" },
     { Instructions: "• instruction: Custom instruction text displayed to the student" },
-    { Instructions: "• imageUrl: Optional local uploaded image path such as /api/images/your-file.jpg" },
-    { Instructions: "• timer: (IGNORED — practice mode has no timer, kept for template compatibility)" },
+    { Instructions: "• imageUrl: Upload image via Admin panel first, then paste the returned /api/images/... path" },
+    { Instructions: "• timer: Time in seconds (optional, default 30)" },
     { Instructions: "" },
     { Instructions: "QUESTION TYPE SPECIFIC FIELDS:" },
-    { Instructions: "MCQ: optionA, optionB, optionC, optionD, correctAnswer (must match one option exactly)" },
-    { Instructions: "Matching: leftItem1-4, rightItem1-4 (pairs to match)" },
-    { Instructions: "Fill: answer (the word that fills the blank, use _______ in question)" },
-    { Instructions: "Reorder: step1, step2, step3, step4 (in correct chronological order)" },
-    { Instructions: "TrueFalse: isTrue ('True' or 'False')" },
-    { Instructions: "" },
-    { Instructions: "TIPS:" },
-    { Instructions: "• For Fill questions, use _______ (underscores) to mark the blank" },
-    { Instructions: "• You can import up to ~200 questions per unit, uploaded in batches" },
-    { Instructions: "• Each play session randomly selects 20 questions from the unit pool" },
+    { Instructions: "• MCQ: optionA, optionB, optionC, optionD, correctAnswer (e.g. 'Port Louis' or 'B')" },
+    { Instructions: "• Matching: leftItem1-4, rightItem1-4 (pairs that match)" },
+    { Instructions: "• Fill: answer (the missing word, use _______ in question)" },
+    { Instructions: "• Reorder: step1, step2, step3, step4 (in correct chronological/sequential order)" },
+    { Instructions: "• TrueFalse: isTrue ('True' or 'False')" },
   ]
   addWorksheet(workbook, "Instructions", instructionsData, [80])
 
-  // MCQ Template
+  // MCQ Template (Sample questions for Grade 5 & Grade 6)
   const mcqData = [
     {
       unit: 1,
       type: "mcq",
-      question: "What is the capital of Mauritius?",
+      question: "What is the capital city of Mauritius?",
+      instruction: "Select the correct city from the options below",
       imageUrl: "",
       timer: 30,
-      optionA: "Port Louis",
-      optionB: "Curepipe",
+      optionA: "Curepipe",
+      optionB: "Port Louis",
       optionC: "Rose Hill",
       optionD: "Vacoas",
       correctAnswer: "Port Louis",
     },
+    {
+      unit: 1,
+      type: "mcq",
+      question: "In which year did Mauritius gain its independence?",
+      instruction: "Choose the correct year",
+      imageUrl: "",
+      timer: 30,
+      optionA: "1965",
+      optionB: "1968",
+      optionC: "1972",
+      optionD: "1992",
+      correctAnswer: "1968",
+    },
+    {
+      unit: 6,
+      type: "mcq",
+      question: "Who was the famous French Governor who built the port and developed Port Louis?",
+      instruction: "Select the correct historical figure",
+      imageUrl: "",
+      timer: 30,
+      optionA: "Mahé de Labourdonnais",
+      optionB: "Pierre Poivre",
+      optionC: "Charles Decaen",
+      optionD: "Sir John Pope Hennessy",
+      correctAnswer: "Mahé de Labourdonnais",
+    },
+    {
+      unit: 7,
+      type: "mcq",
+      question: "Which mountain in the south-west of Mauritius is a UNESCO World Heritage site representing the struggle for freedom from slavery?",
+      instruction: "Select the correct mountain name",
+      imageUrl: "",
+      timer: 30,
+      optionA: "Pieter Both",
+      optionB: "Le Morne Brabant",
+      optionC: "Corps de Garde",
+      optionD: "Lion Mountain",
+      correctAnswer: "Le Morne Brabant",
+    },
   ]
   addWorksheet(workbook, "MCQ", mcqData as Array<Record<string, string | number>>, [
-    6, 8, 50, 40, 6, 20, 20, 20, 20, 20,
+    8, 10, 45, 30, 25, 8, 20, 20, 20, 20, 20,
   ])
 
-  // Matching Template
+  // Matching Template (Sample questions)
   const matchingData = [
     {
       unit: 1,
       type: "matching",
-      question: "Match the following pairs",
-      instruction: "Match each item on the left with its description on the right",
+      question: "Match each Mauritian symbol and concept with its correct description",
+      instruction: "Match each item on the left with the correct description on the right",
       imageUrl: "",
       timer: 45,
       leftItem1: "Dodo",
-      rightItem1: "Extinct bird",
+      rightItem1: "Extinct flightless bird",
       leftItem2: "Port Louis",
-      rightItem2: "Capital city",
-      leftItem3: "1968",
-      rightItem3: "Independence year",
+      rightItem2: "Capital city and main port",
+      leftItem3: "Trochetia Boutoniana",
+      rightItem3: "National flower of Mauritius",
       leftItem4: "Sega",
-      rightItem4: "Traditional dance",
+      rightItem4: "Traditional folk music and dance",
+    },
+    {
+      unit: 6,
+      type: "matching",
+      question: "Match the key historical personalities with their historical achievements",
+      instruction: "Match each leader with their contribution",
+      imageUrl: "",
+      timer: 45,
+      leftItem1: "Mahé de Labourdonnais",
+      rightItem1: "Developed Port Louis as a naval base",
+      leftItem2: "Pierre Poivre",
+      rightItem2: "Created the botanical garden at Pamplemousses",
+      leftItem3: "Emmanuel Anquetil",
+      rightItem3: "Pioneered the trade union movement",
+      leftItem4: "Sir Seewoosagur Ramgoolam",
+      rightItem4: "First Prime Minister of independent Mauritius",
     },
   ]
   addWorksheet(workbook, "Matching", matchingData as Array<Record<string, string | number>>, [
-    6, 10, 40, 30, 10, 6, 20, 20, 20, 20, 20, 20, 20, 20,
+    8, 12, 45, 30, 25, 8, 25, 25, 25, 25, 25, 25, 25, 25,
   ])
 
   // Fill in the Blanks Template
@@ -160,15 +212,42 @@ export const generatePracticeExcelTemplate = async () => {
     {
       unit: 2,
       type: "fill",
-      question: "The Dodo bird is _______ and no longer exists.",
-      instruction: "Type the missing word to complete the sentence",
+      question: "The Dodo bird is _______ and no longer lives on Earth.",
+      instruction: "Type the missing word into the blank space",
       imageUrl: "",
       timer: 30,
       answer: "extinct",
     },
+    {
+      unit: 4,
+      type: "fill",
+      question: "Mauritius is an island located in the _______ Ocean.",
+      instruction: "Fill in the missing ocean name",
+      imageUrl: "",
+      timer: 30,
+      answer: "Indian",
+    },
+    {
+      unit: 6,
+      type: "fill",
+      question: "In 1810, the _______ captured Isle de France from the French.",
+      instruction: "Type the nationality of the conquering power",
+      imageUrl: "",
+      timer: 30,
+      answer: "British",
+    },
+    {
+      unit: 9,
+      type: "fill",
+      question: "The abolition of slavery in Mauritius took place in the year _______.",
+      instruction: "Type the year slavery was officially abolished",
+      imageUrl: "",
+      timer: 30,
+      answer: "1835",
+    },
   ]
   addWorksheet(workbook, "Fill", fillData as Array<Record<string, string | number>>, [
-    6, 8, 50, 40, 6, 20,
+    8, 10, 50, 30, 25, 8, 20,
   ])
 
   // Reorder Template
@@ -176,18 +255,30 @@ export const generatePracticeExcelTemplate = async () => {
     {
       unit: 3,
       type: "reorder",
-      question: "Arrange the following events in chronological order",
-      instruction: "Put these historical events in order from earliest to latest",
+      question: "Arrange the following colonial periods of Mauritius in chronological order",
+      instruction: "Arrange the events from earliest to most recent",
       imageUrl: "",
       timer: 45,
-      step1: "1638 - Dutch settlement",
-      step2: "1715 - French arrival",
-      step3: "1810 - British conquest",
-      step4: "1968 - Independence",
+      step1: "1598 - Dutch arrival and naming of Mauritius",
+      step2: "1715 - French colonisation as Isle de France",
+      step3: "1810 - British conquest and administration",
+      step4: "1968 - Independence of Mauritius",
+    },
+    {
+      unit: 7,
+      type: "reorder",
+      question: "Put these key modern historical milestones in sequential order",
+      instruction: "Arrange the milestones from earliest to latest",
+      imageUrl: "",
+      timer: 45,
+      step1: "1835 - Abolition of slavery",
+      step2: "1834 to 1910 - Arrival of Indian indentured labourers",
+      step3: "1958 - Introduction of universal adult suffrage",
+      step4: "1992 - Mauritius became a Republic",
     },
   ]
   addWorksheet(workbook, "Reorder", reorderData as Array<Record<string, string | number>>, [
-    6, 10, 50, 40, 6, 30, 30, 30, 30,
+    8, 10, 50, 30, 25, 8, 35, 35, 35, 35,
   ])
 
   // True/False Template
@@ -195,14 +286,42 @@ export const generatePracticeExcelTemplate = async () => {
     {
       unit: 1,
       type: "truefalse",
-      question: "The Dodo bird still exists in Mauritius today.",
+      question: "The Dodo bird still lives in the forests of Mauritius today.",
+      instruction: "Decide whether the statement is True or False",
       imageUrl: "",
       timer: 25,
       isTrue: "False",
     },
+    {
+      unit: 4,
+      type: "truefalse",
+      question: "Mauritius is surrounded by coral reefs that protect its calm coastal lagoons.",
+      instruction: "Decide whether the statement is True or False",
+      imageUrl: "",
+      timer: 25,
+      isTrue: "True",
+    },
+    {
+      unit: 6,
+      type: "truefalse",
+      question: "Trou aux Cerfs in Curepipe is an active volcano that erupts regularly.",
+      instruction: "Decide whether the statement is True or False",
+      imageUrl: "",
+      timer: 25,
+      isTrue: "False",
+    },
+    {
+      unit: 8,
+      type: "truefalse",
+      question: "The Battle of Grand Port in August 1810 was a major French naval victory.",
+      instruction: "Decide whether the statement is True or False",
+      imageUrl: "",
+      timer: 25,
+      isTrue: "True",
+    },
   ]
   addWorksheet(workbook, "TrueFalse", trueFalseData as Array<Record<string, string | number>>, [
-    6, 12, 50, 40, 6, 8,
+    8, 12, 50, 30, 25, 8, 10,
   ])
 
   const excelBuffer = await workbook.xlsx.writeBuffer()
@@ -210,7 +329,7 @@ export const generatePracticeExcelTemplate = async () => {
   const url = URL.createObjectURL(blob)
   const link = document.createElement("a")
   link.href = url
-  link.download = "Practice_Mode_Import_Template.xlsx"
+  link.download = "Practice_Questions_Import_Template.xlsx"
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
@@ -255,8 +374,76 @@ const isAllowedImageUrl = (val: any): boolean => {
 }
 
 /**
+ * Helper to normalize question type aliases
+ */
+export function normalizeQuestionType(rawType: any): PracticeExcelQuestion["type"] | null {
+  const t = toStr(rawType).toLowerCase().replace(/[-_\s]+/g, "")
+  if (t === "mcq" || t === "multiplechoice" || t === "choice") return "mcq"
+  if (t === "matching" || t === "match" || t === "pairs") return "matching"
+  if (t === "fill" || t === "fillintheblanks" || t === "fillin" || t === "blank") return "fill"
+  if (t === "reorder" || t === "ordering" || t === "order" || t === "sequence") return "reorder"
+  if (t === "truefalse" || t === "tf" || t === "boolean") return "truefalse"
+  return null
+}
+
+/**
+ * Helper to parse unit number from various inputs:
+ * - Direct unit number (1 to 10)
+ * - Strings like "Unit 1", "Grade 5 Unit 2", "G6U3"
+ * - Fallback to subject + level if using game questions template
+ */
+export function parseUnitNumber(q: any): number | null {
+  // 1. Direct unit property
+  if (q.unit !== undefined && q.unit !== null && q.unit !== "") {
+    const rawUnit = String(q.unit).trim()
+    const g6Match = rawUnit.match(/grade\s*6\s*unit\s*(\d+)/i) || rawUnit.match(/g6\s*u\s*(\d+)/i)
+    if (g6Match) {
+      const u = parseInt(g6Match[1], 10)
+      if (u >= 1 && u <= 5) return 5 + u
+    }
+    const g5Match = rawUnit.match(/grade\s*5\s*unit\s*(\d+)/i) || rawUnit.match(/g5\s*u\s*(\d+)/i)
+    if (g5Match) {
+      const u = parseInt(g5Match[1], 10)
+      if (u >= 1 && u <= 5) return u
+    }
+    const numMatch = rawUnit.match(/\d+/)
+    if (numMatch) {
+      const val = parseInt(numMatch[0], 10)
+      if (val >= 1 && val <= 10) return val
+    }
+  }
+
+  // 2. Separate Grade and Unit columns
+  if (q.grade !== undefined && q.grade !== null) {
+    const gradeNum = parseInt(String(q.grade).replace(/\D/g, ""), 10)
+    const unitPart = parseInt(String(q.unit || "1").replace(/\D/g, ""), 10) || 1
+    if (gradeNum === 6) {
+      return 5 + Math.min(Math.max(unitPart, 1), 5)
+    }
+    if (gradeNum === 5) {
+      return Math.min(Math.max(unitPart, 1), 5)
+    }
+  }
+
+  // 3. Fallback: If using the Game Questions template (has subject & level)
+  if (q.level !== undefined && q.level !== null && q.level !== "") {
+    const levelNum = parseInt(String(q.level).replace(/\D/g, ""), 10) || 1
+    const subject = toStr(q.subject).toLowerCase()
+    if (subject.includes("geo")) {
+      // Geography maps to units 3, 4, 5
+      return Math.min(2 + levelNum, 5)
+    } else {
+      // History maps to units 1, 2, 3
+      return Math.min(levelNum, 5)
+    }
+  }
+
+  return null
+}
+
+/**
  * Validate practice-mode questions parsed from Excel.
- * Same validation rules as gamified, but checks `unit` instead of `subject`+`level`.
+ * Supports both Practice format (with `unit`) and Game format (with `subject`/`level`).
  */
 export const validatePracticeExcelQuestions = (
   questions: any[]
@@ -272,21 +459,21 @@ export const validatePracticeExcelQuestions = (
     const questionPreview = toStr(q.question).substring(0, 40) || "[Empty Question]"
     let hasError = false
 
-    // Validate unit
-    const unitNum = Number(q.unit)
-    if (!Number.isInteger(unitNum) || unitNum < 1 || unitNum > MAX_UNIT) {
+    // Validate and resolve unit
+    const unitNum = parseUnitNumber(q)
+    if (unitNum === null || unitNum < 1 || unitNum > MAX_UNIT) {
       errors.push({
         row: rowNum,
         field: "unit",
-        message: `Unit must be an integer between 1 and ${MAX_UNIT}. Got: "${q.unit}"`,
+        message: `Unit must be a valid integer between 1 and ${MAX_UNIT}. Got: "${q.unit ?? q.level ?? ""}"`,
         question: questionPreview,
       })
       hasError = true
     }
 
-    // Validate type
-    const type = toStr(q.type).toLowerCase()
-    if (!VALID_TYPES.includes(type)) {
+    // Validate and normalize question type
+    const normalizedType = normalizeQuestionType(q.type)
+    if (!normalizedType) {
       errors.push({
         row: rowNum,
         field: "type",
@@ -312,88 +499,123 @@ export const validatePracticeExcelQuestions = (
       warnings.push({
         row: rowNum,
         field: "imageUrl",
-        message: `External image URL will be kept as-is: "${toStr(q.imageUrl).substring(0, 60)}"`,
+        message: `External image URL will be stored as-is: "${toStr(q.imageUrl).substring(0, 60)}"`,
         question: questionPreview,
       })
     }
 
     // Type-specific validation
-    if (!hasError) {
-      if (type === "mcq") {
-        if (isEmpty(q.optionA) || isEmpty(q.optionB)) {
+    let resolvedCorrectAnswer: string | undefined = undefined
+    let resolvedIsTrue: string | undefined = undefined
+
+    if (!hasError && normalizedType) {
+      if (normalizedType === "mcq") {
+        const optA = toStr(q.optionA || q.option1 || q.optA)
+        const optB = toStr(q.optionB || q.option2 || q.optB)
+        const optC = toStr(q.optionC || q.option3 || q.optC)
+        const optD = toStr(q.optionD || q.option4 || q.optD)
+
+        if (isEmpty(optA) || isEmpty(optB)) {
           errors.push({ row: rowNum, field: "options", message: "MCQ requires at least optionA and optionB", question: questionPreview })
           hasError = true
         }
-        if (isEmpty(q.correctAnswer)) {
+
+        const rawCorrect = toStr(q.correctAnswer || q.answer || q.correct)
+        if (isEmpty(rawCorrect)) {
           errors.push({ row: rowNum, field: "correctAnswer", message: "MCQ requires a correctAnswer", question: questionPreview })
           hasError = true
-        }
-        if (!hasError) {
-          const opts = [q.optionA, q.optionB, q.optionC, q.optionD].filter((o) => !isEmpty(o)).map((o) => toStr(o))
-          const correct = toStr(q.correctAnswer)
-          if (!opts.some((o) => o.toLowerCase() === correct.toLowerCase())) {
-            errors.push({
-              row: rowNum,
-              field: "correctAnswer",
-              message: `correctAnswer "${correct}" does not match any option`,
-              question: questionPreview,
-            })
-            hasError = true
+        } else {
+          // Check if answer is given as letter "A", "B", "C", "D"
+          const upperCorrect = rawCorrect.toUpperCase()
+          if (upperCorrect === "A" || upperCorrect === "OPTIONA" || upperCorrect === "OPTION A") {
+            resolvedCorrectAnswer = optA
+          } else if (upperCorrect === "B" || upperCorrect === "OPTIONB" || upperCorrect === "OPTION B") {
+            resolvedCorrectAnswer = optB
+          } else if (upperCorrect === "C" || upperCorrect === "OPTIONC" || upperCorrect === "OPTION C") {
+            resolvedCorrectAnswer = optC
+          } else if (upperCorrect === "D" || upperCorrect === "OPTIOND" || upperCorrect === "OPTION D") {
+            resolvedCorrectAnswer = optD
+          } else {
+            // Check if matches any option text directly
+            const opts = [optA, optB, optC, optD].filter((o) => !isEmpty(o))
+            const match = opts.find((o) => o.toLowerCase() === rawCorrect.toLowerCase())
+            if (match) {
+              resolvedCorrectAnswer = match
+            } else {
+              errors.push({
+                row: rowNum,
+                field: "correctAnswer",
+                message: `correctAnswer "${rawCorrect}" does not match any option (A: "${optA}", B: "${optB}")`,
+                question: questionPreview,
+              })
+              hasError = true
+            }
           }
         }
-      } else if (type === "matching") {
-        if (isEmpty(q.leftItem1) || isEmpty(q.rightItem1) || isEmpty(q.leftItem2) || isEmpty(q.rightItem2)) {
-          errors.push({ row: rowNum, field: "pairs", message: "Matching requires at least 2 pairs (leftItem1/rightItem1 + leftItem2/rightItem2)", question: questionPreview })
+      } else if (normalizedType === "matching") {
+        const l1 = toStr(q.leftItem1 || q.left1 || q.left_item_1)
+        const r1 = toStr(q.rightItem1 || q.right1 || q.right_item_1)
+        const l2 = toStr(q.leftItem2 || q.left2 || q.left_item_2)
+        const r2 = toStr(q.rightItem2 || q.right2 || q.right_item_2)
+        if (isEmpty(l1) || isEmpty(r1) || isEmpty(l2) || isEmpty(r2)) {
+          errors.push({ row: rowNum, field: "pairs", message: "Matching requires at least 2 pairs (leftItem1/rightItem1 & leftItem2/rightItem2)", question: questionPreview })
           hasError = true
         }
-      } else if (type === "fill") {
-        if (isEmpty(q.answer)) {
+      } else if (normalizedType === "fill") {
+        const ans = toStr(q.answer || q.correctAnswer || q.missingWord)
+        if (isEmpty(ans)) {
           errors.push({ row: rowNum, field: "answer", message: "Fill questions require an answer", question: questionPreview })
           hasError = true
         }
-      } else if (type === "reorder") {
-        if (isEmpty(q.step1) || isEmpty(q.step2)) {
+      } else if (normalizedType === "reorder") {
+        const s1 = toStr(q.step1 || q.item1)
+        const s2 = toStr(q.step2 || q.item2)
+        if (isEmpty(s1) || isEmpty(s2)) {
           errors.push({ row: rowNum, field: "steps", message: "Reorder requires at least 2 steps (step1, step2)", question: questionPreview })
           hasError = true
         }
-      } else if (type === "truefalse") {
-        const isTrueVal = toStr(q.isTrue).toLowerCase()
-        if (isTrueVal !== "true" && isTrueVal !== "false") {
+      } else if (normalizedType === "truefalse") {
+        const rawTf = toStr(q.isTrue || q.answer || q.correctAnswer).toLowerCase()
+        if (rawTf === "true" || rawTf === "t" || rawTf === "1" || rawTf === "yes" || rawTf === "vrai") {
+          resolvedIsTrue = "True"
+        } else if (rawTf === "false" || rawTf === "f" || rawTf === "0" || rawTf === "no" || rawTf === "faux") {
+          resolvedIsTrue = "False"
+        } else {
           errors.push({ row: rowNum, field: "isTrue", message: `isTrue must be "True" or "False". Got: "${q.isTrue}"`, question: questionPreview })
           hasError = true
         }
       }
     }
 
-    if (hasError) {
+    if (hasError || !normalizedType || unitNum === null) {
       skippedCount++
     } else {
       validQuestions.push({
         unit: unitNum,
-        type: type as PracticeExcelQuestion["type"],
+        type: normalizedType,
         question: toStr(q.question),
         instruction: toStr(q.instruction) || undefined,
         imageUrl: toStr(q.imageUrl) || undefined,
         timer: Number(q.timer) || 30,
-        optionA: toStr(q.optionA) || undefined,
-        optionB: toStr(q.optionB) || undefined,
-        optionC: toStr(q.optionC) || undefined,
-        optionD: toStr(q.optionD) || undefined,
-        correctAnswer: toStr(q.correctAnswer) || undefined,
-        leftItem1: toStr(q.leftItem1) || undefined,
-        rightItem1: toStr(q.rightItem1) || undefined,
-        leftItem2: toStr(q.leftItem2) || undefined,
-        rightItem2: toStr(q.rightItem2) || undefined,
-        leftItem3: toStr(q.leftItem3) || undefined,
-        rightItem3: toStr(q.rightItem3) || undefined,
-        leftItem4: toStr(q.leftItem4) || undefined,
-        rightItem4: toStr(q.rightItem4) || undefined,
-        answer: toStr(q.answer) || undefined,
-        step1: toStr(q.step1) || undefined,
-        step2: toStr(q.step2) || undefined,
-        step3: toStr(q.step3) || undefined,
-        step4: toStr(q.step4) || undefined,
-        isTrue: toStr(q.isTrue) || undefined,
+        optionA: toStr(q.optionA || q.option1 || q.optA) || undefined,
+        optionB: toStr(q.optionB || q.option2 || q.optB) || undefined,
+        optionC: toStr(q.optionC || q.option3 || q.optC) || undefined,
+        optionD: toStr(q.optionD || q.option4 || q.optD) || undefined,
+        correctAnswer: resolvedCorrectAnswer || toStr(q.correctAnswer) || undefined,
+        leftItem1: toStr(q.leftItem1 || q.left1) || undefined,
+        rightItem1: toStr(q.rightItem1 || q.right1) || undefined,
+        leftItem2: toStr(q.leftItem2 || q.left2) || undefined,
+        rightItem2: toStr(q.rightItem2 || q.right2) || undefined,
+        leftItem3: toStr(q.leftItem3 || q.left3) || undefined,
+        rightItem3: toStr(q.rightItem3 || q.right3) || undefined,
+        leftItem4: toStr(q.leftItem4 || q.left4) || undefined,
+        rightItem4: toStr(q.rightItem4 || q.right4) || undefined,
+        answer: toStr(q.answer || q.correctAnswer) || undefined,
+        step1: toStr(q.step1 || q.item1) || undefined,
+        step2: toStr(q.step2 || q.item2) || undefined,
+        step3: toStr(q.step3 || q.item3) || undefined,
+        step4: toStr(q.step4 || q.item4) || undefined,
+        isTrue: resolvedIsTrue || toStr(q.isTrue) || undefined,
       })
     }
   }

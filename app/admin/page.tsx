@@ -35,13 +35,14 @@ interface Question {
   level: number
   question: string
   instruction?: string
-  options?: { A: string; B: string; C: string; D: string; correct: string } | string[] // For reorder, options become the items to reorder
+  options?: any // Dynamic based on type
   pairs?: { left: string; right: string }[]
-  answer: string | string[] | { left: string; right: string }[] | boolean // For truefalse, answer is boolean
+  answer?: any // Dynamic based on type
+  correctAnswer?: any
   image?: string
   timer?: number
-  createdAt?: number
-  updatedAt?: number
+  createdAt?: any
+  updatedAt?: any
   createdBy?: string
 }
 
@@ -531,7 +532,7 @@ export default function AdminPage() {
 
     if (
       selectedType === "mcq" &&
-      (!formData.options || Object.values(formData.options).some((opt) => !opt?.trim()) || !formData.answer)
+      (!formData.options || Object.values(formData.options as Record<string, string>).some((opt) => !opt?.trim()) || !formData.answer)
     ) {
       alert("Please fill in all options and select a correct answer for MCQ.")
       return
@@ -550,7 +551,7 @@ export default function AdminPage() {
       return
     }
 
-    if (selectedType === "reorder" && (!formData.options || formData.options.some((item) => !item?.trim()))) {
+    if (selectedType === "reorder" && (!formData.options || formData.options.some((item: string) => !item?.trim()))) {
       alert("Please provide all items to reorder.")
       return
     }
@@ -1045,7 +1046,7 @@ ${errorMessages}
                     Items to Reorder (in correct order)
                   </Label>
                   <div className="space-y-3">
-                    {(formData.options || []).map((opt, idx) => (
+                    {(formData.options || []).map((opt: string, idx: number) => (
                       <Input
                         key={idx}
                         type="text"

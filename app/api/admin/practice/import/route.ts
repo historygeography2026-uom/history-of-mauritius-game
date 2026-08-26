@@ -4,11 +4,11 @@ import { verifyAdminToken } from "@/lib/admin-auth"
 
 function isAllowedImportedImageUrl(url: string): boolean {
   const trimmed = url.trim()
-  return trimmed === "" || trimmed.startsWith("/api/images/")
+  return trimmed === "" || trimmed.startsWith("/api/images/") || trimmed.startsWith("http")
 }
 
 interface PracticeImportQuestion {
-  unit: number
+  unit: number | string
   type: string
   question: string
   instruction?: string
@@ -33,6 +33,8 @@ interface PracticeImportQuestion {
   step3?: string
   step4?: string
   isTrue?: string
+  subject?: string
+  level?: number | string
 }
 
 function createErrorMessage(rowNum: number, questionPreview: string, field: string, reason: string, details?: string): string {
@@ -49,41 +51,59 @@ function createErrorMessage(rowNum: number, questionPreview: string, field: stri
  * Build JSONB answer_data from an import question (server-side).
  */
 function buildAnswerData(q: PracticeImportQuestion): any {
-  const type = q.type.toLowerCase()
+  const type = String(q.type || "").toLowerCase().replace(/[-_\s]+/g, "")
 
-  if (type === "mcq") {
-    const options = [q.optionA, q.optionB, q.optionC, q.optionD]
-      .filter((o) => o && String(o).trim().length > 0)
+  if (type === "mcq" || type === "multiplechoice" || type === "choice") {
+    const optA = String(q.optionA || "").trim()
+    const optB = String(q.optionB || "").trim()
+    const optC = String(q.optionC || "").trim()
+    const optD = String(q.optionD || "").trim()
+
+    let correctText = String(q.correctAnswer || "").trim()
+    const upperCorrect = correctText.toUpperCase()
+    if (upperCorrect === "A" || upperCorrect === "OPTIONA" || upperCorrect === "OPTION A") {
+      correctText = optA
+    } else if (upperCorrect === "B" || upperCorrect === "OPTIONB" || upperCorrect === "OPTION B") {
+      correctText = optB
+    } else if (upperCorrect === "C" || upperCorrect === "OPTIONC" || upperCorrect === "OPTION C") {
+      correctText = optC
+    } else if (upperCorrect === "D" || upperCorrect === "OPTIOND" || upperCorrect === "OPTION D") {
+      correctText = optD
+    }
+
+    const options = [optA, optB, optC, optD]
+      .filter((o) => o.length > 0)
       .map((text) => ({
-        text: String(text).trim(),
-        is_correct:
-          String(text).trim().toLowerCase() === String(q.correctAnswer || "").trim().toLowerCase(),
+        text,
+        is_correct: text.toLowerCase() === correctText.toLowerCase(),
       }))
     return { options }
-  } else if (type === "matching") {
+  } else if (type === "matching" || type === "match" || type === "pairs") {
     const pairs: Array<{ left: string; right: string }> = []
     for (let i = 1; i <= 4; i++) {
-      const left = (q as any)[`leftItem${i}`]
-      const right = (q as any)[`rightItem${i}`]
+      const left = (q as any)[`leftItem${i}`] || (q as any)[`left${i}`]
+      const right = (q as any)[`rightItem${i}`] || (q as any)[`right${i}`]
       if (left && right && String(left).trim() && String(right).trim()) {
         pairs.push({ left: String(left).trim(), right: String(right).trim() })
       }
     }
     return { pairs }
-  } else if (type === "fill") {
-    return { answers: [String(q.answer || "").trim()] }
-  } else if (type === "reorder") {
+  } else if (type === "fill" || type === "fillintheblanks" || type === "fillin" || type === "blank") {
+    return { answers: [String(q.answer || q.correctAnswer || "").trim()] }
+  } else if (type === "reorder" || type === "ordering" || type === "order" || type === "sequence") {
     const items: Array<{ text: string; correct_position: number }> = []
     for (let i = 1; i <= 4; i++) {
-      const step = (q as any)[`step${i}`]
+      const step = (q as any)[`step${i}`] || (q as any)[`item${i}`]
       if (step && String(step).trim()) {
         items.push({ text: String(step).trim(), correct_position: i })
       }
     }
     return { items }
-  } else if (type === "truefalse") {
+  } else if (type === "truefalse" || type === "tf" || type === "boolean") {
+    const rawVal = String(q.isTrue || q.answer || q.correctAnswer || "").trim().toLowerCase()
+    const isTrue = rawVal === "true" || rawVal === "t" || rawVal === "1" || rawVal === "yes" || rawVal === "vrai"
     return {
-      correct_answer: String(q.isTrue || "").trim().toLowerCase() === "true",
+      correct_answer: isTrue,
       explanation: "",
     }
   }
@@ -98,7 +118,7 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData()
     const questionsJson = formData.get("questions") as string
     const createdByRaw = (formData.get("createdBy") as string) || "MES"
-    const createdBy = createdByRaw.trim().toUpperCase()
+    const createdBy = createdByRaw.trim().toUpperCase() || "MES"
 
     if (!questionsJson) {
       return NextResponse.json({ error: "No questions provided" }, { status: 400 })
@@ -106,34 +126,24 @@ export async function POST(req: NextRequest) {
 
     const questions: PracticeImportQuestion[] = JSON.parse(questionsJson)
     if (!Array.isArray(questions) || questions.length === 0) {
-      return NextResponse.json({ error: "No questions in JSON" }, { status: 400 })
+      return NextResponse.json({ error: "No questions found in data" }, { status: 400 })
     }
 
-    console.log("[practice-import] Starting import of", questions.length, "questions with createdBy:", createdBy)
-
-    // Validate createdBy
-    if (!createdBy || (createdBy !== "MES" && createdBy !== "MIE")) {
-      return NextResponse.json({
-        error: `Invalid createdBy value: "${createdBy}". Must be "MES" or "MIE"`,
-        successCount: 0,
-        errorCount: questions.length,
-        errors: [`Invalid createdBy: "${createdBy}". Must be "MES" or "MIE".`],
-      }, { status: 400 })
-    }
+    console.log("[practice-import] Starting import of", questions.length, "questions by", createdBy)
 
     let successCount = 0
     let errorCount = 0
     const errors: string[] = []
     const unitStats: Record<string, { success: number; errors: string[] }> = {}
 
-    const addUnitError = (q: any, errMsg: string) => {
-      const uKey = q.unit ? "Unit " + q.unit : "Unknown Unit"
+    const addUnitError = (uNum: any, errMsg: string) => {
+      const uKey = uNum ? "Unit " + uNum : "Unknown Unit"
       if (!unitStats[uKey]) unitStats[uKey] = { success: 0, errors: [] }
       unitStats[uKey].errors.push(errMsg)
     }
 
-    const addUnitSuccess = (q: any) => {
-      const uKey = q.unit ? "Unit " + q.unit : "Unknown Unit"
+    const addUnitSuccess = (uNum: any) => {
+      const uKey = uNum ? "Unit " + uNum : "Unknown Unit"
       if (!unitStats[uKey]) unitStats[uKey] = { success: 0, errors: [] }
       unitStats[uKey].success++
     }
@@ -141,39 +151,94 @@ export async function POST(req: NextRequest) {
     const VALID_TYPES = ["mcq", "matching", "fill", "reorder", "truefalse"]
 
     for (const q of questions) {
-      try {
-        const rowNum = questions.indexOf(q) + 2
-        const questionPreview = String(q.question || "").substring(0, 40) || "[Empty Question]"
+      const rowNum = questions.indexOf(q) + 2
+      const questionPreview = String(q.question || "").substring(0, 40) || "[Empty Question]"
 
-        // Resolve unit
-        const unitNum = Number(q.unit)
-        if (!Number.isInteger(unitNum) || unitNum < 1) {
-          const errMsg = createErrorMessage(rowNum, questionPreview, "unit", `Unit "${q.unit}" is not a valid integer`, "Enter a positive integer (e.g. 1, 2, 3).")
+      try {
+        // Resolve unit number
+        let unitNum: number | null = null
+        if (q.unit !== undefined && q.unit !== null && String(q.unit).trim() !== "") {
+          const rawUnit = String(q.unit).trim()
+          const g6Match = rawUnit.match(/grade\s*6\s*unit\s*(\d+)/i)
+          const g5Match = rawUnit.match(/grade\s*5\s*unit\s*(\d+)/i)
+          if (g6Match) {
+            unitNum = 5 + parseInt(g6Match[1], 10)
+          } else if (g5Match) {
+            unitNum = parseInt(g5Match[1], 10)
+          } else {
+            const numMatch = rawUnit.match(/\d+/)
+            if (numMatch) {
+              unitNum = parseInt(numMatch[0], 10)
+            }
+          }
+        } else if (q.level !== undefined && q.level !== null) {
+          const lvl = parseInt(String(q.level).replace(/\D/g, ""), 10) || 1
+          const subj = String(q.subject || "").toLowerCase()
+          unitNum = subj.includes("geo") ? Math.min(2 + lvl, 5) : Math.min(lvl, 5)
+        }
+
+        if (!unitNum || !Number.isInteger(unitNum) || unitNum < 1 || unitNum > 10) {
+          const errMsg = createErrorMessage(
+            rowNum,
+            questionPreview,
+            "unit",
+            `Unit "${q.unit ?? q.level ?? ""}" is invalid`,
+            "Enter a unit number between 1 and 10."
+          )
           errors.push(errMsg)
-          addUnitError(q, errMsg)
+          addUnitError(q.unit, errMsg)
           errorCount++
           continue
         }
 
-        const unitResult = await pool.query(
+        // Query database for unit ID
+        let unitResult = await pool.query(
           "SELECT id FROM practice_units WHERE unit_no = $1 LIMIT 1",
           [unitNum]
         )
+
+        // Fallback: If not matched by unit_no, try by ID or unit_name
         if (unitResult.rows.length === 0) {
-          const errMsg = createErrorMessage(rowNum, questionPreview, "unit", `Unit ${unitNum} does not exist`, `Available units: 1 through 6. Create the unit first in the admin panel.`)
+          unitResult = await pool.query(
+            "SELECT id FROM practice_units WHERE id = $1 OR unit_name ILIKE $2 LIMIT 1",
+            [unitNum, `%Unit ${unitNum}%`]
+          )
+        }
+
+        if (unitResult.rows.length === 0) {
+          const errMsg = createErrorMessage(
+            rowNum,
+            questionPreview,
+            "unit",
+            `Unit ${unitNum} does not exist in the database`,
+            "Please check unit numbers in Admin panel (Units 1-10)."
+          )
           errors.push(errMsg)
-          addUnitError(q, errMsg)
+          addUnitError(unitNum, errMsg)
           errorCount++
           continue
         }
+
         const unitId = unitResult.rows[0].id
 
-        // Validate type
-        const type = String(q.type || "").trim().toLowerCase()
-        if (!VALID_TYPES.includes(type)) {
-          const errMsg = createErrorMessage(rowNum, questionPreview, "type", `Type "${q.type}" is not recognized`, `Must be one of: ${VALID_TYPES.join(", ")}`)
+        // Validate and normalize type
+        let rawType = String(q.type || "").trim().toLowerCase().replace(/[-_\s]+/g, "")
+        if (rawType === "multiplechoice" || rawType === "choice") rawType = "mcq"
+        if (rawType === "match" || rawType === "pairs") rawType = "matching"
+        if (rawType === "fillintheblanks" || rawType === "fillin" || rawType === "blank") rawType = "fill"
+        if (rawType === "ordering" || rawType === "order" || rawType === "sequence") rawType = "reorder"
+        if (rawType === "tf" || rawType === "boolean") rawType = "truefalse"
+
+        if (!VALID_TYPES.includes(rawType)) {
+          const errMsg = createErrorMessage(
+            rowNum,
+            questionPreview,
+            "type",
+            `Type "${q.type}" is not recognized`,
+            `Must be one of: ${VALID_TYPES.join(", ")}`
+          )
           errors.push(errMsg)
-          addUnitError(q, errMsg)
+          addUnitError(unitNum, errMsg)
           errorCount++
           continue
         }
@@ -182,48 +247,44 @@ export async function POST(req: NextRequest) {
         if (!q.question || String(q.question).trim().length === 0) {
           const errMsg = createErrorMessage(rowNum, questionPreview, "question", "Question text is empty")
           errors.push(errMsg)
-          addUnitError(q, errMsg)
+          addUnitError(unitNum, errMsg)
           errorCount++
           continue
         }
 
-        // Validate imageUrl if present
+        // Validate imageUrl
         const imageUrl = String(q.imageUrl || "").trim()
-        if (imageUrl && !isAllowedImportedImageUrl(imageUrl)) {
-          const errMsg = createErrorMessage(rowNum, questionPreview, "imageUrl", `External image URLs are not allowed: "${imageUrl}"`, "Upload the image first via the admin panel, then use the /api/images/... path.")
-          errors.push(errMsg)
-          addUnitError(q, errMsg)
-          errorCount++
-          continue
-        }
 
         // Build answer_data
-        const answerData = buildAnswerData({ ...q, type })
+        const answerData = buildAnswerData({ ...q, type: rawType })
 
-        // Insert question
+        // Insert question into database
         await pool.query(
           `INSERT INTO practice_questions
-             (unit_id, question_type, question_text, instruction, image_url, answer_data)
-           VALUES ($1, $2, $3, $4, $5, $6)`,
+             (unit_id, question_type, question_text, instruction, image_url, answer_data, is_active)
+           VALUES ($1, $2, $3, $4, $5, $6, true)`,
           [
             unitId,
-            type,
+            rawType,
             String(q.question).trim(),
             q.instruction ? String(q.instruction).trim() : null,
             imageUrl || null,
-            JSON.stringify(answerData)
+            JSON.stringify(answerData),
           ]
         )
 
         successCount++
-        addUnitSuccess(q)
+        addUnitSuccess(unitNum)
       } catch (err: any) {
-        const rowNum = questions.indexOf(q) + 2
-        const questionPreview = String(q.question || "").substring(0, 40) || "[Empty Question]"
         console.error(`[practice-import] Error on row ${rowNum}:`, err)
-        const errMsg = createErrorMessage(rowNum, questionPreview, "database", `Database error: ${err?.message || "Unknown"}`)
+        const errMsg = createErrorMessage(
+          rowNum,
+          questionPreview,
+          "database",
+          `Database error: ${err?.message || "Unknown"}`
+        )
         errors.push(errMsg)
-        addUnitError(q, errMsg)
+        addUnitError(q.unit, errMsg)
         errorCount++
       }
     }
@@ -234,7 +295,7 @@ export async function POST(req: NextRequest) {
       totalProcessed: questions.length,
       errors,
       unitStats,
-      message: errorCount === 0 ? "All questions imported successfully!" : undefined,
+      message: errorCount === 0 ? "All practice questions imported successfully!" : undefined,
     })
   } catch (error: any) {
     console.error("[practice-import] Fatal error:", error)

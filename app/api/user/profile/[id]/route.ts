@@ -3,17 +3,18 @@ import { authOptions } from "@/lib/auth"
 import { pool } from "@/lib/db"
 import { NextRequest, NextResponse } from "next/server"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
 
+    const resolvedParams = await params;
     // Only allow users to fetch their own profile
-    if (!session?.user?.id || session.user.id !== params.id) {
+    if (!session?.user?.id || session.user.id !== resolvedParams.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const result = await pool.query("SELECT id, name, email, image, created_at, updated_at FROM users WHERE id = $1", [
-      params.id,
+      resolvedParams.id,
     ])
 
     if (result.rows.length === 0) {

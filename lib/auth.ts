@@ -87,7 +87,7 @@ function PostgresAdapter(client: any): Adapter {
       )
       return result.rows[0]
     },
-    unlinkAccount: async ({ provider, providerAccountId }) => {
+    unlinkAccount: async ({ provider, providerAccountId }: { provider: string; providerAccountId: string }) => {
       await client.query('DELETE FROM accounts WHERE provider = $1 AND provider_account_id = $2', [provider, providerAccountId])
     },
     createSession: async (session) => {

@@ -154,7 +154,7 @@ export const generateExcelTemplate = async () => {
     },
   ]
 
-  addWorksheet(workbook, "MCQ", mcqData as Array<Record<string, string | number>>, [
+  addWorksheet(workbook, "MCQ", mcqData as any, [
     12,
     6,
     8,
@@ -189,7 +189,7 @@ export const generateExcelTemplate = async () => {
     },
   ]
 
-  addWorksheet(workbook, "Matching", matchingData as Array<Record<string, string | number>>, [
+  addWorksheet(workbook, "Matching", matchingData as any, [
     12,
     6,
     10,
@@ -229,7 +229,7 @@ export const generateExcelTemplate = async () => {
     },
   ]
 
-  addWorksheet(workbook, "Fill", fillData as Array<Record<string, string | number>>, [
+  addWorksheet(workbook, "Fill", fillData as any, [
     12,
     6,
     8,
@@ -256,7 +256,7 @@ export const generateExcelTemplate = async () => {
     },
   ]
 
-  addWorksheet(workbook, "Reorder", reorderData as Array<Record<string, string | number>>, [
+  addWorksheet(workbook, "Reorder", reorderData as any, [
     12,
     6,
     10,
@@ -291,7 +291,7 @@ export const generateExcelTemplate = async () => {
     },
   ]
 
-  addWorksheet(workbook, "TrueFalse", trueFalseData as Array<Record<string, string | number>>, [
+  addWorksheet(workbook, "TrueFalse", trueFalseData as any, [
     12,
     6,
     12,
@@ -351,7 +351,7 @@ export const parseExcelFile = async (file: File): Promise<ExcelQuestion[]> => {
       })
 
       if (hasValues) {
-        allQuestions.push(rowData as ExcelQuestion)
+        allQuestions.push(rowData as unknown as ExcelQuestion)
       }
     }
   })

@@ -33,7 +33,7 @@ export function ProgressMap({ subject, subjectColor, subjectIcon, onSelectLevel,
   useEffect(() => {
     const loadProgress = async () => {
       setIsLoading(true)
-      let progress = {}
+      let progress: Record<string | number, any> = {}
 
       // Try to load from database if authenticated
       if (session?.user?.id) {
@@ -313,6 +313,7 @@ export function ProgressMap({ subject, subjectColor, subjectIcon, onSelectLevel,
 // Helper function to save progress (both localStorage and database)
 export async function saveProgress(subject: string, level: number, stars: number, completed: boolean, userId?: string) {
   // Always save to localStorage for offline access
+  const key = `progress_${subject}`
   let progress: any = {}
   try {
     const existing = localStorage.getItem(key)

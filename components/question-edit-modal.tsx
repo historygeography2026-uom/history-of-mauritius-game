@@ -28,11 +28,11 @@ interface Question {
   level: number
   timer?: number
   image?: string
-  options?: { A: string; B: string; C: string; D: string; correct: string }
+  options?: any
   pairs?: Array<{ left: string; right: string }>
-  answer?: string
+  answer?: any
   items?: string[]
-  correctAnswer?: boolean
+  correctAnswer?: any
   createdAt?: string
   createdBy?: string
   updatedAt?: string
