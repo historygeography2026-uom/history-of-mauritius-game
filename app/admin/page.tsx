@@ -688,7 +688,7 @@ export default function AdminPage() {
         answer_data = {
           options: optionLetters.map((letter, index) => ({
             text: optionsObj[letter as keyof typeof optionsObj] || "",
-            is_correct: updatedQuestion.answer === letter,
+            is_correct: (optionsObj.correct || updatedQuestion.answer) === letter,
           })),
         }
       } else if (updatedQuestion.type === "matching" && updatedQuestion.pairs) {
@@ -704,7 +704,7 @@ export default function AdminPage() {
         }
       } else if (updatedQuestion.type === "truefalse") {
         answer_data = {
-          correct_answer: updatedQuestion.answer === true || updatedQuestion.answer === "true",
+          correct_answer: updatedQuestion.correctAnswer === true || updatedQuestion.answer === true || updatedQuestion.answer === "true",
           explanation: "",
         }
       }
@@ -739,9 +739,9 @@ export default function AdminPage() {
       } else {
         fetchAllQuestions()
       }
-    } catch (error) {
-      console.error("Error updating question:", error)
-      alert("Failed to update question")
+    } catch (error: any) {
+      console.error("Error saving question:", error)
+      alert(error.message || "Failed to save question")
     }
   }
 
