@@ -37,6 +37,7 @@ interface Question {
   instruction?: string
   options?: any // Dynamic based on type
   pairs?: { left: string; right: string }[]
+  items?: string[]
   answer?: any // Dynamic based on type
   correctAnswer?: any
   image?: string
@@ -247,12 +248,18 @@ export default function AdminPage() {
       typeSpecificData = { answer: q.fill_answers[0]?.answer_text }
     } else if (type === "reorder" && q.reorder_items) {
       const items = q.reorder_items.sort((a: any, b: any) => a.item_order - b.item_order)
+      const itemTexts = items.map((i: any) => i.item_text)
       typeSpecificData = {
-        options: items.map((i: any) => i.item_text),
-        answer: items.map((i: any) => i.item_text),
+        options: itemTexts,
+        answer: itemTexts,
+        items: itemTexts,
       }
     } else if (type === "truefalse" && q.truefalse_answers) {
-      typeSpecificData = { answer: q.truefalse_answers[0]?.correct_answer }
+      const tfVal = q.truefalse_answers[0]?.correct_answer
+      typeSpecificData = {
+        answer: tfVal,
+        correctAnswer: tfVal,
+      }
     }
 
     return {
@@ -683,29 +690,41 @@ export default function AdminPage() {
     try {
       // Build answer_data for API based on question type
       let answer_data: any = {}
-      if (updatedQuestion.type === "mcq" && updatedQuestion.options) {
-        const optionsObj = updatedQuestion.options as { A: string; B: string; C: string; D: string; correct: string }
+      if (updatedQuestion.type === "mcq") {
+        const optionsObj = (typeof updatedQuestion.options === "object" && !Array.isArray(updatedQuestion.options) ? updatedQuestion.options : {}) as any
         const optionLetters = ["A", "B", "C", "D"]
+        const correctLetter = optionsObj.correct || updatedQuestion.correctAnswer || updatedQuestion.answer || "A"
         answer_data = {
-          options: optionLetters.map((letter, index) => ({
-            text: optionsObj[letter as keyof typeof optionsObj] || "",
-            is_correct: (optionsObj.correct || updatedQuestion.answer) === letter,
-          })),
+          options: optionLetters
+            .filter((letter) => optionsObj[letter] !== undefined && String(optionsObj[letter]).trim() !== "")
+            .map((letter) => ({
+              text: String(optionsObj[letter]).trim(),
+              is_correct: letter === correctLetter,
+            })),
         }
-      } else if (updatedQuestion.type === "matching" && updatedQuestion.pairs) {
-        answer_data = { pairs: updatedQuestion.pairs.map((pair) => ({ left: pair.left, right: pair.right })) }
-      } else if (updatedQuestion.type === "fill" && updatedQuestion.answer) {
-        answer_data = { answers: [updatedQuestion.answer as string] }
-      } else if (updatedQuestion.type === "reorder" && updatedQuestion.options && Array.isArray(updatedQuestion.options)) {
+      } else if (updatedQuestion.type === "matching") {
+        const rawPairs = updatedQuestion.pairs || (Array.isArray(updatedQuestion.answer) ? updatedQuestion.answer : [])
         answer_data = {
-          items: (updatedQuestion.options as string[]).map((item, index) => ({
-            text: item,
-            correct_position: index + 1,
-          })),
+          pairs: rawPairs
+            .filter((p: any) => p && String(p.left || "").trim() && String(p.right || "").trim())
+            .map((p: any) => ({ left: String(p.left).trim(), right: String(p.right).trim() })),
+        }
+      } else if (updatedQuestion.type === "fill") {
+        answer_data = { answers: [String(updatedQuestion.answer || updatedQuestion.correctAnswer || "").trim()] }
+      } else if (updatedQuestion.type === "reorder") {
+        const rawItems = updatedQuestion.items || (Array.isArray(updatedQuestion.options) ? updatedQuestion.options : Array.isArray(updatedQuestion.answer) ? updatedQuestion.answer : [])
+        answer_data = {
+          items: rawItems
+            .filter((item: any) => item !== undefined && String(item).trim() !== "")
+            .map((item: any, index: number) => ({
+              text: String(item).trim(),
+              correct_position: index + 1,
+            })),
         }
       } else if (updatedQuestion.type === "truefalse") {
+        const isTrue = updatedQuestion.correctAnswer === true || updatedQuestion.correctAnswer === "true" || updatedQuestion.answer === true || updatedQuestion.answer === "true"
         answer_data = {
-          correct_answer: updatedQuestion.correctAnswer === true || updatedQuestion.answer === true || updatedQuestion.answer === "true",
+          correct_answer: isTrue,
           explanation: "",
         }
       }
@@ -717,14 +736,15 @@ export default function AdminPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: isNew ? undefined : parseInt(updatedQuestion.id),
-          subject: updatedQuestion.subject,
-          level: updatedQuestion.level,
+          subject: updatedQuestion.subject ? updatedQuestion.subject.toLowerCase() : "history",
+          level: Number(updatedQuestion.level) || 1,
           type: updatedQuestion.type,
           question_text: updatedQuestion.question,
+          instruction: updatedQuestion.instruction || "",
           image_url: updatedQuestion.image || "",
-          timer_seconds: updatedQuestion.timer || 30,
+          timer_seconds: Number(updatedQuestion.timer) || 30,
           answer_data,
-                  }),
+        }),
       })
 
       if (!res.ok) {
@@ -736,9 +756,9 @@ export default function AdminPage() {
       setQuestionToEdit(null)
       alert(isNew ? "Question created successfully!" : "Question updated successfully!")
       if (viewMode === "filtered") {
-        fetchQuestions()
+        await fetchQuestions()
       } else {
-        fetchAllQuestions()
+        await fetchAllQuestions()
       }
     } catch (error: any) {
       console.error("Error saving question:", error)

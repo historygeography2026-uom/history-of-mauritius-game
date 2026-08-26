@@ -121,6 +121,7 @@ export default function PracticeQuestionManagement({ onImport }: Props) {
       }
       setEditingQuestion(null)
       setIsAddingQuestion(false)
+      fetchData()
     } catch (err: any) {
       setEditError(err.message || "Failed to save question")
     } finally {

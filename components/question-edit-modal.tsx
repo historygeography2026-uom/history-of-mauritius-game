@@ -52,7 +52,38 @@ export default function QuestionEditModal({ question, isOpen, onClose, onSave }:
 
   useEffect(() => {
     if (question) {
-      setFormData({ ...question })
+      const q = { ...question }
+      // Ensure reorder items is always a valid array
+      if (q.type === "reorder") {
+        if (!q.items && Array.isArray(q.options)) {
+          q.items = [...q.options]
+        } else if (!q.items && Array.isArray(q.answer)) {
+          q.items = [...q.answer]
+        } else if (!q.items) {
+          q.items = ["", "", "", ""]
+        }
+      }
+      // Ensure matching pairs is always a valid array
+      if (q.type === "matching") {
+        if (!q.pairs && Array.isArray(q.answer)) {
+          q.pairs = [...q.answer]
+        } else if (!q.pairs) {
+          q.pairs = [{ left: "", right: "" }, { left: "", right: "" }]
+        }
+      }
+      // Ensure truefalse correctAnswer is a boolean
+      if (q.type === "truefalse") {
+        if (q.correctAnswer === undefined) {
+          q.correctAnswer = q.answer === true || q.answer === "true" || q.answer === "True"
+        }
+      }
+      // Ensure MCQ options is an object with A, B, C, D and correct
+      if (q.type === "mcq") {
+        if (!q.options || typeof q.options !== "object" || Array.isArray(q.options)) {
+          q.options = { A: "", B: "", C: "", D: "", correct: q.answer || "A" }
+        }
+      }
+      setFormData(q)
       setImagePreview(question.image || null)
     } else if (isOpen) {
       setFormData({
@@ -62,7 +93,11 @@ export default function QuestionEditModal({ question, isOpen, onClose, onSave }:
         subject: "history",
         level: 1,
         timer: 30,
-        options: { A: "", B: "", C: "", D: "", correct: "A" }
+        options: { A: "", B: "", C: "", D: "", correct: "A" },
+        pairs: [{ left: "", right: "" }, { left: "", right: "" }],
+        items: ["", "", "", ""],
+        correctAnswer: true,
+        answer: "",
       })
       setImagePreview(null)
     }

@@ -106,6 +106,49 @@ export default function PracticeQuestionEditModal({ open, onClose, onSave, quest
       } else {
         payload.image_url = undefined
       }
+
+      // Sanitize answer_data based on question type
+      const type = payload.question_type || "mcq"
+      const ans = payload.answer_data || {}
+
+      if (type === "mcq") {
+        const opts = (ans.options || []).filter((o: any) => o && String(o.text || "").trim() !== "")
+        if (opts.length < 2) {
+          alert("MCQ questions require at least 2 non-empty options")
+          return
+        }
+        if (!opts.some((o: any) => o.is_correct)) {
+          opts[0].is_correct = true
+        }
+        payload.answer_data = { ...ans, options: opts }
+      } else if (type === "matching") {
+        const pairs = (ans.pairs || []).filter((p: any) => p && String(p.left || "").trim() !== "" && String(p.right || "").trim() !== "")
+        if (pairs.length < 2) {
+          alert("Matching questions require at least 2 completed pairs")
+          return
+        }
+        payload.answer_data = { ...ans, pairs }
+      } else if (type === "fill") {
+        const rawAns = (ans.answers && ans.answers[0]) ? String(ans.answers[0]).trim() : ""
+        if (!rawAns) {
+          alert("Fill in the blanks questions require a correct answer")
+          return
+        }
+        payload.answer_data = { ...ans, answers: [rawAns] }
+      } else if (type === "reorder") {
+        const items = (ans.items || [])
+          .filter((i: any) => i && String(i.text || "").trim() !== "")
+          .map((i: any, idx: number) => ({ text: String(i.text).trim(), correct_position: idx + 1 }))
+        if (items.length < 2) {
+          alert("Reorder questions require at least 2 items")
+          return
+        }
+        payload.answer_data = { ...ans, items }
+      } else if (type === "truefalse") {
+        const isTrue = ans.correct_answer === true
+        payload.answer_data = { ...ans, correct_answer: isTrue, explanation: ans.explanation || "" }
+      }
+
       await onSave(payload)
       onClose()
     } catch (error) {

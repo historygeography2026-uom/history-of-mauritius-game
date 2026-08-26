@@ -91,11 +91,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: validation }, { status: 400 })
     }
 
-    const result = await pool.query(
+    const insertResult = await pool.query(
       `INSERT INTO practice_questions
          (unit_id, question_type, question_text, instruction, image_url, answer_data)
        VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING *`,
+       RETURNING id`,
       [
         resolvedUnitId,
         question_type,
@@ -106,7 +106,19 @@ export async function POST(request: NextRequest) {
       ]
     )
 
-    return NextResponse.json(result.rows[0], { status: 201 })
+    const newId = insertResult.rows[0].id
+    const enrichedResult = await pool.query(
+      `SELECT pq.id, pq.question_text, pq.instruction, pq.image_url,
+              pq.question_type, pq.answer_data, pq.is_active,
+              pq.created_at, pq.updated_at,
+              pu.unit_no, pu.unit_name
+       FROM practice_questions pq
+       JOIN practice_units pu ON pq.unit_id = pu.id
+       WHERE pq.id = $1`,
+      [newId]
+    )
+
+    return NextResponse.json(enrichedResult.rows[0], { status: 201 })
   } catch (error: any) {
     console.error("[admin/practice/questions] Error creating:", error)
     return NextResponse.json({ error: "Failed to create question" }, { status: 500 })
@@ -127,7 +139,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Check question exists
-    const existing = await pool.query("SELECT id FROM practice_questions WHERE id = $1", [id])
+    const existing = await pool.query("SELECT id, unit_id FROM practice_questions WHERE id = $1", [id])
     if (existing.rows.length === 0) {
       return NextResponse.json({ error: "Question not found" }, { status: 404 })
     }
@@ -162,18 +174,17 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    const result = await pool.query(
+    await pool.query(
       `UPDATE practice_questions SET
          unit_id = COALESCE($1, unit_id),
          question_type = COALESCE($2, question_type),
          question_text = COALESCE($3, question_text),
-         instruction = COALESCE($4, instruction),
-         image_url = COALESCE($5, image_url),
+         instruction = $4,
+         image_url = $5,
          answer_data = COALESCE($6, answer_data),
          is_active = COALESCE($7, is_active),
          updated_at = NOW()
-       WHERE id = $8
-       RETURNING *`,
+       WHERE id = $8`,
       [
         resolvedUnitId,
         question_type || null,
@@ -186,7 +197,18 @@ export async function PUT(request: NextRequest) {
       ]
     )
 
-    return NextResponse.json(result.rows[0])
+    const enrichedResult = await pool.query(
+      `SELECT pq.id, pq.question_text, pq.instruction, pq.image_url,
+              pq.question_type, pq.answer_data, pq.is_active,
+              pq.created_at, pq.updated_at,
+              pu.unit_no, pu.unit_name
+       FROM practice_questions pq
+       JOIN practice_units pu ON pq.unit_id = pu.id
+       WHERE pq.id = $1`,
+      [id]
+    )
+
+    return NextResponse.json(enrichedResult.rows[0] || { id, ...body })
   } catch (error: any) {
     console.error("[admin/practice/questions] Error updating:", error)
     return NextResponse.json({ error: "Failed to update question" }, { status: 500 })

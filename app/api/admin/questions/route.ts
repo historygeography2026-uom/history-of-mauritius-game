@@ -244,13 +244,20 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
     const { id, subject, level, type, question_text, instruction, image_url, timer_seconds, answer_data } = body
+    const cleanSubj = String(subject || "history").toLowerCase()
+    const cleanLevel = Number(level) || 1
+    const cleanType = String(type || "mcq").toLowerCase()
 
-    // Get IDs
+    // Get IDs with case-insensitive search and safe fallback
     const [subjectResult, levelResult, typeResult] = await Promise.all([
-      pool.query("SELECT id FROM subjects WHERE name = $1", [subject]),
-      pool.query("SELECT id FROM levels WHERE level_number = $1", [level]),
-      pool.query("SELECT id FROM question_types WHERE name = $1", [type]),
+      pool.query("SELECT id FROM subjects WHERE LOWER(name) = $1", [cleanSubj]),
+      pool.query("SELECT id FROM levels WHERE level_number = $1 OR id = $1", [cleanLevel]),
+      pool.query("SELECT id FROM question_types WHERE LOWER(name) = $1", [cleanType]),
     ])
+
+    const subjectId = subjectResult.rows[0]?.id || (await pool.query("SELECT id FROM subjects WHERE LOWER(name) LIKE $1 LIMIT 1", [`%${cleanSubj}%`])).rows[0]?.id
+    const levelId = levelResult.rows[0]?.id || (await pool.query("SELECT id FROM levels WHERE level_number = 1 LIMIT 1")).rows[0]?.id
+    const typeId = typeResult.rows[0]?.id || (await pool.query("SELECT id FROM question_types WHERE LOWER(name) = 'mcq' LIMIT 1")).rows[0]?.id
 
     // Use a transaction to atomically delete old answers and insert new ones
     const client = await pool.connect()
@@ -264,12 +271,12 @@ export async function PUT(request: NextRequest) {
              question_text = $4, instruction = $5, image_url = $6, timer_seconds = $7, updated_at = NOW()
          WHERE id = $8`,
         [
-          subjectResult.rows[0].id,
-          levelResult.rows[0].id,
-          typeResult.rows[0].id,
+          subjectId,
+          levelId,
+          typeId,
           question_text,
-          instruction || null,
-          image_url || null,
+          instruction !== undefined ? instruction : null,
+          image_url !== undefined ? image_url : null,
           timer_seconds || 30,
           id,
         ]
