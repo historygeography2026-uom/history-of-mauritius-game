@@ -117,14 +117,22 @@ export async function POST(req: NextRequest) {
         }
         const levelId = levelResult.rows[0].id
 
-        // Get question type ID
+        // Normalize and get question type ID
+        const rawTypeStr = String(q.type || "").toLowerCase().replace(/[-_\s/]+/g, "")
+        let cleanType = "mcq"
+        if (rawTypeStr.includes("match")) cleanType = "matching"
+        else if (rawTypeStr.includes("fill") || rawTypeStr.includes("blank")) cleanType = "fill"
+        else if (rawTypeStr.includes("order") || rawTypeStr.includes("reorder")) cleanType = "reorder"
+        else if (rawTypeStr.includes("true") || rawTypeStr.includes("tf") || rawTypeStr.includes("false")) cleanType = "truefalse"
+        else if (rawTypeStr.includes("mcq") || rawTypeStr.includes("choice") || rawTypeStr.includes("multiple")) cleanType = "mcq"
+
         const typeResult = await pool.query(
-          `SELECT id FROM question_types WHERE name = $1 LIMIT 1`,
-          [q.type]
+          `SELECT id FROM question_types WHERE LOWER(name) = $1 LIMIT 1`,
+          [cleanType]
         )
         if (typeResult.rows.length === 0) {
           const reason = `Question type "${q.type}" is not recognized`
-          const details = `The system supports FIVE question types: 'mcq' (Multiple Choice), 'matching', 'fill' (Fill-in-Blank), 'reorder', and 'truefalse'.\n   You entered: "${q.type}"\n   Solution: Change the type to one of the five options above (lowercase). Also make sure you're putting the question on the correct Excel sheet.`
+          const details = `The system supports FIVE question types: 'mcq' (Multiple Choice), 'matching', 'fill' (Fill-in-Blank), 'reorder', and 'truefalse'.\n   You entered: "${q.type}"\n   Solution: Change the type to one of the five options above.`
           errors.push(createErrorMessage(rowNum, questionPreview, 'type', reason, details))
           errorCount++
           continue

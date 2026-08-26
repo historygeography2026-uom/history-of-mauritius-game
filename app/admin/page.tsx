@@ -593,28 +593,38 @@ export default function AdminPage() {
       // Build answer_data for API
       const buildAnswerData = () => {
         if (selectedType === "mcq" && formData.options) {
-          const optionsObj = formData.options as { A: string; B: string; C: string; D: string; correct: string }
+          const optionsObj = formData.options as { A: string; B: string; C: string; D: string; correct?: string }
           const optionLetters = ["A", "B", "C", "D"]
+          const filteredLetters = optionLetters.filter((letter) => optionsObj[letter as keyof typeof optionsObj] !== undefined && String(optionsObj[letter as keyof typeof optionsObj]).trim() !== "")
+          const correctLetter = formData.answer || optionsObj.correct || filteredLetters[0] || "A"
           return {
-            options: optionLetters.map((letter, index) => ({
-              text: optionsObj[letter as keyof typeof optionsObj] || "",
-              is_correct: formData.answer === letter,
+            options: filteredLetters.map((letter) => ({
+              text: String(optionsObj[letter as keyof typeof optionsObj]).trim(),
+              is_correct: correctLetter === letter,
             })),
           }
         } else if (selectedType === "matching" && formData.pairs) {
-          return { pairs: formData.pairs.map((pair) => ({ left: pair.left, right: pair.right })) }
-        } else if (selectedType === "fill" && formData.answer) {
-          return { answers: [formData.answer as string] }
-        } else if (selectedType === "reorder" && formData.options && Array.isArray(formData.options)) {
           return {
-            items: (formData.options as string[]).map((item, index) => ({
-              text: item,
-              correct_position: index + 1,
-            })),
+            pairs: formData.pairs
+              .filter((p) => p && String(p.left || "").trim() && String(p.right || "").trim())
+              .map((pair) => ({ left: String(pair.left).trim(), right: String(pair.right).trim() }))
+          }
+        } else if (selectedType === "fill" && formData.answer) {
+          return { answers: [String(formData.answer).trim()] }
+        } else if (selectedType === "reorder") {
+          const rawItems = (formData as any).items || (Array.isArray(formData.options) ? formData.options : [])
+          return {
+            items: rawItems
+              .filter((item: any) => item !== undefined && String(item).trim() !== "")
+              .map((item: any, index: number) => ({
+                text: typeof item === "string" ? item.trim() : String(item.text || "").trim(),
+                correct_position: index + 1,
+              })),
           }
         } else if (selectedType === "truefalse") {
+          const isTrue = formData.answer === true || formData.answer === "true" || (formData as any).correctAnswer === true || (formData as any).correctAnswer === "true"
           return {
-            correct_answer: formData.answer === true || formData.answer === "true",
+            correct_answer: isTrue,
             explanation: "",
           }
         }
