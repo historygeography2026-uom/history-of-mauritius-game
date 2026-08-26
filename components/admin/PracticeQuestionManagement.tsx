@@ -35,21 +35,21 @@ const TYPE_LABELS: Record<string, { label: string; badge: string }> = {
   truefalse: { label: "T/F", badge: "bg-rose-100 text-rose-700 border border-rose-300" },
 }
 
+
 interface Props {
   onImport?: () => void
-  onAdd?: () => void
 }
 
-export default function PracticeQuestionManagement({ onImport, onAdd }: Props) {
+export default function PracticeQuestionManagement({ onImport }: Props) {
   const [units, setUnits] = useState<PracticeUnit[]>([])
   const [questions, setQuestions] = useState<PracticeQuestion[]>([])
   const [loading, setLoading] = useState(true)
-  const [unitFilter, setUnitFilter] = useState("all")
-  const [typeFilter, setTypeFilter] = useState("all")
   const [search, setSearch] = useState("")
-
-  // Edit Modal State
+  const [unitFilter, setUnitFilter] = useState<string>("all")
+  const [typeFilter, setTypeFilter] = useState<string>("all")
+  
   const [editingQuestion, setEditingQuestion] = useState<PracticeQuestion | null>(null)
+  const [isAddingQuestion, setIsAddingQuestion] = useState(false)
   const [savingEdit, setSavingEdit] = useState(false)
   const [editError, setEditError] = useState("")
 
@@ -96,25 +96,31 @@ export default function PracticeQuestionManagement({ onImport, onAdd }: Props) {
   }
 
   const handleSaveEdit = async (updatedQuestion: Partial<PracticeQuestion>) => {
-      if (!updatedQuestion) return
+    if (!updatedQuestion) return
     setSavingEdit(true)
     setEditError("")
 
     try {
+      const isNew = !updatedQuestion.id
       const res = await fetch("/api/admin/practice/questions", {
-        method: "PUT",
+        method: isNew ? "POST" : "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedQuestion),
       })
 
       if (!res.ok) {
         const err = await res.json()
-        throw new Error(err.error || "Failed to update question")
+        throw new Error(err.error || "Failed to save question")
       }
 
-      const updated = await res.json()
-      setQuestions((prev) => prev.map((q) => (q.id === updated.id ? { ...q, ...updated } : q)))
+      const saved = await res.json()
+      if (isNew) {
+        setQuestions((prev) => [saved, ...prev])
+      } else {
+        setQuestions((prev) => prev.map((q) => (q.id === saved.id ? { ...q, ...saved } : q)))
+      }
       setEditingQuestion(null)
+      setIsAddingQuestion(false)
     } catch (err: any) {
       setEditError(err.message || "Failed to save question")
     } finally {
@@ -125,7 +131,7 @@ export default function PracticeQuestionManagement({ onImport, onAdd }: Props) {
   const filtered = questions.filter((q) => {
     if (unitFilter !== "all" && q.unit_no !== Number(unitFilter)) return false
     if (typeFilter !== "all" && q.question_type !== typeFilter) return false
-    if (search && !q.question_text.toLowerCase().includes(search.toLowerCase())) return false
+    if (search && !(q.question_text || "").toLowerCase().includes(search.toLowerCase())) return false
     return true
   })
 
@@ -159,16 +165,14 @@ export default function PracticeQuestionManagement({ onImport, onAdd }: Props) {
                 Import Excel
               </button>
             )}
-            {onAdd && (
-              <button
-                type="button"
-                onClick={onAdd}
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:from-blue-700 hover:to-indigo-700 hover:scale-105"
-              >
-                <Plus className="h-4 w-4" />
-                Add Question
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setIsAddingQuestion(true)}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:from-blue-700 hover:to-indigo-700 hover:scale-105"
+            >
+              <Plus className="h-4 w-4" />
+              Add Question
+            </button>
           </div>
         </header>
 
@@ -357,7 +361,17 @@ export default function PracticeQuestionManagement({ onImport, onAdd }: Props) {
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={9} className="px-4 py-12 text-center text-sm font-bold text-slate-500">
-                    No practice questions found matching your search and filter criteria.
+                    <div className="flex flex-col items-center justify-center gap-4">
+                      <p>No practice questions found matching your search and filter criteria.</p>
+                      <button
+                        type="button"
+                        onClick={() => setIsAddingQuestion(true)}
+                        className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:from-blue-700 hover:to-indigo-700 hover:scale-105"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Add Your First Question
+                      </button>
+                    </div>
                   </td>
                 </tr>
               )}
@@ -374,11 +388,12 @@ export default function PracticeQuestionManagement({ onImport, onAdd }: Props) {
         </div>
       </div>
 
-      {/* Edit Question Modal */}
-      {/* Edit Modal */}
       <PracticeQuestionEditModal
-        open={!!editingQuestion}
-        onClose={() => setEditingQuestion(null)}
+        open={!!editingQuestion || isAddingQuestion}
+        onClose={() => {
+          setEditingQuestion(null)
+          setIsAddingQuestion(false)
+        }}
         onSave={handleSaveEdit}
         question={editingQuestion}
         units={units}

@@ -709,11 +709,13 @@ export default function AdminPage() {
         }
       }
 
+      const isNew = !updatedQuestion.id
+
       const res = await fetch("/api/admin/questions", {
-        method: "PUT",
+        method: isNew ? "POST" : "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: parseInt(updatedQuestion.id),
+          id: isNew ? undefined : parseInt(updatedQuestion.id),
           subject: updatedQuestion.subject,
           level: updatedQuestion.level,
           type: updatedQuestion.type,
@@ -731,7 +733,7 @@ export default function AdminPage() {
 
       setEditModalOpen(false)
       setQuestionToEdit(null)
-      alert("Question updated successfully!")
+      alert(isNew ? "Question created successfully!" : "Question updated successfully!")
       if (viewMode === "filtered") {
         fetchQuestions()
       } else {
@@ -815,7 +817,7 @@ ${errorMessages}
 
   const getFilteredAllQuestions = () => {
     return allQuestions.filter((q) => {
-      const matchesSearch = q.question.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesSearch = (q.question || "").toLowerCase().includes(searchQuery.toLowerCase())
       const matchesSubject = filterSubject === "all" || q.subject === filterSubject
       const matchesLevel = filterLevel === "all" || q.level === filterLevel
       const matchesType = filterType === "all" || q.type === filterType
@@ -1324,9 +1326,9 @@ ${errorMessages}
         <ExcelImportSection onImport={handleExcelImport} isLoading={loading} />
 
         <Card className="p-6 mb-6">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <h2 className="text-2xl font-bold text-slate-900">Question Management</h2>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button
                 onClick={() => {
                   setViewMode("all")
@@ -1355,6 +1357,17 @@ ${errorMessages}
                 disabled={selectedIds.length === 0}
               >
                 Delete Selected ({selectedIds.length})
+              </Button>
+              <Button
+                onClick={() => {
+                  setQuestionToEdit(null)
+                  setEditModalOpen(true)
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white shadow-md transition-all hover:scale-105"
+                size="sm"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Add Question
               </Button>
             </div>
           </div>
@@ -1583,6 +1596,25 @@ ${errorMessages}
                           </TableRow>
                         ))
                       )}
+                      {filteredAllQuestionsForCheckbox.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={9} className="h-32 text-center">
+                            <div className="flex flex-col items-center justify-center gap-3">
+                              <p className="text-slate-500 font-medium">No questions found matching your search.</p>
+                              <Button 
+                                onClick={() => {
+                                  setQuestionToEdit(null)
+                                  setEditModalOpen(true)
+                                }}
+                                className="bg-blue-600 hover:bg-blue-700 text-white shadow"
+                              >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Your First Question
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
                     </TableBody>
                   </Table>
                 </div>
@@ -1642,9 +1674,8 @@ ${errorMessages}
                 <div className="flex items-end">
                   <Button
                     onClick={() => {
-                      // Determine a default type if none is selected or to offer a choice
-                      const defaultTypeToAdd: QuestionType = "mcq" // Or any other default
-                      handleAddQuestion(defaultTypeToAdd)
+                      setQuestionToEdit(null)
+                      setEditModalOpen(true)
                     }}
                     className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white"
                   >
@@ -1659,7 +1690,10 @@ ${errorMessages}
                 {questionTypes.map((type) => (
                   <Button
                     key={type}
-                    onClick={() => handleAddQuestion(type)}
+                    onClick={() => {
+                      setQuestionToEdit(null)
+                      setEditModalOpen(true)
+                    }}
                     variant="outline"
                     className="w-full justify-start"
                   >

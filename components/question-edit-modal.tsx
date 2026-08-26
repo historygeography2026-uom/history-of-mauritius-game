@@ -54,8 +54,19 @@ export default function QuestionEditModal({ question, isOpen, onClose, onSave }:
     if (question) {
       setFormData({ ...question })
       setImagePreview(question.image || null)
+    } else if (isOpen) {
+      setFormData({
+        id: "",
+        type: "mcq",
+        question: "",
+        subject: "history",
+        level: 1,
+        timer: 30,
+        options: { A: "", B: "", C: "", D: "", correct: "A" }
+      })
+      setImagePreview(null)
     }
-  }, [question])
+  }, [question, isOpen])
 
   const [isSaving, setIsSaving] = useState(false)
 
@@ -174,7 +185,7 @@ export default function QuestionEditModal({ question, isOpen, onClose, onSave }:
         <DialogHeader className="px-6 pt-6 pb-4 border-b bg-muted/30">
           <DialogTitle className="text-2xl font-bold flex items-center gap-2">
             <FileText className="h-6 w-6 text-primary" />
-            Edit Question
+            {question ? "Edit Question" : "Add New Question"}
           </DialogTitle>
           <DialogDescription>
             Update the question details below. Changes will be saved to the database.

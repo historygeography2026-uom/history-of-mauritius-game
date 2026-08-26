@@ -66,8 +66,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `Invalid type. Must be one of: ${VALID_TYPES.join(", ")}` }, { status: 400 })
     }
 
+    // Resolve unit_id from unit_no if not provided directly
+    let resolvedUnitId = unit_id || null
+    if (!resolvedUnitId && body.unit_no) {
+      const unitLookup = await pool.query("SELECT id FROM practice_units WHERE unit_no = $1 LIMIT 1", [body.unit_no])
+      if (unitLookup.rows.length > 0) {
+        resolvedUnitId = unitLookup.rows[0].id
+      }
+    }
+
+    if (!resolvedUnitId) {
+      return NextResponse.json({ error: "Invalid or missing unit_id/unit_no" }, { status: 400 })
+    }
+
     // Validate unit exists
-    const unitResult = await pool.query("SELECT id FROM practice_units WHERE id = $1", [unit_id])
+    const unitResult = await pool.query("SELECT id FROM practice_units WHERE id = $1", [resolvedUnitId])
     if (unitResult.rows.length === 0) {
       return NextResponse.json({ error: "Invalid unit_id" }, { status: 400 })
     }
@@ -84,7 +97,7 @@ export async function POST(request: NextRequest) {
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
       [
-        unit_id,
+        resolvedUnitId,
         question_type,
         question_text.trim(),
         instruction || null,
