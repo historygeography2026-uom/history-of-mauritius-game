@@ -138,7 +138,7 @@ export default function MCQQuestionScreen({
           {question.image_url && (
             <div className="mb-6 flex justify-center overflow-hidden rounded-2xl border-2 border-rose-100 bg-slate-50 p-2">
               <img
-                src={question.image_url}
+                src={encodeURI(question.image_url)}
                 alt="Question visual"
                 className="max-h-56 w-auto rounded-xl object-contain shadow-sm"
                 onError={(e) => {
