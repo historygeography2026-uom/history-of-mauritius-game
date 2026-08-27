@@ -230,7 +230,7 @@ export default function MatchingQuestionScreen({
                     key={item}
                     type="button"
                     onClick={() => handleLeftClick(item)}
-                    className={`flex min-h-[4rem] items-center justify-between gap-2 rounded-2xl p-4 text-left text-sm sm:text-base font-bold transition-all ${style}`}
+                    className={`flex min-h-[3.5rem] sm:min-h-[4rem] items-center justify-between gap-2 rounded-2xl p-3 sm:p-4 text-left text-xs sm:text-base font-bold transition-all ${style}`}
                   >
                     <span className="leading-snug">{item}</span>
                     {!checked && pairIndex >= 0 && (
@@ -276,7 +276,7 @@ export default function MatchingQuestionScreen({
                     key={item}
                     type="button"
                     onClick={() => handleRightClick(item)}
-                    className={`flex min-h-[4rem] items-center justify-between gap-2 rounded-2xl p-4 text-left text-sm sm:text-base font-bold transition-all ${style}`}
+                    className={`flex min-h-[3.5rem] sm:min-h-[4rem] items-center justify-between gap-2 rounded-2xl p-3 sm:p-4 text-left text-xs sm:text-base font-bold transition-all ${style}`}
                   >
                     <span className="leading-snug">{item}</span>
                     {checked && isCorrectPair && (

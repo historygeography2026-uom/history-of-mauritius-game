@@ -364,7 +364,7 @@ export default function PracticeUnitSelector({
               Practice Island
             </span>
 
-            <h1 className="font-display text-5xl font-extrabold text-[#333a56] sm:text-6xl tracking-tight text-balance">
+            <h1 className="font-display text-3xl sm:text-5xl md:text-6xl font-extrabold text-[#333a56] tracking-tight text-balance">
               {TITLE_WORDS.map((word, i) => (
                 <motion.span
                   key={word}
