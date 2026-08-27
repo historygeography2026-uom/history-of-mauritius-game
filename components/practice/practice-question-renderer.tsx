@@ -147,7 +147,7 @@ export default function PracticeQuestionRenderer({
         {question.image_url && (
           <div className="mb-4 flex justify-center">
             <img
-              src={question.image_url}
+              src={encodeURI(question.image_url)}
               alt="Question image"
               className="max-h-48 rounded-lg shadow-sm object-contain"
               onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}

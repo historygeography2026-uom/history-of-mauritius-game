@@ -17,14 +17,14 @@ export function PracticeHeader({
   onExit,
 }: PracticeHeaderProps) {
   return (
-    <header className="mx-auto flex w-full max-w-3xl items-center gap-4 mb-8">
+    <header className="mx-auto flex w-full max-w-3xl items-center gap-3 sm:gap-4 mb-4 sm:mb-8">
       <button
         type="button"
         onClick={onExit}
         aria-label="Exit practice"
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-900 shadow-sm"
+        className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-900 shadow-sm active:scale-95"
       >
-        <X className="h-5 w-5" />
+        <X className="h-4 w-4 sm:h-5 sm:w-5" />
       </button>
 
       {/* Segmented progress bar — horizontal broken lines */}
