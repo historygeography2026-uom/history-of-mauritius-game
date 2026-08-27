@@ -137,12 +137,12 @@ export default function PracticeAnalyticsDashboard({}: Props) {
   return (
     <div className="bg-gray-50 px-4 py-8 font-sans">
       <div className="mx-auto max-w-6xl">
-        <header className="mb-6 flex items-center justify-between">
+        <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">Practice Analytics</h1>
             <p className="mt-1 text-sm text-gray-500">Detailed breakdown of practice attempts per learner and unit.</p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <select 
               value={timeRange} 
               onChange={(e) => setTimeRange(e.target.value as any)}

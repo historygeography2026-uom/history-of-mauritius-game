@@ -67,11 +67,11 @@ export default function AdminLoginModal({ onClose, onLogin, initialError }: Admi
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4">
       <Card className="w-full max-w-md border-4 border-secondary bg-card shadow-2xl">
-        <div className="p-8">
-          <h2 className="text-3xl font-bold text-center mb-2 text-card-foreground">Admin Login</h2>
-          <p className="text-center text-muted-foreground mb-6">Enter your credentials to access the admin panel</p>
+        <div className="p-5 sm:p-8">
+          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-2 text-card-foreground">Admin Login</h2>
+          <p className="text-xs sm:text-sm text-center text-muted-foreground mb-4 sm:mb-6">Enter your credentials to access the admin panel</p>
 
           <form onSubmit={handleLogin} className="space-y-4">
             {error && (

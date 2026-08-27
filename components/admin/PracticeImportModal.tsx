@@ -166,11 +166,11 @@ export default function PracticeImportModal({ open, onClose, onImportComplete }:
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 px-4 py-8 font-sans" role="dialog" aria-modal="true" aria-labelledby="import-title">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 p-3 sm:p-4 font-sans" role="dialog" aria-modal="true" aria-labelledby="import-title">
       <div className="flex max-h-full w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
-        <header className="flex items-center justify-between border-b border-gray-200 px-6 py-4 bg-slate-50">
+        <header className="flex items-center justify-between border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 bg-slate-50">
           <div>
-            <h1 id="import-title" className="text-lg font-bold text-gray-900">Import Practice Questions</h1>
+            <h1 id="import-title" className="text-base sm:text-lg font-bold text-gray-900">Import Practice Questions</h1>
             <p className="text-xs text-gray-500">Upload bulk questions using the curriculum Excel template</p>
           </div>
           <button
@@ -183,8 +183,8 @@ export default function PracticeImportModal({ open, onClose, onImportComplete }:
           </button>
         </header>
 
-        <div className="flex-1 overflow-y-auto px-6 py-5">
-          <div className="mb-4 flex items-center justify-between bg-blue-50 border border-blue-200 p-3.5 rounded-xl">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5">
+          <div className="mb-4 flex flex-col sm:flex-row gap-3 sm:gap-0 sm:items-center sm:justify-between bg-blue-50 border border-blue-200 p-3 sm:p-3.5 rounded-xl">
             <div>
               <p className="text-sm font-semibold text-blue-900">Need the Practice Questions Template?</p>
               <p className="text-xs text-blue-700">Download the template populated with sample Grade 5 & Grade 6 questions.</p>
@@ -192,7 +192,7 @@ export default function PracticeImportModal({ open, onClose, onImportComplete }:
             <button
               type="button"
               onClick={handleDownloadTemplate}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-blue-700"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-blue-700 self-start sm:self-auto"
             >
               <Download className="h-4 w-4" aria-hidden="true" />
               Download Template
@@ -327,7 +327,7 @@ export default function PracticeImportModal({ open, onClose, onImportComplete }:
           )}
         </div>
 
-        <footer className="flex items-center justify-between border-t border-gray-200 bg-slate-50 px-6 py-4">
+        <footer className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0 sm:items-center sm:justify-between border-t border-gray-200 bg-slate-50 px-4 sm:px-6 py-3 sm:py-4">
           <button
             type="button"
             onClick={onClose}

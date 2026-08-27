@@ -200,7 +200,7 @@ export default function PracticeQuestionEditModal({ open, onClose, onSave, quest
           <div className="space-y-4">
             <Label>Matching Pairs</Label>
             {pairs.map((pair: any, idx: number) => (
-              <div key={idx} className="grid grid-cols-2 gap-3 items-center">
+              <div key={idx} className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 items-center">
                 <Input 
                   value={pair.left}
                   onChange={(e) => {
@@ -292,17 +292,17 @@ export default function PracticeQuestionEditModal({ open, onClose, onSave, quest
 
   return (
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle>{question ? "Edit Practice Question" : "Add Practice Question"}</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-xl sm:text-2xl">{question ? "Edit Practice Question" : "Add Practice Question"}</DialogTitle>
+          <DialogDescription className="text-xs sm:text-sm">
             Manage practice question details and unit placement.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-6 py-4">
+        <div className="grid gap-4 sm:gap-6 py-3 sm:py-4">
           {/* Top Row: Unit and Type */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-2">
               <Label>Unit</Label>
               <Select
@@ -384,7 +384,7 @@ export default function PracticeQuestionEditModal({ open, onClose, onSave, quest
           {/* Image Upload */}
           <div className="space-y-2">
             <Label>Image (Optional)</Label>
-            <div className="flex gap-4 items-start">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start">
               <div 
                 className={`relative w-32 h-24 rounded-lg border-2 border-dashed flex items-center justify-center overflow-hidden
                   ${imagePreview ? 'border-slate-200' : 'border-slate-300 bg-slate-50'}`}
@@ -432,7 +432,7 @@ export default function PracticeQuestionEditModal({ open, onClose, onSave, quest
           </div>
         </div>
 
-        <DialogFooter className="border-t pt-4 -mx-6 px-6 sm:justify-between">
+        <DialogFooter className="border-t pt-4 -mx-4 sm:-mx-6 px-4 sm:px-6 flex flex-col-reverse sm:flex-row gap-2 sm:gap-0 sm:justify-between">
           <Button type="button" variant="ghost" onClick={onClose}>
             Cancel
           </Button>

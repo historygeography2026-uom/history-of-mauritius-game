@@ -216,25 +216,25 @@ export default function QuestionEditModal({ question, isOpen, onClose, onSave }:
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b bg-muted/30">
-          <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-            <FileText className="h-6 w-6 text-primary" />
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 w-[95vw] sm:w-full">
+        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b bg-muted/30">
+          <DialogTitle className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+            <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
             {question ? "Edit Question" : "Add New Question"}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-xs sm:text-sm">
             Update the question details below. Changes will be saved to the database.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="px-6 py-6 space-y-8">
+        <div className="px-4 sm:px-6 py-4 sm:py-6 space-y-6 sm:space-y-8">
           {/* Section: Basic Settings */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 text-lg font-semibold text-primary">
+          <div className="space-y-3 sm:space-y-4">
+            <div className="flex items-center gap-2 text-base sm:text-lg font-semibold text-primary">
               <Settings className="h-5 w-5" />
               <span>Basic Settings</span>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4 rounded-lg border bg-card">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6 p-3 sm:p-4 rounded-lg border bg-card">
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Subject</Label>
                 <Select value={formData.subject} onValueChange={(val) => setFormData({ ...formData, subject: val })}>
@@ -451,7 +451,7 @@ export default function QuestionEditModal({ question, isOpen, onClose, onSave }:
               {formData.type === "matching" && formData.pairs && (
                 <div className="space-y-3">
                   {formData.pairs.map((pair, idx) => (
-                    <div key={idx} className="grid grid-cols-2 gap-4 p-3 rounded-md bg-muted/30">
+                    <div key={idx} className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 p-3 rounded-md bg-muted/30">
                       <div className="space-y-2">
                         <Label className="text-sm font-medium">Left {idx + 1}</Label>
                         <Input
@@ -549,7 +549,7 @@ export default function QuestionEditModal({ question, isOpen, onClose, onSave }:
           </div>
         </div>
 
-        <DialogFooter className="px-6 py-4 border-t bg-muted/30">
+        <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0 px-4 sm:px-6 py-3 sm:py-4 border-t bg-muted/30">
           <Button variant="outline" onClick={onClose} className="gap-2">
             <X className="h-4 w-4" />
             Cancel

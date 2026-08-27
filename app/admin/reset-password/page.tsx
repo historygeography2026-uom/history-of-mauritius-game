@@ -373,11 +373,11 @@ export default function ResetPasswordPage() {
 
               {/* Toolbar */}
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Button
                     type="button"
                     onClick={() => setShowAddForm((v) => !v)}
-                    className="kid-btn bg-gradient-to-r from-green-500 to-green-600 text-white gap-2"
+                    className="kid-btn bg-gradient-to-r from-green-500 to-green-600 text-white gap-2 text-xs sm:text-sm"
                   >
                     <UserPlus className="h-4 w-4" />
                     {showAddForm ? "Cancel" : "Add User"}
@@ -387,7 +387,7 @@ export default function ResetPasswordPage() {
                     variant="outline"
                     onClick={fetchUsers}
                     disabled={isLoadingUsers}
-                    className="gap-2"
+                    className="gap-2 text-xs sm:text-sm"
                   >
                     <RefreshCw className={`h-4 w-4 ${isLoadingUsers ? "animate-spin" : ""}`} />
                     Refresh
@@ -396,7 +396,7 @@ export default function ResetPasswordPage() {
                     type="button"
                     variant="outline"
                     onClick={handleExportCSV}
-                    className="gap-2 border-primary text-primary hover:bg-primary/10"
+                    className="gap-2 border-primary text-primary hover:bg-primary/10 text-xs sm:text-sm"
                   >
                     <Download className="h-4 w-4" />
                     Export CSV

@@ -892,20 +892,20 @@ ${errorMessages}
 
   if (showForm) {
     return (
-      <div className="min-h-screen bg-slate-50 p-6 md:p-12">
+      <div className="min-h-screen bg-slate-50 p-4 sm:p-6 md:p-12">
         <div className="mx-auto max-w-2xl">
-          <Button onClick={() => setShowForm(false)} variant="outline" className="mb-6 gap-2">
+          <Button onClick={() => setShowForm(false)} variant="outline" className="mb-4 sm:mb-6 gap-2">
             <ArrowLeft className="h-4 w-4" />
             Back to Questions
           </Button>
 
-          <Card className="p-8 border-0 shadow-lg flex flex-col max-h-[80vh]">
-            <h2 className="text-2xl font-bold mb-6 text-slate-900">
+          <Card className="p-4 sm:p-8 border-0 shadow-lg flex flex-col max-h-[85vh] sm:max-h-[80vh]">
+            <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-slate-900">
               {editingId ? "Edit Question" : `Add New ${selectedType.toUpperCase()} Question`}
             </h2>
 
-            <div className="space-y-6 overflow-y-auto pr-4 flex-1">
-              <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-4 sm:space-y-6 overflow-y-auto pr-1 sm:pr-4 flex-1">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                 <div>
                   <Label className="block text-sm font-semibold text-slate-700 mb-2">Question Type</Label>
                   <div className="px-4 py-2 bg-slate-100 rounded-lg text-slate-900 font-medium">
@@ -1212,7 +1212,7 @@ ${errorMessages}
               </div>
             </div>
 
-            <div className="flex gap-4 pt-6 border-t border-slate-200 mt-6">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4 sm:pt-6 border-t border-slate-200 mt-4 sm:mt-6">
               <Button onClick={handleSaveQuestion} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
                 Save Question
               </Button>
@@ -1228,23 +1228,24 @@ ${errorMessages}
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-teal-50">
-      <div className="mx-auto max-w-7xl px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
+      <div className="mx-auto max-w-7xl px-3 sm:px-4 py-4 sm:py-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+          <div className="flex items-center gap-3 sm:gap-4">
             <Link href="/">
-              <Button className="gap-2 bg-gradient-to-r from-secondary via-secondary/80 to-secondary hover:shadow-lg hover:shadow-secondary/50 text-white font-bold transition-all duration-300 hover:scale-105 rounded-xl px-6 py-3">
+              <Button className="gap-2 bg-gradient-to-r from-secondary via-secondary/80 to-secondary hover:shadow-lg hover:shadow-secondary/50 text-white font-bold transition-all duration-300 hover:scale-105 rounded-xl px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm">
                 <ArrowLeft className="h-4 w-4 transition-transform hover:translate-x-1" />
-                🏠 Back to Home
+                <span className="hidden sm:inline">🏠 Back to Home</span>
+                <span className="sm:hidden">🏠 Home</span>
               </Button>
             </Link>
             <div>
-              <h1 className="text-3xl font-bold text-slate-900">Admin Dashboard</h1>
-              <p className="text-sm text-slate-600">
+              <h1 className="text-xl sm:text-3xl font-bold text-slate-900">Admin Dashboard</h1>
+              <p className="text-xs sm:text-sm text-slate-600">
                 Logged in as: <span className="font-semibold">{currentUser}</span>
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               onClick={async () => {
                 setExportingSql(true)
@@ -1263,11 +1264,12 @@ ${errorMessages}
                 setExportingSql(false)
               }}
               disabled={exportingSql}
-              className="kid-btn gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:shadow-lg hover:shadow-blue-400/40 text-white font-bold px-4 py-2"
+              className="kid-btn gap-1.5 sm:gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:shadow-lg hover:shadow-blue-400/40 text-white font-bold px-3 sm:px-4 py-2 text-xs sm:text-sm"
               title="Export Database Backup (SQL)"
             >
               <Database className="h-4 w-4" />
-              {exportingSql ? "Exporting..." : "💾 SQL Backup"}
+              <span className="hidden sm:inline">{exportingSql ? "Exporting..." : "💾 SQL Backup"}</span>
+              <span className="sm:hidden">{exportingSql ? "..." : "💾 SQL"}</span>
             </Button>
             <Button
               onClick={async () => {
@@ -1287,21 +1289,23 @@ ${errorMessages}
                 setExportingExcel(false)
               }}
               disabled={exportingExcel}
-              className="kid-btn gap-2 bg-gradient-to-r from-emerald-600 to-green-600 hover:shadow-lg hover:shadow-emerald-400/40 text-white font-bold px-4 py-2"
+              className="kid-btn gap-1.5 sm:gap-2 bg-gradient-to-r from-emerald-600 to-green-600 hover:shadow-lg hover:shadow-emerald-400/40 text-white font-bold px-3 sm:px-4 py-2 text-xs sm:text-sm"
               title="Export All Student Data (Excel)"
             >
               <FileSpreadsheet className="h-4 w-4" />
-              {exportingExcel ? "Exporting..." : "📊 Excel Export"}
+              <span className="hidden sm:inline">{exportingExcel ? "Exporting..." : "📊 Excel Export"}</span>
+              <span className="sm:hidden">{exportingExcel ? "..." : "📊 Excel"}</span>
             </Button>
             <Link href="/admin/reset-password">
-              <Button className="kid-btn gap-2 bg-gradient-to-r from-primary via-purple-500 to-secondary hover:shadow-lg hover:shadow-primary/40 text-white font-bold px-5 py-2">
-                🛡️ User Passwords
+              <Button className="kid-btn gap-1.5 sm:gap-2 bg-gradient-to-r from-primary via-purple-500 to-secondary hover:shadow-lg hover:shadow-primary/40 text-white font-bold px-3 sm:px-5 py-2 text-xs sm:text-sm">
+                <span className="hidden sm:inline">🛡️ User Passwords</span>
+                <span className="sm:hidden">🛡️ Passwords</span>
               </Button>
             </Link>
             <Button
               onClick={handleLogout}
               variant="outline"
-              className="gap-2 text-red-600"
+              className="gap-1.5 sm:gap-2 text-red-600 text-xs sm:text-sm"
             >
               <LogOut className="h-4 w-4" />
               Logout
@@ -1427,7 +1431,7 @@ ${errorMessages}
               </div>
 
               {/* Search and Filters */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-slate-50 rounded-lg">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 p-3 sm:p-4 bg-slate-50 rounded-lg">
                 <div className="md:col-span-4">
                   <Label className="text-sm font-medium mb-2">Search Questions</Label>
                   <div className="relative">
@@ -1738,7 +1742,7 @@ ${errorMessages}
                 {filteredQuestions.length > 0 ? (
                   filteredQuestions.map((question) => (
                     <Card key={question.id} className="p-4 border-0 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex items-start justify-between gap-4">
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
                         <div className="flex items-start gap-3">
                           <Input type="checkbox" className="h-4 w-4 mt-2" checked={selectedIds.includes(question.id)} onChange={() => toggleSelectId(question.id)} />
                           <div className="flex-1">
@@ -1785,7 +1789,7 @@ ${errorMessages}
                             </div>
                           </div>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 self-end sm:self-auto">
                           <Button onClick={() => handleEditQuestion(question)} size="sm" variant="outline" className="gap-2">
                             <Edit2 className="h-4 w-4" />
                             Edit
