@@ -14,27 +14,50 @@ interface PracticeUnit {
   question_count: number
 }
 
+// Fallback units in case of initial server cold start
+const DEFAULT_FALLBACK_UNITS: PracticeUnit[] = [
+  { id: 7, unit_no: 1, unit_name: "Our Natural Environment", question_count: 191 },
+  { id: 8, unit_no: 2, unit_name: "Discovery of Mauritius & Rodrigues", question_count: 186 },
+  { id: 9, unit_no: 3, unit_name: "Settlement in Mauritius", question_count: 173 },
+  { id: 10, unit_no: 4, unit_name: "Weather and Climate", question_count: 190 },
+  { id: 11, unit_no: 5, unit_name: "Port Louis: the capital of Mauritius", question_count: 150 },
+  { id: 1, unit_no: 6, unit_name: "Land Use", question_count: 151 },
+  { id: 2, unit_no: 7, unit_name: "People in the island in the past", question_count: 152 },
+  { id: 3, unit_no: 8, unit_name: "Natural Hazards", question_count: 165 },
+  { id: 4, unit_no: 9, unit_name: "Celebrating Independence", question_count: 160 },
+  { id: 5, unit_no: 10, unit_name: "Our Heritage", question_count: 174 },
+]
+
 export default function PracticePage() {
-  const [units, setUnits] = useState<PracticeUnit[]>([])
-  const [loading, setLoading] = useState(true)
+  const [units, setUnits] = useState<PracticeUnit[]>(DEFAULT_FALLBACK_UNITS)
+  const [loading, setLoading] = useState(false)
   const [starting, setStarting] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
   const { status } = useSession()
 
-  // Fetch units from API immediately for all visitors
+  // Fetch units from API immediately for all visitors with automatic retry
   useEffect(() => {
-    fetch("/api/practice/units")
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setUnits(data)
-        } else if (data.units) {
-          setUnits(data.units)
+    let isMounted = true
+    const fetchUnits = async () => {
+      try {
+        const res = await fetch("/api/practice/units")
+        if (res.ok) {
+          const data = await res.json()
+          if (isMounted) {
+            if (Array.isArray(data) && data.length > 0) {
+              setUnits(data)
+            } else if (data.units && data.units.length > 0) {
+              setUnits(data.units)
+            }
+          }
         }
-      })
-      .catch(() => setError("Failed to load units"))
-      .finally(() => setLoading(false))
+      } catch (err) {
+        console.warn("[Practice] Units fetch fallback to default:", err)
+      }
+    }
+    fetchUnits()
+    return () => { isMounted = false }
   }, [])
 
   const handleStart = async (unitId: number) => {

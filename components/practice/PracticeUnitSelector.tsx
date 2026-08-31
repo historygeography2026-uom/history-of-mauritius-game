@@ -430,22 +430,30 @@ export default function PracticeUnitSelector({
         </div>
 
         {/* 3D Quest Cards Grid with Framer Motion Staggered Pop-in & Spring Reflow */}
-        <motion.ul layout className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <AnimatePresence mode="popLayout">
-            {visibleUnits.map((unit, i) => (
-              <motion.li
-                key={unit.id}
-                layout
-                initial={{ opacity: 0, scale: 0.95, y: 24 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                transition={{ type: "spring", stiffness: 250, damping: 20, delay: i * 0.06 }}
-              >
-                <UnitQuestCard unit={unit} onStart={onStart} />
-              </motion.li>
-            ))}
-          </AnimatePresence>
-        </motion.ul>
+        {visibleUnits.length > 0 ? (
+          <motion.ul layout className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <AnimatePresence mode="popLayout">
+              {visibleUnits.map((unit, i) => (
+                <motion.li
+                  key={unit.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.95, y: 24 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                  transition={{ type: "spring", stiffness: 250, damping: 20, delay: i * 0.06 }}
+                >
+                  <UnitQuestCard unit={unit} onStart={onStart} />
+                </motion.li>
+              ))}
+            </AnimatePresence>
+          </motion.ul>
+        ) : (
+          <div className="mt-12 text-center py-12 bg-white/60 rounded-3xl border border-slate-200 shadow-sm max-w-md mx-auto">
+            <p className="text-3xl mb-2">🌴</p>
+            <p className="font-display font-bold text-lg text-slate-700">Connecting to Practice Island...</p>
+            <p className="text-sm text-slate-500 mt-1">Please wait a moment while the quests load.</p>
+          </div>
+        )}
       </section>
     </div>
   )

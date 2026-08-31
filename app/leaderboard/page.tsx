@@ -37,7 +37,14 @@ type SortField = "total_points" | "stars_earned" | "played_at" | "display_name" 
 type ViewMode = "cumulated" | "level"
 
 const ROWS_PER_PAGE = 20
-const fetcher = (url: string) => fetch(url).then((r) => r.json())
+const fetcher = async (url: string) => {
+  const res = await fetch(url)
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}))
+    throw new Error(errorData.error || "Failed to load leaderboard")
+  }
+  return res.json()
+}
 
 const encouragements = [
   "🚀 You're doing amazing! Keep pushing for the top!",
