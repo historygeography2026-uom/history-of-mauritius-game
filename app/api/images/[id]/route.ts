@@ -16,6 +16,27 @@ export async function GET(
     const decodedId = decodeURIComponent(rawId)
     const fileName = path.basename(decodedId)
 
+    // Security check 1: Disallow dotfiles / hidden files (e.g. .env, .git)
+    if (fileName.startsWith(".") || fileName.includes("/") || fileName.includes("\\")) {
+      return NextResponse.json({ error: "Invalid image filename" }, { status: 400 })
+    }
+
+    // Security check 2: Strict extension whitelist (only images permitted)
+    const ext = path.extname(fileName).toLowerCase()
+    const mimeMap: Record<string, string> = {
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".jfif": "image/jpeg",
+      ".png": "image/png",
+      ".gif": "image/gif",
+      ".webp": "image/webp",
+      ".svg": "image/svg+xml",
+      ".ico": "image/x-icon",
+    }
+    if (!mimeMap[ext]) {
+      return NextResponse.json({ error: "Invalid or unsupported file type" }, { status: 400 })
+    }
+
     // Check multiple candidate storage directories so images are NEVER lost:
     const candidateDirs: string[] = []
 
@@ -93,18 +114,8 @@ export async function GET(
     }
 
     // Infer content type from extension
-    const ext = path.extname(foundFilePath).toLowerCase()
-    const mimeMap: Record<string, string> = {
-      ".jpg": "image/jpeg",
-      ".jpeg": "image/jpeg",
-      ".jfif": "image/jpeg",
-      ".png": "image/png",
-      ".gif": "image/gif",
-      ".webp": "image/webp",
-      ".svg": "image/svg+xml",
-      ".ico": "image/x-icon",
-    }
-    const fileType = mimeMap[ext] || "image/jpeg"
+    const fileExt = path.extname(foundFilePath).toLowerCase()
+    const fileType = mimeMap[fileExt] || mimeMap[ext] || "image/jpeg"
 
     // Read file and serve with caching
     const imageData = await readFile(foundFilePath)
