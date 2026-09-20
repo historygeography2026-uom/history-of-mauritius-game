@@ -601,76 +601,87 @@ export default function PracticeAnalyticsDashboard({}: Props) {
           </div>
         </section>
 
-        {/* Charts: Top Learners & Unit Popularity */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Top Learners Chart */}
-          <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-blue-500" />
-                <span>Top Active Learners {gradeFilter !== 'all' ? `— Grade ${gradeFilter}` : '— All Grades'}</span>
-              </h2>
-              {gradeFilter !== 'all' && (
+        {/* Unit Popularity Chart — Full Parent Width */}
+        <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm w-full">
+          <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-amber-500" />
+              <span>Unit Popularity {gradeFilter !== 'all' ? `— Grade ${gradeFilter}` : '— Across Grades'}</span>
+            </h2>
+            <div className="flex items-center gap-3">
+              {gradeFilter === 'all' ? (
+                <div className="flex items-center gap-3 text-xs font-semibold">
+                  <span className="flex items-center gap-1.5 text-indigo-600">
+                    <span className="h-2.5 w-2.5 rounded-full bg-indigo-500"></span> Grade 4
+                  </span>
+                  <span className="flex items-center gap-1.5 text-emerald-600">
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-500"></span> Grade 5
+                  </span>
+                  <span className="flex items-center gap-1.5 text-sky-600">
+                    <span className="h-2.5 w-2.5 rounded-full bg-sky-500"></span> Grade 6
+                  </span>
+                </div>
+              ) : (
                 <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${currentTheme.badgeBg}`}>
                   Grade {gradeFilter}
                 </span>
               )}
             </div>
-            <div style={{ height: 288, minHeight: 288, width: '100%' }}>
-              {learnerChartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={288} minHeight={288} key={`learner-bar-${gradeFilter}-${timeRange}`}>
-                  <BarChart data={learnerChartData} layout="vertical" margin={{ left: 20, right: 20, top: 10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                    <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
-                    <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#334155', fontWeight: 600 }} width={90} />
-                    <RechartsTooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '10px' }} />
-                    <Bar dataKey="Attempts" name="Attempts" fill={currentTheme.barColor} radius={[0, 4, 4, 0]} barSize={20} />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="flex h-full items-center justify-center text-sm text-gray-400">
-                  No practice attempts recorded for {gradeFilter !== 'all' ? `Grade ${gradeFilter}` : 'this selection'}.
-                </div>
-              )}
-            </div>
-          </section>
+          </div>
+          <div style={{ height: 320, minHeight: 320, width: '100%' }}>
+            {unitChartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={320} minHeight={320} key={`unit-bar-${gradeFilter}-${timeRange}`}>
+                <BarChart data={unitChartData} margin={{ top: 10, right: 15, left: -10, bottom: 25 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="shortName" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b', fontWeight: 600 }} dy={8} interval={0} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
+                  <RechartsTooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '10px' }} />
+                  <Bar dataKey="Attempts" name="Attempts" radius={[4, 4, 0, 0]} barSize={activeUnits.length > 10 ? 36 : 56}>
+                    {unitChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={getGradeTheme(entry.grade).barColor} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-gray-400">
+                No chart data available.
+              </div>
+            )}
+          </div>
+        </section>
 
-          {/* Unit Popularity Chart */}
-          <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-amber-500" />
-                <span>Unit Popularity {gradeFilter !== 'all' ? `— Grade ${gradeFilter}` : '— Across Grades'}</span>
-              </h2>
-              {gradeFilter !== 'all' && (
-                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${currentTheme.badgeBg}`}>
-                  Grade {gradeFilter}
-                </span>
-              )}
-            </div>
-            <div style={{ height: 288, minHeight: 288, width: '100%' }}>
-              {unitChartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={288} minHeight={288} key={`unit-bar-${gradeFilter}-${timeRange}`}>
-                  <BarChart data={unitChartData} margin={{ top: 10, right: 10, left: -10, bottom: 25 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="shortName" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dy={8} interval={0} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
-                    <RechartsTooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '10px' }} />
-                    <Bar dataKey="Attempts" name="Attempts" radius={[4, 4, 0, 0]} barSize={activeUnits.length > 10 ? 22 : 36}>
-                      {unitChartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={getGradeTheme(entry.grade).barColor} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="flex h-full items-center justify-center text-sm text-gray-400">
-                  No chart data available.
-                </div>
-              )}
-            </div>
-          </section>
-        </div>
+        {/* Top Learners Chart — Full Parent Width */}
+        <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm w-full">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-blue-500" />
+              <span>Top Active Learners {gradeFilter !== 'all' ? `— Grade ${gradeFilter}` : '— All Grades'}</span>
+            </h2>
+            {gradeFilter !== 'all' && (
+              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${currentTheme.badgeBg}`}>
+                Grade {gradeFilter}
+              </span>
+            )}
+          </div>
+          <div style={{ height: 320, minHeight: 320, width: '100%' }}>
+            {learnerChartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={320} minHeight={320} key={`learner-bar-${gradeFilter}-${timeRange}`}>
+                <BarChart data={learnerChartData} layout="vertical" margin={{ left: 20, right: 30, top: 10, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                  <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
+                  <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#334155', fontWeight: 600 }} width={120} />
+                  <RechartsTooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '10px' }} />
+                  <Bar dataKey="Attempts" name="Attempts" fill={currentTheme.barColor} radius={[0, 6, 6, 0]} barSize={22} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-gray-400">
+                No practice attempts recorded for {gradeFilter !== 'all' ? `Grade ${gradeFilter}` : 'this selection'}.
+              </div>
+            )}
+          </div>
+        </section>
 
         {/* Pivot Table: Learner vs Unit Attempts */}
         <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
