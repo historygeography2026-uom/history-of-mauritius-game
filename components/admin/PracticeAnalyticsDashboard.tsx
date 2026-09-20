@@ -2,8 +2,8 @@
 "use client"
 
 import { useState, useEffect, useCallback, useMemo } from "react"
-import { Users, BookOpen, Target, TrendingUp, Download, Search, Filter, Layers } from "lucide-react"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts'
+import { Users, BookOpen, Target, TrendingUp, Download, Search, Filter, Layers, CheckCircle2 } from "lucide-react"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line, Cell } from 'recharts'
 
 interface LearnerUnitStat {
   learner_name: string
@@ -56,28 +56,40 @@ function parseGradeAndUnit(unitName: string, unitNo?: number): { grade: number; 
 function getGradeTheme(grade: number) {
   if (grade === 4) {
     return {
+      name: 'Grade 4',
       border: 'border-indigo-200',
+      activeBorder: 'border-indigo-500 ring-2 ring-indigo-500/20',
       bg: 'bg-indigo-50/50',
       badgeBg: 'bg-indigo-100 text-indigo-700 font-bold',
       text: 'text-indigo-900',
-      barColor: '#6366f1'
+      headingText: 'text-indigo-700',
+      barColor: '#6366f1',
+      lightBg: 'bg-indigo-50',
     }
   }
   if (grade === 5) {
     return {
+      name: 'Grade 5',
       border: 'border-emerald-200',
+      activeBorder: 'border-emerald-500 ring-2 ring-emerald-500/20',
       bg: 'bg-emerald-50/50',
       badgeBg: 'bg-emerald-100 text-emerald-700 font-bold',
       text: 'text-emerald-900',
-      barColor: '#10b981'
+      headingText: 'text-emerald-700',
+      barColor: '#10b981',
+      lightBg: 'bg-emerald-50',
     }
   }
   return {
+    name: 'Grade 6',
     border: 'border-sky-200',
+    activeBorder: 'border-sky-500 ring-2 ring-sky-500/20',
     bg: 'bg-sky-50/50',
     badgeBg: 'bg-sky-100 text-sky-700 font-bold',
     text: 'text-sky-900',
-    barColor: '#0284c7'
+    headingText: 'text-sky-700',
+    barColor: '#0284c7',
+    lightBg: 'bg-sky-50',
   }
 }
 
@@ -91,16 +103,6 @@ export default function PracticeAnalyticsDashboard({}: Props) {
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | 'all'>('7d')
   const [gradeFilter, setGradeFilter] = useState<'all' | '4' | '5' | '6'>('all')
 
-  const [hiddenSeries, setHiddenSeries] = useState<Record<string, boolean>>({})
-
-  const handleLegendClick = (e: any) => {
-    if (!e || !e.dataKey) return
-    setHiddenSeries(prev => ({
-      ...prev,
-      [e.dataKey]: !prev[e.dataKey]
-    }))
-  }
-
   const [currentPage, setCurrentPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState("")
   const pageSize = 10
@@ -110,7 +112,7 @@ export default function PracticeAnalyticsDashboard({}: Props) {
       setLoading(true)
       const [unitsRes, timelineRes, allUnitsRes] = await Promise.all([
         fetch(`/api/admin/practice/stats?view=learner-units&range=${timeRange}`),
-        fetch(`/api/admin/practice/stats?view=timeline&range=${timeRange}`),
+        fetch(`/api/admin/practice/stats?view=timeline&range=${timeRange}&grade=${gradeFilter}`),
         fetch(`/api/admin/practice/units`)
       ])
       
@@ -135,12 +137,45 @@ export default function PracticeAnalyticsDashboard({}: Props) {
     } finally {
       setLoading(false)
     }
-  }, [timeRange])
+  }, [timeRange, gradeFilter])
 
   useEffect(() => { 
     setCurrentPage(1)
     fetchStats() 
-  }, [fetchStats, timeRange])
+  }, [fetchStats])
+
+  // --- Grade Breakdown Totals (Always computed across all units for top cards) ---
+  const gradeBreakdown = useMemo(() => {
+    let g4Attempts = 0
+    let g5Attempts = 0
+    let g6Attempts = 0
+    const g4Learners = new Set<string>()
+    const g5Learners = new Set<string>()
+    const g6Learners = new Set<string>()
+
+    stats.forEach(s => {
+      const parsed = parseGradeAndUnit(s.unit_name, s.unit_no)
+      const attempts = parseInt(String(s.attempts), 10) || 0
+      if (parsed.grade === 4) {
+        g4Attempts += attempts
+        if (attempts > 0) g4Learners.add(s.learner_name)
+      } else if (parsed.grade === 5) {
+        g5Attempts += attempts
+        if (attempts > 0) g5Learners.add(s.learner_name)
+      } else if (parsed.grade === 6) {
+        g6Attempts += attempts
+        if (attempts > 0) g6Learners.add(s.learner_name)
+      }
+    })
+
+    return {
+      4: { attempts: g4Attempts, learners: g4Learners.size, units: 6 },
+      5: { attempts: g5Attempts, learners: g5Learners.size, units: 5 },
+      6: { attempts: g6Attempts, learners: g6Learners.size, units: 5 },
+      totalAttempts: g4Attempts + g5Attempts + g6Attempts,
+      totalLearners: new Set(stats.filter(s => (parseInt(String(s.attempts), 10) || 0) > 0).map(s => s.learner_name)).size
+    }
+  }, [stats])
 
   // --- Process & Filter Units in Natural Progression ---
   // Sort order: Grade 4 (Units 1–6) -> Grade 5 (Units 1–5) -> Grade 6 (Units 1–5)
@@ -160,6 +195,15 @@ export default function PracticeAnalyticsDashboard({}: Props) {
     })
   }, [availableUnits, stats])
 
+  // Group sorted units by grade for organized display
+  const unitsByGrade = useMemo(() => {
+    return {
+      4: allSortedUnits.filter(u => parseGradeAndUnit(u.unit_name, u.unit_no).grade === 4),
+      5: allSortedUnits.filter(u => parseGradeAndUnit(u.unit_name, u.unit_no).grade === 5),
+      6: allSortedUnits.filter(u => parseGradeAndUnit(u.unit_name, u.unit_no).grade === 6),
+    }
+  }, [allSortedUnits])
+
   // Filter units according to grade filter
   const activeUnits = useMemo(() => {
     if (gradeFilter === 'all') return allSortedUnits
@@ -170,14 +214,17 @@ export default function PracticeAnalyticsDashboard({}: Props) {
   const activeUnitNames = useMemo(() => activeUnits.map(u => u.unit_name), [activeUnits])
 
   // --- Aggregate Data for Active Grade Filter ---
-  // Stats filtered by active units
   const activeStats = useMemo(() => {
     return stats.filter(s => activeUnitNames.includes(s.unit_name))
   }, [stats, activeUnitNames])
 
-  // Learners who have attempts in the selected units (or all learners if all grades)
+  // Learners who have attempts in the selected grade's units
   const relevantLearners = useMemo(() => {
-    return Array.from(new Set(activeStats.map(s => s.learner_name))).sort()
+    return Array.from(new Set(
+      activeStats
+        .filter(s => (parseInt(String(s.attempts), 10) || 0) > 0)
+        .map(s => s.learner_name)
+    )).sort()
   }, [activeStats])
 
   // Pivot Table: Rows = Learners, Columns = Units in activeUnits
@@ -196,7 +243,7 @@ export default function PracticeAnalyticsDashboard({}: Props) {
     })
   }, [relevantLearners, activeUnitNames, activeStats])
 
-  // Unit Summary Data (for top stats bar and popularity chart)
+  // Unit Summary Data (for badges and popularity chart)
   const unitSummaryData = useMemo(() => {
     return activeUnits.map(u => {
       const total = pivotTable.reduce((acc, row) => acc + (row[u.unit_name] || 0), 0)
@@ -229,14 +276,20 @@ export default function PracticeAnalyticsDashboard({}: Props) {
   }, [unitSummaryData])
 
   const totalPracticeAttempts = useMemo(() => {
-    return pivotTable.reduce((acc, row) => acc + row.total, 0)
-  }, [pivotTable])
+    if (gradeFilter === 'all') return gradeBreakdown.totalAttempts
+    const g = parseInt(gradeFilter, 10) as 4 | 5 | 6
+    return gradeBreakdown[g]?.attempts || 0
+  }, [gradeFilter, gradeBreakdown])
 
+  // Timeline chart data formatted with grade-separated properties
   const timelineChartData = useMemo(() => {
     return [...timelineStats].reverse().map(d => ({
       ...d,
       displayDate: new Date(d.day).toLocaleDateString("en-GB", { day: 'numeric', month: 'short' }),
-      Attempts: Number(d.attempts) || 0
+      Attempts: Number(d.attempts) || 0,
+      Grade4: Number(d.grade4_attempts) || 0,
+      Grade5: Number(d.grade5_attempts) || 0,
+      Grade6: Number(d.grade6_attempts) || 0,
     }))
   }, [timelineStats])
 
@@ -268,59 +321,68 @@ export default function PracticeAnalyticsDashboard({}: Props) {
     URL.revokeObjectURL(url)
   }
 
-  if (loading) {
+  // Active theme based on selected grade
+  const currentTheme = useMemo(() => {
+    if (gradeFilter === '4') return getGradeTheme(4)
+    if (gradeFilter === '5') return getGradeTheme(5)
+    if (gradeFilter === '6') return getGradeTheme(6)
+    return {
+      name: 'All Grades',
+      border: 'border-emerald-200',
+      activeBorder: 'border-emerald-500 ring-2 ring-emerald-500/20',
+      bg: 'bg-emerald-50/50',
+      badgeBg: 'bg-emerald-100 text-emerald-800 font-bold',
+      text: 'text-emerald-950',
+      headingText: 'text-emerald-800',
+      barColor: '#10b981',
+      lightBg: 'bg-emerald-50',
+    }
+  }, [gradeFilter])
+
+  if (loading && stats.length === 0) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <p className="text-lg text-gray-500 font-medium">Loading practice analytics... 📚</p>
+      <div className="flex items-center justify-center py-24">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-emerald-500 border-r-transparent mb-3"></div>
+          <p className="text-base text-gray-600 font-medium">Loading practice analytics across Grade 4, 5, and 6... 📚</p>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="bg-gray-50 px-4 py-8 font-sans">
-      <div className="mx-auto max-w-6xl">
-        {/* Header with Title and Filters */}
-        <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mx-auto max-w-6xl space-y-6">
+        {/* Header with Title and Global Time Range */}
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Practice Analytics</h1>
+            <h1 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2">
+              Practice Analytics
+              {gradeFilter !== 'all' && (
+                <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${currentTheme.badgeBg}`}>
+                  Grade {gradeFilter}
+                </span>
+              )}
+            </h1>
             <p className="mt-1 text-sm text-gray-500">
               Detailed breakdown of practice attempts across Grade 4, Grade 5, and Grade 6.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {/* Grade Filter Pill Tabs */}
-            <div className="flex items-center rounded-lg bg-white p-1 border border-gray-200 shadow-sm">
-              {(['all', '4', '5', '6'] as const).map(g => {
-                const label = g === 'all' ? 'All Grades' : `Grade ${g}`
-                const isActive = gradeFilter === g
-                return (
-                  <button
-                    key={g}
-                    type="button"
-                    onClick={() => { setGradeFilter(g); setCurrentPage(1); }}
-                    className={`px-3 py-1 text-xs sm:text-sm font-semibold rounded-md transition-all ${
-                      isActive 
-                        ? 'bg-emerald-600 text-white shadow-sm' 
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                )
-              })}
-            </div>
-
             {/* Time Range Selector */}
-            <select 
-              value={timeRange} 
-              onChange={(e) => setTimeRange(e.target.value as any)}
-              className="rounded-lg border border-gray-300 bg-white py-1.5 pl-3 pr-8 text-sm font-medium text-gray-700 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
-            >
-              <option value="7d">Last 7 Days</option>
-              <option value="30d">Last 30 Days</option>
-              <option value="all">All Time</option>
-            </select>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500 font-medium hidden sm:inline">Range:</span>
+              <select 
+                value={timeRange} 
+                onChange={(e) => setTimeRange(e.target.value as any)}
+                className="rounded-lg border border-gray-300 bg-white py-1.5 pl-3 pr-8 text-sm font-semibold text-gray-700 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+              >
+                <option value="7d">Last 7 Days</option>
+                <option value="30d">Last 30 Days</option>
+                <option value="all">All Time</option>
+              </select>
+            </div>
 
             <button 
               onClick={fetchStats} 
@@ -331,128 +393,334 @@ export default function PracticeAnalyticsDashboard({}: Props) {
           </div>
         </header>
 
-        {/* Statistics Bar with Grade-Aware Units Badges */}
-        <div className="mb-6 space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm shadow-sm flex items-center gap-2">
-              <span className="font-bold text-emerald-800">Total Attempts:</span>
-              <span className="font-black text-emerald-950 text-base">{totalPracticeAttempts}</span>
+        {/* Grade Separation Cards — Interactive selector & breakdown at a glance */}
+        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {/* Card: All Grades */}
+          <button
+            type="button"
+            onClick={() => { setGradeFilter('all'); setCurrentPage(1); }}
+            className={`text-left rounded-2xl p-4 transition-all border shadow-sm ${
+              gradeFilter === 'all'
+                ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-emerald-600 ring-2 ring-emerald-400/40 shadow-md scale-[1.02]'
+                : 'bg-white hover:bg-gray-50 text-gray-800 border-gray-200'
+            }`}
+          >
+            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider mb-2">
+              <span className={gradeFilter === 'all' ? 'text-emerald-100' : 'text-gray-500'}>All Grades</span>
+              {gradeFilter === 'all' && <CheckCircle2 className="h-4 w-4 text-emerald-100" />}
             </div>
-            <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm shadow-sm flex items-center gap-2">
-              <span className="font-bold text-blue-800">Active Learners:</span>
-              <span className="font-black text-blue-950 text-base">{relevantLearners.length}</span>
+            <div className="text-2xl font-black mb-1">
+              {gradeBreakdown.totalAttempts}
+              <span className={`text-xs font-normal ml-1.5 ${gradeFilter === 'all' ? 'text-emerald-100' : 'text-gray-500'}`}>attempts</span>
             </div>
-            <div className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs shadow-sm flex items-center gap-1.5 text-gray-500">
-              <Layers className="h-3.5 w-3.5 text-gray-400" />
-              <span>Showing: <strong className="text-gray-800">{activeUnits.length} Units</strong></span>
+            <div className={`text-xs flex items-center justify-between ${gradeFilter === 'all' ? 'text-emerald-100' : 'text-gray-500'}`}>
+              <span>{gradeBreakdown.totalLearners} Active Learners</span>
+              <span>16 Units</span>
             </div>
+          </button>
+
+          {/* Card: Grade 4 */}
+          <button
+            type="button"
+            onClick={() => { setGradeFilter('4'); setCurrentPage(1); }}
+            className={`text-left rounded-2xl p-4 transition-all border shadow-sm ${
+              gradeFilter === '4'
+                ? 'bg-gradient-to-br from-indigo-600 to-violet-700 text-white border-indigo-600 ring-2 ring-indigo-400/40 shadow-md scale-[1.02]'
+                : 'bg-white hover:bg-indigo-50/40 text-gray-800 border-indigo-100'
+            }`}
+          >
+            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider mb-2">
+              <span className={gradeFilter === '4' ? 'text-indigo-100' : 'text-indigo-600'}>🟣 Grade 4</span>
+              {gradeFilter === '4' && <CheckCircle2 className="h-4 w-4 text-indigo-100" />}
+            </div>
+            <div className="text-2xl font-black mb-1">
+              {gradeBreakdown[4].attempts}
+              <span className={`text-xs font-normal ml-1.5 ${gradeFilter === '4' ? 'text-indigo-100' : 'text-gray-500'}`}>attempts</span>
+            </div>
+            <div className={`text-xs flex items-center justify-between ${gradeFilter === '4' ? 'text-indigo-100' : 'text-gray-500'}`}>
+              <span>{gradeBreakdown[4].learners} Learners</span>
+              <span>6 Units</span>
+            </div>
+          </button>
+
+          {/* Card: Grade 5 */}
+          <button
+            type="button"
+            onClick={() => { setGradeFilter('5'); setCurrentPage(1); }}
+            className={`text-left rounded-2xl p-4 transition-all border shadow-sm ${
+              gradeFilter === '5'
+                ? 'bg-gradient-to-br from-emerald-600 to-green-700 text-white border-emerald-600 ring-2 ring-emerald-400/40 shadow-md scale-[1.02]'
+                : 'bg-white hover:bg-emerald-50/40 text-gray-800 border-emerald-100'
+            }`}
+          >
+            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider mb-2">
+              <span className={gradeFilter === '5' ? 'text-emerald-100' : 'text-emerald-700'}>🟢 Grade 5</span>
+              {gradeFilter === '5' && <CheckCircle2 className="h-4 w-4 text-emerald-100" />}
+            </div>
+            <div className="text-2xl font-black mb-1">
+              {gradeBreakdown[5].attempts}
+              <span className={`text-xs font-normal ml-1.5 ${gradeFilter === '5' ? 'text-emerald-100' : 'text-gray-500'}`}>attempts</span>
+            </div>
+            <div className={`text-xs flex items-center justify-between ${gradeFilter === '5' ? 'text-emerald-100' : 'text-gray-500'}`}>
+              <span>{gradeBreakdown[5].learners} Learners</span>
+              <span>5 Units</span>
+            </div>
+          </button>
+
+          {/* Card: Grade 6 */}
+          <button
+            type="button"
+            onClick={() => { setGradeFilter('6'); setCurrentPage(1); }}
+            className={`text-left rounded-2xl p-4 transition-all border shadow-sm ${
+              gradeFilter === '6'
+                ? 'bg-gradient-to-br from-sky-600 to-blue-700 text-white border-sky-600 ring-2 ring-sky-400/40 shadow-md scale-[1.02]'
+                : 'bg-white hover:bg-sky-50/40 text-gray-800 border-sky-100'
+            }`}
+          >
+            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider mb-2">
+              <span className={gradeFilter === '6' ? 'text-sky-100' : 'text-sky-700'}>🔵 Grade 6</span>
+              {gradeFilter === '6' && <CheckCircle2 className="h-4 w-4 text-sky-100" />}
+            </div>
+            <div className="text-2xl font-black mb-1">
+              {gradeBreakdown[6].attempts}
+              <span className={`text-xs font-normal ml-1.5 ${gradeFilter === '6' ? 'text-sky-100' : 'text-gray-500'}`}>attempts</span>
+            </div>
+            <div className={`text-xs flex items-center justify-between ${gradeFilter === '6' ? 'text-sky-100' : 'text-gray-500'}`}>
+              <span>{gradeBreakdown[6].learners} Learners</span>
+              <span>5 Units</span>
+            </div>
+          </button>
+        </section>
+
+        {/* Grade-Separated Unit Badges Section */}
+        <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+            <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+              <Layers className="h-4 w-4 text-gray-400" />
+              <span>Unit Attempts Breakdown {gradeFilter !== 'all' ? `(Grade ${gradeFilter})` : '(Organized by Grade)'}</span>
+            </h2>
+            <span className="text-xs text-gray-500 font-medium">
+              Showing {activeUnits.length} Units • {totalPracticeAttempts} Attempts
+            </span>
           </div>
 
-          {/* Unit badges sorted strictly by natural progression: Grade 4 (1–6) -> Grade 5 (1–5) -> Grade 6 (1–5) */}
-          <div className="flex flex-wrap gap-2">
-            {unitSummaryData.map(u => {
-              const theme = getGradeTheme(u.grade)
-              return (
-                <div 
-                  key={u.name} 
-                  className={`rounded-xl border ${theme.border} ${theme.bg} px-3 py-1.5 text-xs shadow-sm flex items-center gap-2 transition-all hover:shadow`}
-                >
-                  <span className={`font-bold ${theme.text}`}>{u.name}</span>
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-black ${u.Attempts > 0 ? theme.badgeBg : 'bg-gray-100 text-gray-400'}`}>
-                    {u.Attempts}
-                  </span>
+          {/* If All Grades: Render 3 cleanly separated rows for Grade 4, Grade 5, Grade 6 */}
+          {gradeFilter === 'all' ? (
+            <div className="space-y-3.5">
+              {/* Grade 4 Badges */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <div className="w-28 shrink-0 flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-full bg-indigo-500"></span>
+                  <span className="text-xs font-bold text-indigo-900 uppercase tracking-wider">Grade 4:</span>
                 </div>
-              )
-            })}
-          </div>
-        </div>
+                <div className="flex flex-wrap gap-2">
+                  {unitsByGrade[4].map(u => {
+                    const theme = getGradeTheme(4)
+                    const count = pivotTable.reduce((acc, row) => acc + (row[u.unit_name] || 0), 0)
+                    return (
+                      <div key={u.unit_name} className={`rounded-xl border ${theme.border} ${theme.bg} px-3 py-1.5 text-xs shadow-xs flex items-center gap-2`}>
+                        <span className={`font-semibold ${theme.text}`}>{u.unit_name}</span>
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-black ${count > 0 ? theme.badgeBg : 'bg-gray-100 text-gray-400'}`}>
+                          {count}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
 
-        {/* Practice Timeline Chart */}
-        <section className="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-4 text-sm font-semibold text-gray-900 flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-emerald-500" /> Practice Engagement (Over Time)
-          </h2>
-          <div className="h-72 w-full">
+              {/* Grade 5 Badges */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <div className="w-28 shrink-0 flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                  <span className="text-xs font-bold text-emerald-900 uppercase tracking-wider">Grade 5:</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {unitsByGrade[5].map(u => {
+                    const theme = getGradeTheme(5)
+                    const count = pivotTable.reduce((acc, row) => acc + (row[u.unit_name] || 0), 0)
+                    return (
+                      <div key={u.unit_name} className={`rounded-xl border ${theme.border} ${theme.bg} px-3 py-1.5 text-xs shadow-xs flex items-center gap-2`}>
+                        <span className={`font-semibold ${theme.text}`}>{u.unit_name}</span>
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-black ${count > 0 ? theme.badgeBg : 'bg-gray-100 text-gray-400'}`}>
+                          {count}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Grade 6 Badges */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <div className="w-28 shrink-0 flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-full bg-sky-500"></span>
+                  <span className="text-xs font-bold text-sky-900 uppercase tracking-wider">Grade 6:</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {unitsByGrade[6].map(u => {
+                    const theme = getGradeTheme(6)
+                    const count = pivotTable.reduce((acc, row) => acc + (row[u.unit_name] || 0), 0)
+                    return (
+                      <div key={u.unit_name} className={`rounded-xl border ${theme.border} ${theme.bg} px-3 py-1.5 text-xs shadow-xs flex items-center gap-2`}>
+                        <span className={`font-semibold ${theme.text}`}>{u.unit_name}</span>
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-black ${count > 0 ? theme.badgeBg : 'bg-gray-100 text-gray-400'}`}>
+                          {count}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Selected Grade Badges */
+            <div className="flex flex-wrap gap-2">
+              {unitSummaryData.map(u => {
+                const theme = getGradeTheme(u.grade)
+                return (
+                  <div key={u.name} className={`rounded-xl border ${theme.border} ${theme.bg} px-3 py-1.5 text-xs shadow-xs flex items-center gap-2`}>
+                    <span className={`font-bold ${theme.text}`}>{u.name}</span>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-black ${u.Attempts > 0 ? theme.badgeBg : 'bg-gray-100 text-gray-400'}`}>
+                      {u.Attempts}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* Practice Timeline Chart — Separated by Grade */}
+        <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-emerald-500" />
+              <span>Practice Engagement Over Time {gradeFilter !== 'all' ? `— Grade ${gradeFilter}` : '— Separated by Grade'}</span>
+            </h2>
+            {gradeFilter === 'all' && (
+              <div className="flex items-center gap-4 text-xs font-semibold">
+                <span className="flex items-center gap-1.5 text-indigo-600">
+                  <span className="h-2.5 w-2.5 rounded-full bg-indigo-500"></span> Grade 4
+                </span>
+                <span className="flex items-center gap-1.5 text-emerald-600">
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500"></span> Grade 5
+                </span>
+                <span className="flex items-center gap-1.5 text-sky-600">
+                  <span className="h-2.5 w-2.5 rounded-full bg-sky-500"></span> Grade 6
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div style={{ height: 288, minHeight: 288, width: '100%' }}>
             {timelineChartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={timelineChartData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                  <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} />
-                  <RechartsTooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                  <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '12px', cursor: 'pointer' }} onClick={handleLegendClick} />
-                  <Line type="monotone" dataKey="Attempts" name="Practice Attempts" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} hide={!!hiddenSeries['Attempts']} />
+              <ResponsiveContainer width="100%" height={288} minHeight={288} key={`timeline-${gradeFilter}-${timeRange}`}>
+                <LineChart data={timelineChartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
+                  <RechartsTooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                  <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '12px' }} />
+                  
+                  {gradeFilter === 'all' ? (
+                    <>
+                      <Line type="monotone" dataKey="Grade4" name="Grade 4" stroke="#6366f1" strokeWidth={3} dot={{ r: 3.5 }} activeDot={{ r: 6 }} />
+                      <Line type="monotone" dataKey="Grade5" name="Grade 5" stroke="#10b981" strokeWidth={3} dot={{ r: 3.5 }} activeDot={{ r: 6 }} />
+                      <Line type="monotone" dataKey="Grade6" name="Grade 6" stroke="#0284c7" strokeWidth={3} dot={{ r: 3.5 }} activeDot={{ r: 6 }} />
+                    </>
+                  ) : (
+                    <Line 
+                      type="monotone" 
+                      dataKey="Attempts" 
+                      name={`Grade ${gradeFilter} Attempts`} 
+                      stroke={currentTheme.barColor} 
+                      strokeWidth={3} 
+                      dot={{ r: 4 }} 
+                      activeDot={{ r: 6 }} 
+                    />
+                  )}
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex h-full items-center justify-center text-sm text-gray-400">No chart data available</div>
+              <div className="flex h-full items-center justify-center text-sm text-gray-400">
+                No practice attempts recorded for this selection.
+              </div>
             )}
           </div>
         </section>
 
         {/* Charts: Top Learners & Unit Popularity */}
-        <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Top Learners Chart */}
-          <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <h2 className="mb-4 text-sm font-semibold text-gray-900 flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-blue-500" /> Top Active Learners {gradeFilter !== 'all' ? `(Grade ${gradeFilter})` : ''}
+          <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+            <h2 className="mb-4 text-sm font-bold text-gray-900 flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-blue-500" />
+              <span>Top Active Learners {gradeFilter !== 'all' ? `— Grade ${gradeFilter}` : '— All Grades'}</span>
             </h2>
-            <div className="h-72 w-full">
+            <div style={{ height: 288, minHeight: 288, width: '100%' }}>
               {learnerChartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={learnerChartData} layout="vertical" margin={{ left: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" />
-                    <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} />
-                    <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#374151', fontWeight: 500 }} width={80} />
-                    <RechartsTooltip cursor={{ fill: '#f3f4f6' }} contentStyle={{ borderRadius: '8px' }} />
-                    <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '12px', cursor: 'pointer' }} onClick={handleLegendClick} />
-                    <Bar dataKey="Attempts" name="Attempts" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={20} hide={!!hiddenSeries['Attempts']} />
+                <ResponsiveContainer width="100%" height={288} minHeight={288} key={`learner-bar-${gradeFilter}-${timeRange}`}>
+                  <BarChart data={learnerChartData} layout="vertical" margin={{ left: 20, right: 20, top: 10, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                    <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
+                    <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#334155', fontWeight: 600 }} width={90} />
+                    <RechartsTooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '10px' }} />
+                    <Bar dataKey="Attempts" name="Attempts" fill={currentTheme.barColor} radius={[0, 4, 4, 0]} barSize={20} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="flex h-full items-center justify-center text-sm text-gray-400">No practice attempts recorded for this selection</div>
+                <div className="flex h-full items-center justify-center text-sm text-gray-400">
+                  No practice attempts recorded for {gradeFilter !== 'all' ? `Grade ${gradeFilter}` : 'this selection'}.
+                </div>
               )}
             </div>
           </section>
 
           {/* Unit Popularity Chart */}
-          <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <h2 className="mb-4 text-sm font-semibold text-gray-900 flex items-center gap-2">
-              <BookOpen className="h-4 w-4 text-amber-500" /> Unit Popularity {gradeFilter !== 'all' ? `(Grade ${gradeFilter})` : ''}
+          <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+            <h2 className="mb-4 text-sm font-bold text-gray-900 flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-amber-500" />
+              <span>Unit Popularity {gradeFilter !== 'all' ? `— Grade ${gradeFilter}` : '— Across Grades'}</span>
             </h2>
-            <div className="h-72 w-full">
+            <div style={{ height: 288, minHeight: 288, width: '100%' }}>
               {unitChartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={unitChartData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6b7280' }} dy={10} interval={0} angle={-30} textAnchor="end" height={60} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} />
-                    <RechartsTooltip cursor={{ fill: '#f3f4f6' }} contentStyle={{ borderRadius: '8px' }} />
-                    <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '12px', cursor: 'pointer' }} onClick={handleLegendClick} />
-                    <Bar dataKey="Attempts" name="Attempts" fill="#10b981" radius={[4, 4, 0, 0]} barSize={activeUnits.length > 10 ? 24 : 40} hide={!!hiddenSeries['Attempts']} />
+                <ResponsiveContainer width="100%" height={288} minHeight={288} key={`unit-bar-${gradeFilter}-${timeRange}`}>
+                  <BarChart data={unitChartData} margin={{ top: 10, right: 10, left: -10, bottom: 25 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="shortName" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dy={8} interval={0} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
+                    <RechartsTooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '10px' }} />
+                    <Bar dataKey="Attempts" name="Attempts" radius={[4, 4, 0, 0]} barSize={activeUnits.length > 10 ? 22 : 36}>
+                      {unitChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={getGradeTheme(entry.grade).barColor} />
+                      ))}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="flex h-full items-center justify-center text-sm text-gray-400">No chart data available</div>
+                <div className="flex h-full items-center justify-center text-sm text-gray-400">
+                  No chart data available.
+                </div>
               )}
             </div>
           </section>
         </div>
 
         {/* Pivot Table: Learner vs Unit Attempts */}
-        <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm mt-6">
-          <div className="border-b border-gray-200 px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between bg-gray-50 gap-4">
+        <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+          <div className="border-b border-gray-200 px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between bg-gray-50/70 gap-4">
             <div>
               <h2 className="text-sm font-bold text-gray-900 whitespace-nowrap flex items-center gap-2">
                 Learner vs Unit Attempts
                 {gradeFilter !== 'all' && (
-                  <span className="rounded-full bg-emerald-100 text-emerald-800 text-xs px-2.5 py-0.5 font-semibold">
+                  <span className={`rounded-full text-xs px-2.5 py-0.5 font-bold uppercase tracking-wider ${currentTheme.badgeBg}`}>
                     Grade {gradeFilter}
                   </span>
                 )}
               </h2>
               <p className="text-xs text-gray-500 mt-0.5">
-                Practice attempts broken down per learner and unit in natural sequence.
+                Practice attempts broken down per learner and unit in natural pedagogical order.
               </p>
             </div>
             
@@ -464,12 +732,12 @@ export default function PracticeAnalyticsDashboard({}: Props) {
                   placeholder="Search learner..." 
                   value={searchQuery}
                   onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                  className="pl-9 pr-4 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
+                  className="pl-9 pr-4 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 bg-white"
                 />
               </div>
               <button 
                 onClick={handleExportCSV}
-                className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-md transition-colors shadow-sm whitespace-nowrap"
+                className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors shadow-xs whitespace-nowrap"
               >
                 <Download className="h-4 w-4 text-gray-500" />
                 Export CSV
@@ -478,23 +746,51 @@ export default function PracticeAnalyticsDashboard({}: Props) {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm min-w-max">
-              <thead className="border-b border-gray-200 bg-white text-xs font-semibold uppercase tracking-wide text-gray-500">
-                <tr>
-                  <th scope="col" className="px-5 py-4 border-r border-gray-100 bg-gray-50 sticky left-0 z-10 shadow-[1px_0_0_0_#f3f4f6]">
+            <table className="w-full text-left text-sm min-w-max border-collapse">
+              <thead>
+                {/* When All Grades is selected: Top Super-Header Grouping Columns by Grade */}
+                {gradeFilter === 'all' && (
+                  <tr className="border-b border-gray-200 text-xs font-bold uppercase tracking-wider">
+                    <th className="px-5 py-2.5 border-r border-gray-200 bg-gray-100 text-gray-600 sticky left-0 z-10 shadow-[1px_0_0_0_#e5e7eb]">
+                      Learner
+                    </th>
+                    <th className="px-4 py-2.5 text-center bg-emerald-100/60 text-emerald-900 border-r-2 border-emerald-300">
+                      Total
+                    </th>
+                    <th colSpan={6} className="px-4 py-2 text-center bg-indigo-50 border-r-2 border-indigo-200 text-indigo-900 font-extrabold">
+                      🟣 Grade 4 Units (1–6)
+                    </th>
+                    <th colSpan={5} className="px-4 py-2 text-center bg-emerald-50 border-r-2 border-emerald-200 text-emerald-900 font-extrabold">
+                      🟢 Grade 5 Units (1–5)
+                    </th>
+                    <th colSpan={5} className="px-4 py-2 text-center bg-sky-50 text-sky-900 font-extrabold">
+                      🔵 Grade 6 Units (1–5)
+                    </th>
+                  </tr>
+                )}
+
+                {/* Subheader: Individual Unit Columns */}
+                <tr className="border-b border-gray-200 bg-white text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  <th scope="col" className="px-5 py-3 border-r border-gray-100 bg-gray-50 sticky left-0 z-10 shadow-[1px_0_0_0_#f3f4f6]">
                     Learner Name
                   </th>
-                  <th scope="col" className="px-5 py-4 text-center text-emerald-700 bg-emerald-50/50 border-r border-gray-100 font-bold">
+                  <th scope="col" className="px-4 py-3 text-center text-emerald-700 bg-emerald-50/50 border-r-2 border-gray-200 font-bold">
                     Total
                   </th>
                   {activeUnits.map(unit => {
                     const parsed = parseGradeAndUnit(unit.unit_name, unit.unit_no)
                     const theme = getGradeTheme(parsed.grade)
+                    // Add thicker border after last unit of Grade 4 and Grade 5
+                    const isLastOfGrade = (parsed.grade === 4 && parsed.unit === 6) || (parsed.grade === 5 && parsed.unit === 5)
                     return (
-                      <th key={unit.unit_name} scope="col" className="px-4 py-3 text-center border-r border-gray-100 whitespace-nowrap">
+                      <th 
+                        key={unit.unit_name} 
+                        scope="col" 
+                        className={`px-3 py-2.5 text-center whitespace-nowrap ${isLastOfGrade ? 'border-r-2 border-gray-300' : 'border-r border-gray-100'}`}
+                      >
                         <div className="flex flex-col items-center gap-0.5">
                           <span className={`text-[10px] uppercase font-bold tracking-wider ${theme.text}`}>
-                            Grade {parsed.grade}
+                            G{parsed.grade}
                           </span>
                           <span className="font-bold text-gray-800 text-xs">
                             Unit {parsed.unit}
@@ -511,13 +807,18 @@ export default function PracticeAnalyticsDashboard({}: Props) {
                     <td className="px-5 py-3 font-semibold text-gray-900 border-r border-gray-100 bg-white sticky left-0 z-10 shadow-[1px_0_0_0_#f3f4f6]">
                       {row.learner}
                     </td>
-                    <td className="px-5 py-3 text-center font-black text-emerald-700 bg-emerald-50/30 border-r border-gray-100">
+                    <td className="px-4 py-3 text-center font-black text-emerald-700 bg-emerald-50/30 border-r-2 border-gray-200">
                       {row.total}
                     </td>
                     {activeUnitNames.map(unit => {
                       const count = row[unit] || 0
+                      const parsed = parseGradeAndUnit(unit)
+                      const isLastOfGrade = (parsed.grade === 4 && parsed.unit === 6) || (parsed.grade === 5 && parsed.unit === 5)
                       return (
-                        <td key={unit} className={`px-4 py-3 text-center border-r border-gray-100 ${count > 0 ? 'text-gray-900 font-bold' : 'text-gray-300'}`}>
+                        <td 
+                          key={unit} 
+                          className={`px-3 py-3 text-center ${isLastOfGrade ? 'border-r-2 border-gray-200' : 'border-r border-gray-100'} ${count > 0 ? 'text-gray-900 font-bold' : 'text-gray-300'}`}
+                        >
                           {count > 0 ? (
                             <span className="inline-block rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-800">
                               {count}
@@ -542,22 +843,22 @@ export default function PracticeAnalyticsDashboard({}: Props) {
           </div>
 
           {Math.ceil(filteredPivotTable.length / pageSize) > 1 && (
-            <div className="border-t border-gray-200 px-5 py-3 flex items-center justify-between bg-gray-50">
+            <div className="border-t border-gray-200 px-5 py-3 flex items-center justify-between bg-gray-50/70">
               <span className="text-sm text-gray-500">
-                Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to <span className="font-medium">{Math.min(currentPage * pageSize, filteredPivotTable.length)}</span> of <span className="font-medium">{filteredPivotTable.length}</span> results
+                Showing <span className="font-semibold text-gray-800">{(currentPage - 1) * pageSize + 1}</span> to <span className="font-semibold text-gray-800">{Math.min(currentPage * pageSize, filteredPivotTable.length)}</span> of <span className="font-semibold text-gray-800">{filteredPivotTable.length}</span> learners
               </span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 hover:bg-gray-100 transition-colors font-medium text-gray-700 bg-white"
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm disabled:opacity-50 hover:bg-gray-100 transition-colors font-medium text-gray-700 bg-white shadow-xs"
                 >
                   Previous
                 </button>
                 <button
                   onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredPivotTable.length / pageSize), p + 1))}
                   disabled={currentPage === Math.ceil(filteredPivotTable.length / pageSize)}
-                  className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 hover:bg-gray-100 transition-colors font-medium text-gray-700 bg-white"
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm disabled:opacity-50 hover:bg-gray-100 transition-colors font-medium text-gray-700 bg-white shadow-xs"
                 >
                   Next
                 </button>

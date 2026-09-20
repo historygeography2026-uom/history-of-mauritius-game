@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       case "learner-units":
         return await getLearnerUnitStats(searchParams.get("range"))
       case "timeline":
-        return await getPracticeTimeline(searchParams.get("range"))
+        return await getPracticeTimeline(searchParams.get("range"), searchParams.get("grade"))
       case "hard-questions":
         return await getHardQuestions(searchParams.get("unit"))
       case "learner-detail":
@@ -269,30 +269,73 @@ async function getLearnerUnitStats(range: string | null) {
   return NextResponse.json(result.rows)
 }
 
-async function getPracticeTimeline(range: string | null) {
+async function getPracticeTimeline(range: string | null, grade: string | null = null) {
   const p = range || 'all'
   
   let dateExpression = `TO_CHAR(pa.attempted_at, 'YYYY-MM-DD')`
   let dateFilter = ''
+  let numDays = 0
   
   if (p === '7d') {
     dateFilter = `AND pa.attempted_at > NOW() - INTERVAL '7 days'`
+    numDays = 7
   } else if (p === '30d') {
     dateFilter = `AND pa.attempted_at > NOW() - INTERVAL '30 days'`
+    numDays = 30
   } else if (p === 'all') {
     dateExpression = `TO_CHAR(DATE_TRUNC('month', pa.attempted_at), 'YYYY-MM')`
+  }
+
+  let gradeFilter = ''
+  if (grade === '4') {
+    gradeFilter = 'AND pu.unit_no BETWEEN 11 AND 16'
+  } else if (grade === '5') {
+    gradeFilter = 'AND pu.unit_no BETWEEN 1 AND 5'
+  } else if (grade === '6') {
+    gradeFilter = 'AND pu.unit_no BETWEEN 6 AND 10'
   }
 
   const sql = `
     SELECT
       ${dateExpression} as day,
-      COUNT(pa.id) as attempts
+      COUNT(pa.id)::int as attempts,
+      COUNT(CASE WHEN pu.unit_no BETWEEN 11 AND 16 THEN 1 END)::int as grade4_attempts,
+      COUNT(CASE WHEN pu.unit_no BETWEEN 1 AND 5 THEN 1 END)::int as grade5_attempts,
+      COUNT(CASE WHEN pu.unit_no BETWEEN 6 AND 10 THEN 1 END)::int as grade6_attempts
     FROM practice_attempts pa
-    WHERE pa.attempted_at IS NOT NULL ${dateFilter}
+    JOIN practice_units pu ON pa.unit_id = pu.id
+    WHERE pa.attempted_at IS NOT NULL ${dateFilter} ${gradeFilter}
     GROUP BY ${dateExpression}
     ORDER BY day DESC
   `
   const result = await pool.query(sql)
+  const rows = result.rows
+
+  // If fixed daily range (7d or 30d), fill in missing dates with 0 so the line chart is always smooth and continuous
+  if (numDays > 0) {
+    const dayMap = new Map<string, any>()
+    rows.forEach(r => dayMap.set(r.day, r))
+
+    const filledRows: any[] = []
+    const now = new Date()
+    for (let i = 0; i < numDays; i++) {
+      const d = new Date(now)
+      d.setDate(d.getDate() - i)
+      const dayStr = d.toISOString().slice(0, 10) // YYYY-MM-DD
+      if (dayMap.has(dayStr)) {
+        filledRows.push(dayMap.get(dayStr))
+      } else {
+        filledRows.push({
+          day: dayStr,
+          attempts: 0,
+          grade4_attempts: 0,
+          grade5_attempts: 0,
+          grade6_attempts: 0,
+        })
+      }
+    }
+    return NextResponse.json(filledRows)
+  }
   
-  return NextResponse.json(result.rows)
+  return NextResponse.json(rows)
 }
