@@ -255,14 +255,15 @@ async function getLearnerUnitStats(range: string | null) {
   const result = await pool.query(`
     SELECT
       u.name as learner_name,
+      pu.unit_no,
       pu.unit_name,
       COUNT(pa.id) as attempts
     FROM users u
     JOIN practice_attempts pa ON u.id = pa.student_id
     JOIN practice_units pu ON pa.unit_id = pu.id
     ${dateFilter}
-    GROUP BY u.name, pu.unit_name
-    ORDER BY u.name, pu.unit_name
+    GROUP BY u.name, pu.unit_no, pu.unit_name
+    ORDER BY u.name, pu.unit_no
   `)
   
   return NextResponse.json(result.rows)

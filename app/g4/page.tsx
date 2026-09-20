@@ -15,12 +15,12 @@ interface PracticeUnit {
 
 // Fallback units in case of initial server cold start
 const DEFAULT_FALLBACK_UNITS: PracticeUnit[] = [
-  { id: 12, unit_no: 11, unit_name: "Working with Maps", question_count: 0 },
-  { id: 13, unit_no: 12, unit_name: "Our Natural Environment", question_count: 0 },
-  { id: 14, unit_no: 13, unit_name: "Weather", question_count: 0 },
-  { id: 15, unit_no: 14, unit_name: "Locality - Past and Present", question_count: 0 },
-  { id: 16, unit_no: 15, unit_name: "People Living in our Locality", question_count: 0 },
-  { id: 17, unit_no: 16, unit_name: "Voyages of Discovery", question_count: 0 },
+  { id: 12, unit_no: 11, unit_name: "Grade 4 Unit 1", question_count: 0 },
+  { id: 13, unit_no: 12, unit_name: "Grade 4 Unit 2", question_count: 0 },
+  { id: 14, unit_no: 13, unit_name: "Grade 4 Unit 3", question_count: 0 },
+  { id: 15, unit_no: 14, unit_name: "Grade 4 Unit 4", question_count: 0 },
+  { id: 16, unit_no: 15, unit_name: "Grade 4 Unit 5", question_count: 0 },
+  { id: 17, unit_no: 16, unit_name: "Grade 4 Unit 6", question_count: 0 },
 ]
 
 export default function G4PracticePage() {
