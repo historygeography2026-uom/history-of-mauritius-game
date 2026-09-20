@@ -99,14 +99,14 @@ export default function SignUpPage() {
         <Link href="/">
           <Button className="kid-btn mb-4 bg-gradient-to-r from-secondary via-secondary/80 to-secondary text-white px-6 py-3">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            🏠 Back Home
+            Back Home
           </Button>
         </Link>
 
         <Card className="kid-card border-green-400/40 bg-white/90 backdrop-blur-sm">
           <CardHeader className="text-center">
-            <div className="text-5xl mb-2 animate-bounce-gentle">🌟</div>
-            <CardTitle className="text-2xl kid-heading">Join the Adventure! ✨</CardTitle>
+            <div className="text-5xl mb-2 animate-bounce-gentle emoji-icon">🌟</div>
+            <CardTitle className="text-2xl kid-heading">Join the Adventure! <span className="emoji-icon">✨</span></CardTitle>
             <CardDescription>Create your account to start learning</CardDescription>
           </CardHeader>
           <CardContent>

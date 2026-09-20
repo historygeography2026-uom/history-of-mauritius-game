@@ -3,7 +3,7 @@
  *
  * Generates, parses, and validates practice-mode Excel templates.
  * Populated with realistic dummy questions for all 5 question types across Grade 5 and Grade 6.
- * Supports both Practice format (unit 1-10) and Game format (subject/level).
+ * Supports both Practice format (unit 1-16) and Game format (subject/level).
  */
 
 import ExcelJS from "exceljs"
@@ -86,12 +86,13 @@ export const generatePracticeExcelTemplate = async () => {
     { Instructions: "4. Save the file and upload it in the Admin Practice Questions -> Import Excel modal." },
     { Instructions: "" },
     { Instructions: "UNIT NUMBERING GUIDE:" },
+    { Instructions: "• Grade 4 Units: Unit 11, 12, 13, 14, 15, 16" },
     { Instructions: "• Grade 5 Units: Unit 1, 2, 3, 4, 5" },
     { Instructions: "• Grade 6 Units: Unit 6 (Grade 6 Unit 1), Unit 7 (Grade 6 Unit 2), Unit 8 (Grade 6 Unit 3), Unit 9 (Grade 6 Unit 4), Unit 10 (Grade 6 Unit 5)" },
-    { Instructions: "• Note: You can enter numbers 1 to 10 directly in the 'unit' column." },
+    { Instructions: "• Note: You can enter numbers 1 to 16 directly in the 'unit' column." },
     { Instructions: "" },
     { Instructions: "REQUIRED FIELDS FOR ALL QUESTIONS:" },
-    { Instructions: "• unit: Unit number (1 to 10)" },
+    { Instructions: "• unit: Unit number (1-5 for Grade 5, 6-10 for Grade 6, 11-16 for Grade 4)" },
     { Instructions: "• type: 'mcq', 'matching', 'fill', 'reorder', or 'truefalse'" },
     { Instructions: "• question: The question text / prompt" },
     { Instructions: "" },
@@ -359,7 +360,7 @@ export interface PracticeValidationResult {
 }
 
 const VALID_TYPES = ["mcq", "matching", "fill", "reorder", "truefalse"]
-const MAX_UNIT = 10
+const MAX_UNIT = 16
 
 const toStr = (val: any): string => {
   if (val === null || val === undefined) return ""
@@ -388,7 +389,7 @@ export function normalizeQuestionType(rawType: any): PracticeExcelQuestion["type
 
 /**
  * Helper to parse unit number from various inputs:
- * - Direct unit number (1 to 10)
+ * - Direct unit number (1 to 16)
  * - Strings like "Unit 1", "Grade 5 Unit 2", "G6U3"
  * - Fallback to subject + level if using game questions template
  */
@@ -398,6 +399,11 @@ export function parseUnitNumber(q: any): number {
 
   if (rawUnit !== undefined && rawUnit !== null && String(rawUnit).trim() !== "") {
     const rawStr = String(rawUnit).trim()
+    const g4Match = rawStr.match(/grade\s*4\s*unit\s*(\d+)/i) || rawStr.match(/g4\s*u\s*(\d+)/i)
+    if (g4Match) {
+      const u = parseInt(g4Match[1], 10)
+      if (u >= 1 && u <= 6) return 10 + u
+    }
     const g6Match = rawStr.match(/grade\s*6\s*unit\s*(\d+)/i) || rawStr.match(/g6\s*u\s*(\d+)/i)
     if (g6Match) {
       const u = parseInt(g6Match[1], 10)
@@ -411,7 +417,7 @@ export function parseUnitNumber(q: any): number {
     const numMatch = rawStr.match(/\d+/)
     if (numMatch) {
       const val = parseInt(numMatch[0], 10)
-      if (val >= 1 && val <= 10) return val
+      if (val >= 1 && val <= 16) return val
     }
   }
 
@@ -419,6 +425,9 @@ export function parseUnitNumber(q: any): number {
   if (q.grade !== undefined && q.grade !== null) {
     const gradeNum = parseInt(String(q.grade).replace(/\D/g, ""), 10)
     const unitPart = parseInt(String(q.unit || q.Unit || "1").replace(/\D/g, ""), 10) || 1
+    if (gradeNum === 4) {
+      return 10 + Math.min(Math.max(unitPart, 1), 6)
+    }
     if (gradeNum === 6) {
       return 5 + Math.min(Math.max(unitPart, 1), 5)
     }

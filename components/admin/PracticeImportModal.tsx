@@ -187,7 +187,7 @@ export default function PracticeImportModal({ open, onClose, onImportComplete }:
           <div className="mb-4 flex flex-col sm:flex-row gap-3 sm:gap-0 sm:items-center sm:justify-between bg-blue-50 border border-blue-200 p-3 sm:p-3.5 rounded-xl">
             <div>
               <p className="text-sm font-semibold text-blue-900">Need the Practice Questions Template?</p>
-              <p className="text-xs text-blue-700">Download the template populated with sample Grade 5 & Grade 6 questions.</p>
+              <p className="text-xs text-blue-700">Download the template populated with sample Grade 4, Grade 5 & Grade 6 questions.</p>
             </div>
             <button
               type="button"

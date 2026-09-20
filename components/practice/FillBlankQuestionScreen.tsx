@@ -127,6 +127,8 @@ export default function FillBlankQuestionScreen({
               <img
                 src={encodeURI(question.image_url)}
                 alt="Question visual"
+                loading="lazy"
+                decoding="async"
                 className="max-h-40 sm:max-h-56 w-auto rounded-lg sm:rounded-xl object-contain shadow-sm"
                 onError={(e) => {
                   ;(e.target as HTMLImageElement).style.display = "none"

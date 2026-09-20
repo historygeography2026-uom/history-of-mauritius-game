@@ -144,17 +144,17 @@ export default function Leaderboard() {
   }
 
   const rankBadge = (rank: number) => {
-    if (rank === 1) return <span className="text-2xl drop-shadow-md">🥇</span>
-    if (rank === 2) return <span className="text-2xl drop-shadow-md">🥈</span>
-    if (rank === 3) return <span className="text-2xl drop-shadow-md">🥉</span>
+    if (rank === 1) return <span className="text-2xl drop-shadow-md emoji-icon">🥇</span>
+    if (rank === 2) return <span className="text-2xl drop-shadow-md emoji-icon">🥈</span>
+    if (rank === 3) return <span className="text-2xl drop-shadow-md emoji-icon">🥉</span>
     return <span className="text-sm font-extrabold text-gray-400">#{rank}</span>
   }
 
   const subjectBadge = (sub: string | null) => {
     const s = (sub || "").toLowerCase()
-    if (s === "history") return <span className="inline-flex items-center gap-0.5 text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">📚 History</span>
-    if (s === "geography") return <span className="inline-flex items-center gap-0.5 text-xs font-semibold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">🗺️ Geography</span>
-    return <span className="inline-flex items-center gap-0.5 text-xs font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">📖 Combined</span>
+    if (s === "history") return <span className="inline-flex items-center gap-1 text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full"><span className="emoji-icon">📚</span> History</span>
+    if (s === "geography") return <span className="inline-flex items-center gap-1 text-xs font-semibold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full"><span className="emoji-icon">🗺️</span> Geography</span>
+    return <span className="inline-flex items-center gap-1 text-xs font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full"><span className="emoji-icon">📖</span> Combined</span>
   }
 
   return (
@@ -171,13 +171,13 @@ export default function Leaderboard() {
         <Link href="/">
           <Button className="kid-btn mb-6 bg-gradient-to-r from-secondary via-secondary/80 to-secondary hover:shadow-lg hover:shadow-secondary/50 text-white font-bold transition-all duration-300 hover:scale-105 px-6 py-3">
             <ArrowLeft className="mr-2 h-5 w-5" />
-            🏠 Back Home
+            Back Home
           </Button>
         </Link>
 
         {/* Header */}
         <div className="mb-8 text-center">
-          <div className="text-6xl mb-3 animate-bounce-gentle">🏆</div>
+          <div className="text-6xl mb-3 animate-bounce-gentle emoji-icon">🏆</div>
           <div className="mb-3 flex items-center justify-center gap-3">
             <Sparkles className="h-8 w-8 text-amber-400 animate-pulse" />
             <h1 className="kid-heading text-5xl font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 bg-clip-text text-transparent md:text-6xl">
@@ -186,7 +186,7 @@ export default function Leaderboard() {
             <Sparkles className="h-8 w-8 text-amber-400 animate-pulse" />
           </div>
           <p className="text-lg text-muted-foreground md:text-xl">
-            Best scores from Mauritius Learning Hub heroes! 🎓
+            Best scores from Mauritius Learning Hub heroes! <span className="emoji-icon">🎓</span>
           </p>
         </div>
 
@@ -207,7 +207,7 @@ export default function Leaderboard() {
                   : "bg-white/80 text-gray-600 border-2 border-gray-200 hover:border-gray-300 hover:bg-white"
               }`}
             >
-              <span className="text-xl mr-1">{cat.icon}</span> {cat.label}
+              <span className="text-xl mr-1 emoji-icon">{cat.icon}</span> {cat.label}
             </Button>
           ))}
         </div>
@@ -259,7 +259,7 @@ export default function Leaderboard() {
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
-              placeholder="🔍 Search for a player..."
+              placeholder="Search for a player..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-12 h-12 text-base rounded-xl border-2 border-gray-200 focus:border-amber-400 focus:ring-amber-200 bg-white/90 shadow-sm"

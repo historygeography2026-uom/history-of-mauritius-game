@@ -11,7 +11,7 @@ import { GAME_CONFIG } from "@/lib/game-config"
 import { DodoMascot, getRandomMessage } from "@/components/dodo-mascot"
 import { SoundToggle } from "@/components/sound-toggle"
 import { useGameSounds, stopAllSounds } from "@/hooks/use-game-sounds"
-import { clearAllToastsTimeouts } from "@/hooks/use-toast"
+const clearAllToastsTimeouts = () => {}
 import { DodoTimer } from "@/components/dodo-timer"
 import { useAchievements } from "@/hooks/use-achievements"
 import { saveProgress } from "@/components/progress-map"
@@ -741,18 +741,18 @@ const GamePage = () => {
             }} className="kid-btn mb-6 bg-gradient-to-r from-secondary via-secondary/80 to-secondary text-white px-6 py-3">
               {/* Changed window.history.back to router.push("/") */}
               <ArrowLeft className="mr-2 h-5 w-5" />
-              🏠 Back to Home
+              Back to Home
             </Button>
 
             <Card className="kid-card border-secondary/50 bg-gradient-to-br from-secondary/20 to-accent/20 p-8 text-center animate-pop-in relative overflow-visible">
               {/* Celebrating Mascot */}
               <div className="absolute -top-16 right-4">
-                <DodoMascot mood="celebrating" size="lg" showSpeechBubble speechText={getRandomMessage("levelComplete")} />
+                <DodoMascot mood="celebrating" size="lg" showSpeechBubble speechText={getRandomMessage("levelComplete")} speechPlacement="left" />
               </div>
               
               <Trophy className="mx-auto mb-6 h-24 w-24 text-secondary animate-bounce-gentle" />
               <h1 className="mb-4 text-4xl font-bold text-primary">
-                {levelTimedOut ? "⏰ Time's Up!" : "🎉 Level Complete!"}
+                {levelTimedOut ? <span className="emoji-icon">⏰ Time&apos;s Up!</span> : <span className="emoji-icon">🎉 Level Complete!</span>}
               </h1>
             <p className="mb-6 text-xl text-card-foreground">
               {levelTimedOut 

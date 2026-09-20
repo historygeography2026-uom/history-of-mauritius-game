@@ -160,9 +160,12 @@ export async function POST(req: NextRequest) {
         const rawUnitVal = q.unit ?? (q as any).Unit ?? (q as any).unitno ?? (q as any).unit_no ?? (q as any)["Unit No"] ?? (q as any)["Unit Number"] ?? (q as any).theme
         if (rawUnitVal !== undefined && rawUnitVal !== null && String(rawUnitVal).trim() !== "") {
           const rawUnit = String(rawUnitVal).trim()
+          const g4Match = rawUnit.match(/grade\s*4\s*unit\s*(\d+)/i)
           const g6Match = rawUnit.match(/grade\s*6\s*unit\s*(\d+)/i)
           const g5Match = rawUnit.match(/grade\s*5\s*unit\s*(\d+)/i)
-          if (g6Match) {
+          if (g4Match) {
+            unitNum = 10 + parseInt(g4Match[1], 10)
+          } else if (g6Match) {
             unitNum = 5 + parseInt(g6Match[1], 10)
           } else if (g5Match) {
             unitNum = parseInt(g5Match[1], 10)
@@ -178,7 +181,7 @@ export async function POST(req: NextRequest) {
           unitNum = subj.includes("geo") ? Math.min(2 + lvl, 5) : Math.min(lvl, 5)
         }
 
-        if (unitNum < 1 || unitNum > 10) {
+        if (unitNum < 1 || unitNum > 16) {
           unitNum = 1
         }
 
@@ -202,7 +205,7 @@ export async function POST(req: NextRequest) {
             questionPreview,
             "unit",
             `Unit ${unitNum} does not exist in the database`,
-            "Please check unit numbers in Admin panel (Units 1-10)."
+            "Please check unit numbers in Admin panel (Units 1-16)."
           )
           errors.push(errMsg)
           addUnitError(unitNum, errMsg)

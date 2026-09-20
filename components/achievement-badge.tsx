@@ -2,6 +2,7 @@
 
 import { Achievement, RARITY_COLORS, RARITY_BORDER } from "@/hooks/use-achievements"
 import { Lock } from "lucide-react"
+import { DodoIcon } from "@/components/ui/dodo-icon"
 
 interface AchievementBadgeProps {
   achievement: Achievement
@@ -49,7 +50,11 @@ export function AchievementBadge({
         }`}
       >
         {achievement.isUnlocked ? (
-          <span className={`${iconSizes[size]} drop-shadow-md`}>{achievement.icon}</span>
+          achievement.icon === "🦤" ? (
+            <DodoIcon size={size === "sm" ? 24 : size === "md" ? 36 : 48} className="drop-shadow-md" />
+          ) : (
+            <span className={`${iconSizes[size]} drop-shadow-md emoji-icon`}>{achievement.icon}</span>
+          )
         ) : (
           <Lock className={`${size === "sm" ? "h-6 w-6" : size === "md" ? "h-8 w-8" : "h-10 w-10"} text-gray-500`} />
         )}
@@ -141,7 +146,13 @@ export function AchievementUnlockNotification({
           <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
             Achievement Unlocked!
           </p>
-          <div className="text-6xl my-4 animate-bounce">{achievement.icon}</div>
+          <div className="text-6xl my-4 animate-bounce flex justify-center">
+            {achievement.icon === "🦤" ? (
+              <DodoIcon size={64} className="drop-shadow-md" />
+            ) : (
+              <span className="emoji-icon">{achievement.icon}</span>
+            )}
+          </div>
           <h2 className="text-2xl font-bold text-gray-900">{achievement.title}</h2>
           <p className="text-gray-600 mt-2">{achievement.description}</p>
         </div>

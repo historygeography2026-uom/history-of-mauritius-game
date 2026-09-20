@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
+import { DodoIcon } from "@/components/ui/dodo-icon"
 
 export const dynamic = 'force-dynamic'
 
@@ -74,14 +75,16 @@ export default function LoginPage() {
         <Link href="/">
           <Button className="kid-btn mb-4 bg-gradient-to-r from-secondary via-secondary/80 to-secondary text-white px-6 py-3">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            🏠 Back Home
+            Back Home
           </Button>
         </Link>
 
         <Card className="kid-card border-primary/30 bg-white/90 backdrop-blur-sm">
           <CardHeader className="text-center">
-            <div className="text-5xl mb-2 animate-bounce-gentle">🦤</div>
-            <CardTitle className="text-2xl kid-heading">Welcome Back! 👋</CardTitle>
+            <div className="flex justify-center mb-2 animate-bounce-gentle">
+              <DodoIcon size={52} className="drop-shadow-md" />
+            </div>
+            <CardTitle className="text-2xl kid-heading">Welcome Back! <span className="emoji-icon">👋</span></CardTitle>
             <CardDescription>Login to continue your adventure</CardDescription>
           </CardHeader>
           <CardContent>

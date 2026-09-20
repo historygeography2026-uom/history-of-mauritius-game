@@ -109,18 +109,37 @@ async function getLearnerStats() {
 
 async function getUnitStats() {
   const result = await pool.query(`
+    WITH attempts_agg AS (
+      SELECT unit_id,
+             COUNT(DISTINCT student_id) AS unique_students,
+             COUNT(id) AS total_attempts,
+             ROUND(AVG(is_correct::int) * 100) AS avg_accuracy
+      FROM practice_attempts
+      GROUP BY unit_id
+    ),
+    sessions_agg AS (
+      SELECT unit_id, COUNT(id) AS total_sessions
+      FROM practice_sessions
+      GROUP BY unit_id
+    ),
+    questions_agg AS (
+      SELECT unit_id, COUNT(id) AS question_count
+      FROM practice_questions
+      WHERE is_active = true
+      GROUP BY unit_id
+    )
     SELECT
       pu.id, pu.unit_no, pu.unit_name,
-      COUNT(DISTINCT pa.student_id) AS unique_students,
-      COUNT(pa.id) AS total_attempts,
-      ROUND(AVG(pa.is_correct::int) * 100) AS avg_accuracy,
-      COUNT(DISTINCT ps.id) AS total_sessions,
-      (SELECT COUNT(*) FROM practice_questions pq WHERE pq.unit_id = pu.id AND pq.is_active = true) AS question_count
+      COALESCE(aa.unique_students, 0)::int AS unique_students,
+      COALESCE(aa.total_attempts, 0)::int AS total_attempts,
+      COALESCE(aa.avg_accuracy, 0)::int AS avg_accuracy,
+      COALESCE(sa.total_sessions, 0)::int AS total_sessions,
+      COALESCE(qa.question_count, 0)::int AS question_count
     FROM practice_units pu
-    LEFT JOIN practice_attempts pa ON pa.unit_id = pu.id
-    LEFT JOIN practice_sessions ps ON ps.unit_id = pu.id
+    LEFT JOIN attempts_agg aa ON aa.unit_id = pu.id
+    LEFT JOIN sessions_agg sa ON sa.unit_id = pu.id
+    LEFT JOIN questions_agg qa ON qa.unit_id = pu.id
     WHERE pu.is_active = true
-    GROUP BY pu.id
     ORDER BY pu.unit_no
   `)
 

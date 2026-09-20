@@ -149,6 +149,8 @@ export default function PracticeQuestionRenderer({
             <img
               src={encodeURI(question.image_url)}
               alt="Question image"
+              loading="lazy"
+              decoding="async"
               className="max-h-48 rounded-lg shadow-sm object-contain"
               onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
             />

@@ -291,19 +291,24 @@ export default function PracticeUnitSelector({
   units: PracticeUnit[]
   onStart: (unitId: number) => void
 }) {
-  const [filter, setFilter] = useState<"g5" | "g6">("g5")
+  const [filter, setFilter] = useState<"g5" | "g6">("g6")
 
   const readyCount = useMemo(
     () => (units || []).filter((u) => Number(u.question_count) > 0).length,
     [units]
   )
 
-
-
   const visibleUnits = useMemo(() => {
-    if (filter === "g5") return (units || []).filter((u) => u.unit_no <= 5)
-    if (filter === "g6") return (units || []).filter((u) => u.unit_no >= 6 && u.unit_no <= 10)
-    return units
+    let list: PracticeUnit[] = []
+    if (filter === "g6") {
+      list = (units || []).filter((u) => u.unit_no >= 6 && u.unit_no <= 10)
+    } else if (filter === "g5") {
+      list = (units || []).filter((u) => u.unit_no <= 5)
+    } else {
+      list = units || []
+    }
+    // Units in descending order so Unit 1 will be last
+    return [...list].sort((a, b) => b.unit_no - a.unit_no)
   }, [units, filter])
 
   return (
@@ -397,8 +402,8 @@ export default function PracticeUnitSelector({
           className="mx-auto flex w-fit items-center gap-1 rounded-full border-2 border-[#333a56]/10 bg-white p-1.5 shadow-[0_5px_0_0_rgba(51,58,86,0.1)]"
         >
           {[
-            { value: "g5" as const, label: "Grade 5" },
             { value: "g6" as const, label: "Grade 6" },
+            { value: "g5" as const, label: "Grade 5" },
           ].map((opt) => {
             const active = filter === opt.value
             return (

@@ -1,7 +1,9 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import ReactConfetti from "react-confetti"
+import dynamic from "next/dynamic"
+
+const DynamicReactConfetti = dynamic(() => import("react-confetti"), { ssr: false })
 
 interface GameConfettiProps {
   trigger: boolean
@@ -75,7 +77,7 @@ export function GameConfetti({ trigger, type = "correct", duration = 3000 }: Gam
   const config = confettiConfig[type]
 
   return (
-    <ReactConfetti
+    <DynamicReactConfetti
       width={dimensions.width}
       height={dimensions.height}
       numberOfPieces={config.numberOfPieces}

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ArrowLeft, Trophy, Star, Clock, TrendingUp, Target, Calendar, AlertTriangle, BarChart3, LineChart as LineChartIcon } from "lucide-react"
 import { useSession } from "next-auth/react"
+import { DodoIcon } from "@/components/ui/dodo-icon"
 
 export const dynamic = 'force-dynamic'
 
@@ -292,14 +293,17 @@ export default function AttemptHistoryPage() {
           <Link href="/">
             <Button className="kid-btn mb-6 bg-gradient-to-r from-secondary via-secondary/80 to-secondary hover:shadow-lg hover:shadow-secondary/50 text-white font-bold transition-all duration-300 hover:scale-105 px-6 py-3">
               <ArrowLeft className="mr-2 h-5 w-5" />
-              🏠 Back Home
+              Back Home
             </Button>
           </Link>
           <Card className="kid-card p-8 text-center bg-white/90 backdrop-blur-sm">
-            <div className="text-5xl mb-3 animate-bounce-gentle">🔒</div>
+            <div className="text-5xl mb-3 animate-bounce-gentle emoji-icon">🔒</div>
             <p className="text-lg text-muted-foreground">Please log in to see your attempt history.</p>
             <Link href="/auth/login">
-              <Button className="kid-btn mt-4 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white font-bold shadow-lg">🦤 Log In</Button>
+              <Button className="kid-btn mt-4 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white font-bold shadow-lg flex items-center justify-center gap-2 mx-auto">
+                <DodoIcon size={20} />
+                <span>Log In</span>
+              </Button>
             </Link>
           </Card>
         </div>
@@ -313,18 +317,18 @@ export default function AttemptHistoryPage() {
         <Link href="/">
           <Button className="kid-btn mb-6 bg-gradient-to-r from-secondary via-secondary/80 to-secondary hover:shadow-lg hover:shadow-secondary/50 text-white font-bold transition-all duration-300 hover:scale-105 px-6 py-3">
             <ArrowLeft className="mr-2 h-5 w-5" />
-            🏠 Back Home
+            Back Home
           </Button>
         </Link>
 
         {/* Header */}
         <div className="mb-8 text-center">
-          <div className="text-5xl mb-2 animate-bounce-gentle">📊</div>
+          <div className="text-5xl mb-2 animate-bounce-gentle emoji-icon">📊</div>
           <div className="mb-4 flex items-center justify-center gap-3">
             <Clock className="h-10 w-10 text-primary" />
             <h1 className="kid-heading text-4xl font-bold text-primary md:text-5xl">My Progress</h1>
           </div>
-          <p className="text-lg text-muted-foreground">Track your learning journey through Mauritius! 🇲🇺</p>
+          <p className="text-lg text-muted-foreground">Track your learning journey through Mauritius! <span className="emoji-icon">🇲🇺</span></p>
         </div>
 
         {/* Summary Cards */}

@@ -10,6 +10,7 @@ interface DodoMascotProps {
   className?: string
   showSpeechBubble?: boolean
   speechText?: string
+  speechPlacement?: "top" | "bottom" | "left"
 }
 
 export function DodoMascot({
@@ -18,6 +19,7 @@ export function DodoMascot({
   className = "",
   showSpeechBubble = false,
   speechText = "",
+  speechPlacement = "top",
 }: DodoMascotProps) {
   const [isAnimating, setIsAnimating] = useState(false)
   const pendingTimeoutsRef = useRef<number[]>([])
@@ -74,10 +76,22 @@ export function DodoMascot({
     <div className={`relative ${className}`}>
       {/* Speech Bubble */}
       {showSpeechBubble && speechText && (
-        <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-white rounded-2xl px-4 py-2 shadow-lg border-2 border-primary/30 z-10 min-w-max">
-          <p className="text-sm font-bold text-primary">{speechText}</p>
-          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-r-2 border-b-2 border-primary/30 rotate-45" />
-        </div>
+        speechPlacement === "bottom" ? (
+          <div className="absolute top-full mt-2 right-0 bg-white rounded-2xl px-3.5 py-1.5 shadow-lg border-2 border-primary/30 z-10 max-w-[210px] sm:max-w-none text-center">
+            <div className="absolute -top-2 right-12 w-4 h-4 bg-white border-l-2 border-t-2 border-primary/30 rotate-45" />
+            <p className="text-xs sm:text-sm font-bold text-primary">{speechText}</p>
+          </div>
+        ) : speechPlacement === "left" ? (
+          <div className="absolute top-1/2 -translate-y-1/2 right-[105%] mr-2 bg-white rounded-2xl px-4 py-2 shadow-lg border-2 border-primary/30 z-10 min-w-max">
+            <div className="absolute top-1/2 -right-2 -translate-y-1/2 w-4 h-4 bg-white border-r-2 border-t-2 border-primary/30 rotate-45" />
+            <p className="text-sm font-bold text-primary">{speechText}</p>
+          </div>
+        ) : (
+          <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-white rounded-2xl px-4 py-2 shadow-lg border-2 border-primary/30 z-10 min-w-max">
+            <p className="text-sm font-bold text-primary">{speechText}</p>
+            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-r-2 border-b-2 border-primary/30 rotate-45" />
+          </div>
+        )
       )}
 
       {/* Dodo Bird SVG */}

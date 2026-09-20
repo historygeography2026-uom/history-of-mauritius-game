@@ -345,7 +345,7 @@ export default function ExploreMap() {
             <Link href="/">
               <Button variant="outline" className="kid-btn bg-white/10 border-white/20 text-white hover:bg-white/20">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                🏠 Back Home
+                Back Home
               </Button>
             </Link>
             <div className="flex items-center gap-3">
@@ -353,7 +353,7 @@ export default function ExploreMap() {
                 <Compass className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="kid-heading text-2xl md:text-3xl font-bold text-white">🗺️ Interactive Map</h1>
+                <h1 className="kid-heading text-2xl md:text-3xl font-bold text-white">Interactive Map</h1>
               </div>
             </div>
           </div>
@@ -474,9 +474,9 @@ export default function ExploreMap() {
 
               {/* Zoom controls */}
               <div className="absolute top-4 right-4 z-20 flex flex-col gap-2">
-                <Button size="icon" variant="secondary" onClick={handleZoomIn} className="bg-white/90 hover:bg-white shadow-lg"><ZoomIn className="w-4 h-4" /></Button>
-                <Button size="icon" variant="secondary" onClick={handleZoomOut} className="bg-white/90 hover:bg-white shadow-lg"><ZoomOut className="w-4 h-4" /></Button>
-                <Button size="icon" variant="secondary" onClick={handleReset} className="bg-white/90 hover:bg-white shadow-lg"><RotateCcw className="w-4 h-4" /></Button>
+                <Button size="icon" variant="secondary" onClick={handleZoomIn} className="bg-white/95 hover:bg-white text-slate-800 hover:text-slate-950 shadow-lg border border-slate-200/60"><ZoomIn className="w-4 h-4" /></Button>
+                <Button size="icon" variant="secondary" onClick={handleZoomOut} className="bg-white/95 hover:bg-white text-slate-800 hover:text-slate-950 shadow-lg border border-slate-200/60"><ZoomOut className="w-4 h-4" /></Button>
+                <Button size="icon" variant="secondary" onClick={handleReset} className="bg-white/95 hover:bg-white text-slate-800 hover:text-slate-950 shadow-lg border border-slate-200/60"><RotateCcw className="w-4 h-4" /></Button>
               </div>
 
               {/* Zoom indicator */}

@@ -4,9 +4,17 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-display: var(--font-baloo), "Baloo 2", cursive, sans-serif;
-  --font-sans: var(--font-nunito), "Nunito", sans-serif;
+  --font-display: var(--font-baloo), "Baloo 2", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", cursive, sans-serif;
+  --font-sans: var(--font-nunito), "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
 }
+
+/* Universal emoji rendering protection */
+.emoji-icon, .kid-emoji {
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", var(--font-nunito), sans-serif;
+  display: inline-block;
+  line-height: 1;
+}
+
 
 @keyframes dodo-float {
   0%, 100% {

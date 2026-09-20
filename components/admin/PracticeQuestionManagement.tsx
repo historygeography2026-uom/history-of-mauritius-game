@@ -152,7 +152,7 @@ export default function PracticeQuestionManagement({ onImport }: Props) {
           <div>
             <h1 className="text-2xl font-black text-slate-900">Practice Question Bank</h1>
             <p className="mt-1 text-sm text-slate-500">
-              Manage all Grade 5 & Grade 6 practice questions, visuals, and answer keys.
+              Manage all Grade 4, Grade 5 & Grade 6 practice questions, visuals, and answer keys.
             </p>
           </div>
           <div className="flex gap-2.5">
@@ -214,7 +214,7 @@ export default function PracticeQuestionManagement({ onImport }: Props) {
             aria-label="Filter by unit"
             className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 focus:border-blue-500 focus:outline-none shadow-sm"
           >
-            <option value="all">All Units (10)</option>
+            <option value="all">All Units ({units.length})</option>
             {units.map((u) => (
               <option key={u.id} value={u.unit_no}>
                 {u.unit_name}
@@ -257,6 +257,7 @@ export default function PracticeQuestionManagement({ onImport }: Props) {
                   label: q.question_type,
                   badge: "bg-slate-100 text-slate-700 border border-slate-300",
                 }
+                const isGrade4 = q.unit_no >= 11 && q.unit_no <= 16
                 const isGrade5 = q.unit_no <= 5
                 const createdDate = q.created_at ? new Date(q.created_at).toLocaleDateString() : "—"
 
@@ -283,9 +284,11 @@ export default function PracticeQuestionManagement({ onImport }: Props) {
                     <td className="px-4 py-3">
                       <span
                         className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-extrabold ${
-                          isGrade5
-                            ? "bg-amber-50 text-amber-800 border border-amber-200"
-                            : "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                          isGrade4
+                            ? "bg-violet-50 text-violet-800 border border-violet-200"
+                            : isGrade5
+                              ? "bg-amber-50 text-amber-800 border border-amber-200"
+                              : "bg-emerald-50 text-emerald-800 border border-emerald-200"
                         }`}
                       >
                         {q.unit_name || `Unit ${q.unit_no}`}

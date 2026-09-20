@@ -12,7 +12,7 @@ export async function GET() {
              COUNT(pq.id) FILTER (WHERE pq.is_active = true) AS question_count
       FROM practice_units pu
       LEFT JOIN practice_questions pq ON pq.unit_id = pu.id
-      WHERE pu.is_active = true
+      WHERE pu.is_active = true AND pu.unit_no BETWEEN 1 AND 10
       GROUP BY pu.id
       ORDER BY pu.unit_no
     `)

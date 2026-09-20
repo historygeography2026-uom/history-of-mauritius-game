@@ -1,6 +1,7 @@
 "use client"
 
 import { usePathname } from "next/navigation"
+import { DodoIcon } from "@/components/ui/dodo-icon"
 
 /**
  * Kid-friendly animated background with Mauritius history & geography themed icons.
@@ -15,7 +16,7 @@ export function KidBackground() {
   }
 
   const icons = [
-    { emoji: "🦤", size: 3.5, top: 5, left: 8, delay: 0, drift: "drift1" },
+    { isDodo: true, emoji: "🦤", size: 3.5, top: 5, left: 8, delay: 0, drift: "drift1" },
     { emoji: "🧭", size: 2.8, top: 12, left: 85, delay: 2, drift: "drift2" },
     { emoji: "🌴", size: 3.2, top: 25, left: 3, delay: 4, drift: "drift3" },
     { emoji: "⛵", size: 3, top: 18, left: 50, delay: 1, drift: "drift1" },
@@ -90,7 +91,7 @@ export function KidBackground() {
       {icons.map((icon, i) => (
         <span
           key={i}
-          className="absolute select-none opacity-[0.25]"
+          className="absolute select-none opacity-[0.25] emoji-icon"
           style={{
             fontSize: `${icon.size}rem`,
             top: `${icon.top}%`,
@@ -98,7 +99,11 @@ export function KidBackground() {
             animation: `${icon.drift} ${18 + (i % 5) * 4}s ease-in-out ${icon.delay}s infinite`,
           }}
         >
-          {icon.emoji}
+          {icon.isDodo ? (
+            <DodoIcon size={`${icon.size}rem`} className="inline-block" />
+          ) : (
+            icon.emoji
+          )}
         </span>
       ))}
 
