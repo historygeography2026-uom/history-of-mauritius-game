@@ -89,6 +89,27 @@ class AdminTabErrorBoundary extends Component<
   }
 }
 
+function getPageNumbers(current: number, total: number): number[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1)
+  }
+  const pages: number[] = []
+  pages.push(1)
+  if (current > 3) {
+    pages.push(-1)
+  }
+  const start = Math.max(2, current - 1)
+  const end = Math.min(total - 1, current + 1)
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
+  }
+  if (current < total - 2) {
+    pages.push(-1)
+  }
+  pages.push(total)
+  return pages
+}
+
 export default function AdminPage() {
   const [showLoginModal, setShowLoginModal] = useState(true)
   const [isCheckingAdminSession, setIsCheckingAdminSession] = useState(true)
@@ -99,9 +120,17 @@ export default function AdminPage() {
   const [allQuestions, setAllQuestions] = useState<Question[]>([])
   const [viewMode, setViewMode] = useState<"filtered" | "all">("all")
   const [searchQuery, setSearchQuery] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [filterSubject, setFilterSubject] = useState<string>("all")
   const [filterLevel, setFilterLevel] = useState<number | "all">("all")
   const [filterType, setFilterType] = useState<string>("all")
+
+  // Server-side Pagination state for Game Questions
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+  const [totalQuestions, setTotalQuestions] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [breakdownCounts, setBreakdownCounts] = useState<{ subject: string; level: number; count: number }[]>([])
 
   const [loading, setLoading] = useState(true)
   const [selectedIds, setSelectedIds] = useState<string[]>([]) // For bulk actions
@@ -209,15 +238,24 @@ export default function AdminPage() {
     verifyAdminSession()
   }, [])
 
+  // Debounce search query to prevent unnecessary queries while typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery)
+      setCurrentPage(1)
+    }, 350)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
   useEffect(() => {
     if (currentUser) {
       if (viewMode === "all") {
-        fetchAllQuestions()
+        fetchAllQuestions(currentPage, pageSize)
       } else {
         fetchQuestions()
       }
     }
-  }, [selectedSubject, selectedLevel, currentUser, viewMode])
+  }, [selectedSubject, selectedLevel, currentUser, viewMode, currentPage, pageSize, filterSubject, filterLevel, filterType, debouncedSearch])
 
   const initializeBaseData = async () => {
     // Base data (subjects, levels, question_types) already exists in Render DB
@@ -304,10 +342,29 @@ export default function AdminPage() {
     }
   }
 
-  const fetchAllQuestions = async () => {
+  const fetchAllQuestions = async (page = currentPage, limit = pageSize) => {
     try {
       setLoading(true)
-      const res = await fetch("/api/admin/questions")
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(limit),
+        paginate: "true",
+      })
+
+      if (debouncedSearch.trim()) {
+        params.set("search", debouncedSearch.trim())
+      }
+      if (filterSubject !== "all") {
+        params.set("subject", filterSubject)
+      }
+      if (filterLevel !== "all") {
+        params.set("level", String(filterLevel))
+      }
+      if (filterType !== "all") {
+        params.set("type", filterType)
+      }
+
+      const res = await fetch(`/api/admin/questions?${params.toString()}`)
 
       if (res.status === 401 || res.status === 403) {
         resetAdminSession("Admin session expired. Please log in again.")
@@ -316,7 +373,20 @@ export default function AdminPage() {
 
       if (!res.ok) throw new Error("Failed to fetch questions")
       const data = await res.json()
-      setAllQuestions(data.map(transformApiQuestion))
+
+      if (data && data.questions) {
+        setAllQuestions(data.questions.map(transformApiQuestion))
+        setTotalQuestions(data.pagination.total)
+        setTotalPages(data.pagination.totalPages)
+        setCurrentPage(data.pagination.page)
+        if (data.breakdown) {
+          setBreakdownCounts(data.breakdown)
+        }
+      } else if (Array.isArray(data)) {
+        setAllQuestions(data.map(transformApiQuestion))
+        setTotalQuestions(data.length)
+        setTotalPages(Math.ceil(data.length / limit) || 1)
+      }
     } catch (error) {
       console.error("Error fetching all questions:", error)
       alert("Failed to fetch questions")
@@ -846,24 +916,8 @@ ${errorMessages}
     }
   }
 
-  const getFilteredAllQuestions = () => {
-    return allQuestions.filter((q) => {
-      const matchesSearch = (q.question || "").toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesSubject = filterSubject === "all" || q.subject === filterSubject
-      const matchesLevel = filterLevel === "all" || q.level === filterLevel
-      const matchesType = filterType === "all" || q.type === filterType
-      return matchesSearch && matchesSubject && matchesLevel && matchesType
-    })
-  }
-
-  // Memoize the filtered questions to avoid recalculating on every render
-  const filteredAllQuestionsForCheckbox = useMemo(() => getFilteredAllQuestions(), [
-    allQuestions,
-    searchQuery,
-    filterSubject,
-    filterLevel,
-    filterType,
-  ])
+  // In paginated mode, allQuestions already contains the sliced questions for the current page from the backend
+  const filteredAllQuestionsForCheckbox = allQuestions
 
   const filteredQuestions = questions.filter((q) => q.subject === selectedSubject && q.level === selectedLevel)
 
@@ -1412,13 +1466,13 @@ ${errorMessages}
               {/* Statistics Bar */}
               <div className="flex flex-wrap gap-2 mb-2">
                 <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm shadow-sm flex items-center gap-2">
-                  <span className="font-bold text-blue-700">Displaying:</span>
-                  <span className="font-black text-blue-900">{filteredAllQuestionsForCheckbox.length}</span>
-                  <span className="text-blue-600">/ {allQuestions.length} total</span>
+                  <span className="font-bold text-blue-700">Total Questions:</span>
+                  <span className="font-black text-blue-900">{totalQuestions}</span>
                 </div>
                 {subjects.map(s => 
                   levels.map(l => {
-                    const count = allQuestions.filter(q => q.subject.toLowerCase() === s.toLowerCase() && Number(q.level) === l).length;
+                    const match = breakdownCounts.find(b => b.subject.toLowerCase() === s.toLowerCase() && Number(b.level) === l);
+                    const count = match ? match.count : 0;
                     if (count === 0) return null;
                     return (
                       <div key={`${s}-${l}`} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-sm flex items-center gap-2">
@@ -1446,7 +1500,13 @@ ${errorMessages}
                 </div>
                 <div>
                   <Label className="text-sm font-medium mb-2">Subject</Label>
-                  <Select value={filterSubject} onValueChange={setFilterSubject}>
+                  <Select 
+                    value={filterSubject} 
+                    onValueChange={(val) => {
+                      setFilterSubject(val)
+                      setCurrentPage(1)
+                    }}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -1461,7 +1521,10 @@ ${errorMessages}
                   <Label className="text-sm font-medium mb-2">Level</Label>
                   <Select
                     value={filterLevel.toString()}
-                    onValueChange={(v) => setFilterLevel(v === "all" ? "all" : Number.parseInt(v))}
+                    onValueChange={(v) => {
+                      setFilterLevel(v === "all" ? "all" : Number.parseInt(v))
+                      setCurrentPage(1)
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -1476,7 +1539,13 @@ ${errorMessages}
                 </div>
                 <div>
                   <Label className="text-sm font-medium mb-2">Type</Label>
-                  <Select value={filterType} onValueChange={setFilterType}>
+                  <Select 
+                    value={filterType} 
+                    onValueChange={(val) => {
+                      setFilterType(val)
+                      setCurrentPage(1)
+                    }}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -1494,9 +1563,11 @@ ${errorMessages}
                   <Button
                     onClick={() => {
                       setSearchQuery("")
+                      setDebouncedSearch("")
                       setFilterSubject("all")
                       setFilterLevel("all")
                       setFilterType("all")
+                      setCurrentPage(1)
                     }}
                     variant="outline"
                     size="sm"
@@ -1655,8 +1726,98 @@ ${errorMessages}
                 </div>
               </div>
 
-              <div className="text-sm text-slate-600 text-center">
-                Showing {filteredAllQuestionsForCheckbox.length} of {allQuestions.length} total questions
+              {/* Pagination Toolbar */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-white border border-slate-200 rounded-xl shadow-xs mt-3">
+                <div className="flex items-center gap-4 text-xs sm:text-sm text-slate-600">
+                  <span>
+                    Showing <strong className="text-slate-900">{totalQuestions > 0 ? (currentPage - 1) * pageSize + 1 : 0}</strong> to{" "}
+                    <strong className="text-slate-900">{Math.min(currentPage * pageSize, totalQuestions)}</strong> of{" "}
+                    <strong className="text-slate-900">{totalQuestions}</strong> questions
+                  </span>
+                  <div className="flex items-center gap-1.5 border-l border-slate-200 pl-4">
+                    <span className="text-xs text-slate-500">Per page:</span>
+                    <select
+                      value={pageSize}
+                      onChange={(e) => {
+                        setPageSize(Number(e.target.value))
+                        setCurrentPage(1)
+                      }}
+                      className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 shadow-xs focus:border-blue-500 focus:outline-none"
+                    >
+                      <option value="10">10</option>
+                      <option value="20">20</option>
+                      <option value="50">50</option>
+                      <option value="100">100</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1 || loading}
+                    className="h-8 px-2 text-xs"
+                    title="First Page"
+                  >
+                    «
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1 || loading}
+                    className="h-8 px-2.5 text-xs font-medium"
+                  >
+                    Previous
+                  </Button>
+
+                  {/* Page Number Buttons */}
+                  <div className="flex items-center gap-1 mx-1">
+                    {getPageNumbers(currentPage, totalPages).map((p, idx) => {
+                      if (p === -1) {
+                        return <span key={`ellipsis-${idx}`} className="px-1 text-slate-400 text-xs font-bold">...</span>
+                      }
+                      return (
+                        <Button
+                          key={p}
+                          size="sm"
+                          variant={currentPage === p ? "default" : "outline"}
+                          onClick={() => setCurrentPage(p)}
+                          disabled={loading}
+                          className={`h-8 w-8 p-0 text-xs font-bold transition-all ${
+                            currentPage === p 
+                              ? "bg-blue-600 text-white hover:bg-blue-700 shadow-xs" 
+                              : "text-slate-700 hover:bg-slate-100"
+                          }`}
+                        >
+                          {p}
+                        </Button>
+                      )
+                    })}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages || loading}
+                    className="h-8 px-2.5 text-xs font-medium"
+                  >
+                    Next
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages || loading}
+                    className="h-8 px-2 text-xs"
+                    title="Last Page"
+                  >
+                    »
+                  </Button>
+                </div>
               </div>
             </div>
           )}

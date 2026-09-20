@@ -9,7 +9,7 @@ async function requireAdmin(request: Request): Promise<NextResponse | null> {
   return verifyAdminToken(request)
 }
 
-// GET all questions with filtering + type-specific details
+// GET all questions with optional pagination, filtering, search, and batched type-specific details
 export async function GET(request: NextRequest) {
   const authError = await requireAdmin(request)
   if (authError) return authError
@@ -19,8 +19,39 @@ export async function GET(request: NextRequest) {
     const subject = searchParams.get("subject")
     const level = searchParams.get("level")
     const type = searchParams.get("type")
+    const search = searchParams.get("search")
 
-    let query = `
+    const pageParam = searchParams.get("page")
+    const limitParam = searchParams.get("limit")
+    const isPaginated = pageParam !== null || limitParam !== null || searchParams.get("paginate") === "true"
+
+    const page = Math.max(1, parseInt(pageParam || "1", 10) || 1)
+    const limit = Math.max(1, Math.min(100, parseInt(limitParam || "20", 10) || 20))
+
+    let whereClause = "WHERE 1=1"
+    const params: any[] = []
+
+    if (subject && subject !== "all") {
+      whereClause += ` AND LOWER(s.name) = LOWER($${params.length + 1})`
+      params.push(subject)
+    }
+
+    if (level && level !== "all") {
+      whereClause += ` AND l.level_number = $${params.length + 1}`
+      params.push(Number(level))
+    }
+
+    if (type && type !== "all") {
+      whereClause += ` AND qt.name = $${params.length + 1}`
+      params.push(type)
+    }
+
+    if (search && search.trim().length > 0) {
+      whereClause += ` AND q.question_text ILIKE $${params.length + 1}`
+      params.push(`%${search.trim()}%`)
+    }
+
+    let questionsQuery = `
       SELECT 
         q.id, q.question_text, q.instruction, q.image_url, q.timer_seconds, 
         q.created_at, q.updated_at,
@@ -29,75 +60,146 @@ export async function GET(request: NextRequest) {
       JOIN subjects s ON q.subject_id = s.id
       JOIN levels l ON q.level_id = l.id
       JOIN question_types qt ON q.question_type_id = qt.id
-      WHERE 1=1
+      ${whereClause}
+      ORDER BY q.created_at DESC
     `
-    const params: any[] = []
 
-    if (subject && subject !== "all") {
-      query += ` AND LOWER(s.name) = LOWER($${params.length + 1})`
-      params.push(subject)
+    let countPromise: Promise<any> | null = null
+    let breakdownPromise: Promise<any> | null = null
+
+    if (isPaginated) {
+      const countSql = `
+        SELECT COUNT(*)::int AS total
+        FROM questions q
+        JOIN subjects s ON q.subject_id = s.id
+        JOIN levels l ON q.level_id = l.id
+        JOIN question_types qt ON q.question_type_id = qt.id
+        ${whereClause}
+      `
+      countPromise = pool.query(countSql, [...params])
+
+      // Breakdown of question counts across subjects and levels for admin statistics badges
+      const breakdownSql = `
+        SELECT LOWER(s.name) as subject, l.level_number as level, COUNT(*)::int as count
+        FROM questions q
+        JOIN subjects s ON q.subject_id = s.id
+        JOIN levels l ON q.level_id = l.id
+        GROUP BY s.name, l.level_number
+        ORDER BY s.name, l.level_number
+      `
+      breakdownPromise = pool.query(breakdownSql)
+
+      const offset = (page - 1) * limit
+      const limitIndex = params.length + 1
+      const offsetIndex = params.length + 2
+      questionsQuery += ` LIMIT $${limitIndex} OFFSET $${offsetIndex}`
+      params.push(limit, offset)
     }
 
-    if (level && level !== "all") {
-      query += ` AND l.level_number = $${params.length + 1}`
-      params.push(Number(level))
-    }
+    const [questionsRes, countRes, breakdownRes] = await Promise.all([
+      pool.query(questionsQuery, params),
+      countPromise,
+      breakdownPromise,
+    ])
 
-    if (type && type !== "all") {
-      query += ` AND qt.name = $${params.length + 1}`
-      params.push(type)
-    }
+    const rows = questionsRes.rows
+    const questionIds = rows.map((r: any) => parseInt(r.id, 10)).filter((id: number) => !isNaN(id))
 
-    query += ` ORDER BY q.created_at DESC`
+    // Batch enrich child tables in parallel (eliminates N+1 queries!)
+    const mcqMap = new Map<number, any[]>()
+    const matchMap = new Map<number, any[]>()
+    const fillMap = new Map<number, any[]>()
+    const reorderMap = new Map<number, any[]>()
+    const tfMap = new Map<number, any[]>()
 
-    const result = await pool.query(query, params)
+    if (questionIds.length > 0) {
+      const placeholders = questionIds.map((_, i) => `$${i + 1}`).join(", ")
 
-    // Enrich each question with type-specific details
-    const enrichedQuestions = await Promise.all(
-      result.rows.map(async (q: any) => {
-        const qType = q.question_type
-        let details: any = {}
+      const [mcqRes, matchRes, fillRes, reorderRes, tfRes] = await Promise.all([
+        pool.query(`SELECT question_id, option_text, is_correct, option_order FROM mcq_options WHERE question_id IN (${placeholders}) ORDER BY option_order`, questionIds),
+        pool.query(`SELECT question_id, left_item, right_item, pair_order FROM matching_pairs WHERE question_id IN (${placeholders}) ORDER BY pair_order`, questionIds),
+        pool.query(`SELECT question_id, answer_text FROM fill_answers WHERE question_id IN (${placeholders})`, questionIds),
+        pool.query(`SELECT question_id, item_text, item_order FROM reorder_items WHERE question_id IN (${placeholders}) ORDER BY item_order`, questionIds),
+        pool.query(`SELECT question_id, correct_answer FROM truefalse_answers WHERE question_id IN (${placeholders})`, questionIds),
+      ])
 
-        if (qType === "mcq") {
-          const opts = await pool.query(
-            "SELECT option_text, is_correct, option_order FROM mcq_options WHERE question_id = $1 ORDER BY option_order",
-            [q.id]
-          )
-          details.mcq_options = opts.rows
-        } else if (qType === "matching") {
-          const pairs = await pool.query(
-            "SELECT left_item, right_item, pair_order FROM matching_pairs WHERE question_id = $1 ORDER BY pair_order",
-            [q.id]
-          )
-          details.matching_pairs = pairs.rows
-        } else if (qType === "fill") {
-          const ans = await pool.query(
-            "SELECT answer_text FROM fill_answers WHERE question_id = $1",
-            [q.id]
-          )
-          details.fill_answers = ans.rows
-        } else if (qType === "reorder") {
-          const items = await pool.query(
-            "SELECT item_text, item_order FROM reorder_items WHERE question_id = $1 ORDER BY item_order",
-            [q.id]
-          )
-          details.reorder_items = items.rows
-        } else if (qType === "truefalse") {
-          const tf = await pool.query(
-            "SELECT correct_answer FROM truefalse_answers WHERE question_id = $1",
-            [q.id]
-          )
-          details.truefalse_answers = tf.rows
-        }
-
-        return { ...q, ...details }
+      mcqRes.rows.forEach(r => {
+        const qId = Number(r.question_id)
+        const list = mcqMap.get(qId) || []
+        list.push(r)
+        mcqMap.set(qId, list)
       })
-    )
+
+      matchRes.rows.forEach(r => {
+        const qId = Number(r.question_id)
+        const list = matchMap.get(qId) || []
+        list.push(r)
+        matchMap.set(qId, list)
+      })
+
+      fillRes.rows.forEach(r => {
+        const qId = Number(r.question_id)
+        const list = fillMap.get(qId) || []
+        list.push(r)
+        fillMap.set(qId, list)
+      })
+
+      reorderRes.rows.forEach(r => {
+        const qId = Number(r.question_id)
+        const list = reorderMap.get(qId) || []
+        list.push(r)
+        reorderMap.set(qId, list)
+      })
+
+      tfRes.rows.forEach(r => {
+        const qId = Number(r.question_id)
+        const list = tfMap.get(qId) || []
+        list.push(r)
+        tfMap.set(qId, list)
+      })
+    }
+
+    const enrichedQuestions = rows.map((q: any) => {
+      const qId = Number(q.id)
+      let details: any = {}
+      if (q.question_type === "mcq") {
+        details.mcq_options = mcqMap.get(qId) || []
+      } else if (q.question_type === "matching") {
+        details.matching_pairs = matchMap.get(qId) || []
+      } else if (q.question_type === "fill") {
+        details.fill_answers = fillMap.get(qId) || []
+      } else if (q.question_type === "reorder") {
+        details.reorder_items = reorderMap.get(qId) || []
+      } else if (q.question_type === "truefalse") {
+        details.truefalse_answers = tfMap.get(qId) || []
+      }
+      return { ...q, ...details }
+    })
+
+    if (isPaginated) {
+      const total = countRes ? countRes.rows[0].total : enrichedQuestions.length
+      const totalPages = Math.ceil(total / limit) || 1
+
+      return NextResponse.json({
+        questions: enrichedQuestions,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+        },
+        breakdown: breakdownRes ? breakdownRes.rows.map((r: any) => ({
+          subject: r.subject,
+          level: parseInt(r.level, 10),
+          count: parseInt(r.count, 10),
+        })) : [],
+      })
+    }
 
     return NextResponse.json(enrichedQuestions)
   } catch (error: any) {
     console.error("Error fetching questions:", error)
-    return NextResponse.json({ error: "Failed to fetch questions", details: error?.message, stack: error?.stack }, { status: 500 })
+    return NextResponse.json({ error: "Failed to fetch questions", details: error?.message }, { status: 500 })
   }
 }
 
