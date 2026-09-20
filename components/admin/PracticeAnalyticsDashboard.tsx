@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useMemo } from "react"
-import { Users, BookOpen, Target, TrendingUp, Download, Search, Filter, Layers, CheckCircle2 } from "lucide-react"
+import { Users, BookOpen, Target, TrendingUp, Download, Search, Filter, Layers } from "lucide-react"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line, Cell } from 'recharts'
 
 interface LearnerUnitStat {
@@ -58,7 +58,6 @@ function getGradeTheme(grade: number) {
     return {
       name: 'Grade 4',
       border: 'border-indigo-200',
-      activeBorder: 'border-indigo-500 ring-2 ring-indigo-500/20',
       bg: 'bg-indigo-50/50',
       badgeBg: 'bg-indigo-100 text-indigo-700 font-bold',
       text: 'text-indigo-900',
@@ -71,7 +70,6 @@ function getGradeTheme(grade: number) {
     return {
       name: 'Grade 5',
       border: 'border-emerald-200',
-      activeBorder: 'border-emerald-500 ring-2 ring-emerald-500/20',
       bg: 'bg-emerald-50/50',
       badgeBg: 'bg-emerald-100 text-emerald-700 font-bold',
       text: 'text-emerald-900',
@@ -83,7 +81,6 @@ function getGradeTheme(grade: number) {
   return {
     name: 'Grade 6',
     border: 'border-sky-200',
-    activeBorder: 'border-sky-500 ring-2 ring-sky-500/20',
     bg: 'bg-sky-50/50',
     badgeBg: 'bg-sky-100 text-sky-700 font-bold',
     text: 'text-sky-900',
@@ -144,7 +141,7 @@ export default function PracticeAnalyticsDashboard({}: Props) {
     fetchStats() 
   }, [fetchStats])
 
-  // --- Grade Breakdown Totals (Always computed across all units for top cards) ---
+  // --- Grade Breakdown Totals ---
   const gradeBreakdown = useMemo(() => {
     let g4Attempts = 0
     let g5Attempts = 0
@@ -329,7 +326,6 @@ export default function PracticeAnalyticsDashboard({}: Props) {
     return {
       name: 'All Grades',
       border: 'border-emerald-200',
-      activeBorder: 'border-emerald-500 ring-2 ring-emerald-500/20',
       bg: 'bg-emerald-50/50',
       badgeBg: 'bg-emerald-100 text-emerald-800 font-bold',
       text: 'text-emerald-950',
@@ -353,7 +349,7 @@ export default function PracticeAnalyticsDashboard({}: Props) {
   return (
     <div className="bg-gray-50 px-4 py-8 font-sans">
       <div className="mx-auto max-w-6xl space-y-6">
-        {/* Header with Title and Global Time Range */}
+        {/* Header with Title, Grade Filter Tabs, and Global Time Range */}
         <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2">
@@ -370,6 +366,28 @@ export default function PracticeAnalyticsDashboard({}: Props) {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            {/* Grade Filter Pill Tabs in Header */}
+            <div className="flex items-center rounded-lg bg-white p-1 border border-gray-200 shadow-sm">
+              {(['all', '4', '5', '6'] as const).map(g => {
+                const label = g === 'all' ? 'All Grades' : `Grade ${g}`
+                const isActive = gradeFilter === g
+                return (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => { setGradeFilter(g); setCurrentPage(1); }}
+                    className={`px-3 py-1 text-xs sm:text-sm font-semibold rounded-md transition-all ${
+                      isActive 
+                        ? 'bg-emerald-600 text-white shadow-xs' 
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
+
             {/* Time Range Selector */}
             <div className="flex items-center gap-2">
               <span className="text-xs text-gray-500 font-medium hidden sm:inline">Range:</span>
@@ -393,104 +411,21 @@ export default function PracticeAnalyticsDashboard({}: Props) {
           </div>
         </header>
 
-        {/* Grade Separation Cards — Interactive selector & breakdown at a glance */}
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {/* Card: All Grades */}
-          <button
-            type="button"
-            onClick={() => { setGradeFilter('all'); setCurrentPage(1); }}
-            className={`text-left rounded-2xl p-4 transition-all border shadow-sm ${
-              gradeFilter === 'all'
-                ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-emerald-600 ring-2 ring-emerald-400/40 shadow-md scale-[1.02]'
-                : 'bg-white hover:bg-gray-50 text-gray-800 border-gray-200'
-            }`}
-          >
-            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider mb-2">
-              <span className={gradeFilter === 'all' ? 'text-emerald-100' : 'text-gray-500'}>All Grades</span>
-              {gradeFilter === 'all' && <CheckCircle2 className="h-4 w-4 text-emerald-100" />}
-            </div>
-            <div className="text-2xl font-black mb-1">
-              {gradeBreakdown.totalAttempts}
-              <span className={`text-xs font-normal ml-1.5 ${gradeFilter === 'all' ? 'text-emerald-100' : 'text-gray-500'}`}>attempts</span>
-            </div>
-            <div className={`text-xs flex items-center justify-between ${gradeFilter === 'all' ? 'text-emerald-100' : 'text-gray-500'}`}>
-              <span>{gradeBreakdown.totalLearners} Active Learners</span>
-              <span>16 Units</span>
-            </div>
-          </button>
-
-          {/* Card: Grade 4 */}
-          <button
-            type="button"
-            onClick={() => { setGradeFilter('4'); setCurrentPage(1); }}
-            className={`text-left rounded-2xl p-4 transition-all border shadow-sm ${
-              gradeFilter === '4'
-                ? 'bg-gradient-to-br from-indigo-600 to-violet-700 text-white border-indigo-600 ring-2 ring-indigo-400/40 shadow-md scale-[1.02]'
-                : 'bg-white hover:bg-indigo-50/40 text-gray-800 border-indigo-100'
-            }`}
-          >
-            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider mb-2">
-              <span className={gradeFilter === '4' ? 'text-indigo-100' : 'text-indigo-600'}>🟣 Grade 4</span>
-              {gradeFilter === '4' && <CheckCircle2 className="h-4 w-4 text-indigo-100" />}
-            </div>
-            <div className="text-2xl font-black mb-1">
-              {gradeBreakdown[4].attempts}
-              <span className={`text-xs font-normal ml-1.5 ${gradeFilter === '4' ? 'text-indigo-100' : 'text-gray-500'}`}>attempts</span>
-            </div>
-            <div className={`text-xs flex items-center justify-between ${gradeFilter === '4' ? 'text-indigo-100' : 'text-gray-500'}`}>
-              <span>{gradeBreakdown[4].learners} Learners</span>
-              <span>6 Units</span>
-            </div>
-          </button>
-
-          {/* Card: Grade 5 */}
-          <button
-            type="button"
-            onClick={() => { setGradeFilter('5'); setCurrentPage(1); }}
-            className={`text-left rounded-2xl p-4 transition-all border shadow-sm ${
-              gradeFilter === '5'
-                ? 'bg-gradient-to-br from-emerald-600 to-green-700 text-white border-emerald-600 ring-2 ring-emerald-400/40 shadow-md scale-[1.02]'
-                : 'bg-white hover:bg-emerald-50/40 text-gray-800 border-emerald-100'
-            }`}
-          >
-            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider mb-2">
-              <span className={gradeFilter === '5' ? 'text-emerald-100' : 'text-emerald-700'}>🟢 Grade 5</span>
-              {gradeFilter === '5' && <CheckCircle2 className="h-4 w-4 text-emerald-100" />}
-            </div>
-            <div className="text-2xl font-black mb-1">
-              {gradeBreakdown[5].attempts}
-              <span className={`text-xs font-normal ml-1.5 ${gradeFilter === '5' ? 'text-emerald-100' : 'text-gray-500'}`}>attempts</span>
-            </div>
-            <div className={`text-xs flex items-center justify-between ${gradeFilter === '5' ? 'text-emerald-100' : 'text-gray-500'}`}>
-              <span>{gradeBreakdown[5].learners} Learners</span>
-              <span>5 Units</span>
-            </div>
-          </button>
-
-          {/* Card: Grade 6 */}
-          <button
-            type="button"
-            onClick={() => { setGradeFilter('6'); setCurrentPage(1); }}
-            className={`text-left rounded-2xl p-4 transition-all border shadow-sm ${
-              gradeFilter === '6'
-                ? 'bg-gradient-to-br from-sky-600 to-blue-700 text-white border-sky-600 ring-2 ring-sky-400/40 shadow-md scale-[1.02]'
-                : 'bg-white hover:bg-sky-50/40 text-gray-800 border-sky-100'
-            }`}
-          >
-            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider mb-2">
-              <span className={gradeFilter === '6' ? 'text-sky-100' : 'text-sky-700'}>🔵 Grade 6</span>
-              {gradeFilter === '6' && <CheckCircle2 className="h-4 w-4 text-sky-100" />}
-            </div>
-            <div className="text-2xl font-black mb-1">
-              {gradeBreakdown[6].attempts}
-              <span className={`text-xs font-normal ml-1.5 ${gradeFilter === '6' ? 'text-sky-100' : 'text-gray-500'}`}>attempts</span>
-            </div>
-            <div className={`text-xs flex items-center justify-between ${gradeFilter === '6' ? 'text-sky-100' : 'text-gray-500'}`}>
-              <span>{gradeBreakdown[6].learners} Learners</span>
-              <span>5 Units</span>
-            </div>
-          </button>
-        </section>
+        {/* Compact Statistics Summary Bar */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm shadow-xs flex items-center gap-2">
+            <span className="font-bold text-emerald-800">Total Attempts:</span>
+            <span className="font-black text-emerald-950 text-base">{totalPracticeAttempts}</span>
+          </div>
+          <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm shadow-xs flex items-center gap-2">
+            <span className="font-bold text-blue-800">Active Learners:</span>
+            <span className="font-black text-blue-950 text-base">{relevantLearners.length}</span>
+          </div>
+          <div className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs shadow-xs flex items-center gap-1.5 text-gray-500">
+            <Layers className="h-3.5 w-3.5 text-gray-400" />
+            <span>Showing: <strong className="text-gray-800">{activeUnits.length} Units</strong></span>
+          </div>
+        </div>
 
         {/* Grade-Separated Unit Badges Section */}
         <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
@@ -591,26 +526,42 @@ export default function PracticeAnalyticsDashboard({}: Props) {
           )}
         </section>
 
-        {/* Practice Timeline Chart — Separated by Grade */}
+        {/* Practice Timeline Chart — With Grade Filter Buttons Right Inside The Chart Header */}
         <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-emerald-500" />
-              <span>Practice Engagement Over Time {gradeFilter !== 'all' ? `— Grade ${gradeFilter}` : '— Separated by Grade'}</span>
-            </h2>
-            {gradeFilter === 'all' && (
-              <div className="flex items-center gap-4 text-xs font-semibold">
-                <span className="flex items-center gap-1.5 text-indigo-600">
-                  <span className="h-2.5 w-2.5 rounded-full bg-indigo-500"></span> Grade 4
-                </span>
-                <span className="flex items-center gap-1.5 text-emerald-600">
-                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500"></span> Grade 5
-                </span>
-                <span className="flex items-center gap-1.5 text-sky-600">
-                  <span className="h-2.5 w-2.5 rounded-full bg-sky-500"></span> Grade 6
-                </span>
-              </div>
-            )}
+          <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-emerald-500" />
+                <span>Practice Engagement Over Time {gradeFilter !== 'all' ? `— Grade ${gradeFilter}` : '— All Grades'}</span>
+              </h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {gradeFilter === 'all' 
+                  ? 'Showing all grades separated (Grade 4, 5, and 6)' 
+                  : `Filtered specifically by Grade ${gradeFilter}`}
+              </p>
+            </div>
+
+            {/* Grade Filter Pill Buttons inside the Chart Header */}
+            <div className="flex items-center rounded-lg bg-gray-100 p-1 border border-gray-200 shadow-xs">
+              {(['all', '4', '5', '6'] as const).map(g => {
+                const label = g === 'all' ? 'All Grades' : `Grade ${g}`
+                const isActive = gradeFilter === g
+                return (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => { setGradeFilter(g); setCurrentPage(1); }}
+                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${
+                      isActive 
+                        ? 'bg-emerald-600 text-white shadow-xs' 
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/60'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
           <div style={{ height: 288, minHeight: 288, width: '100%' }}>
@@ -654,10 +605,17 @@ export default function PracticeAnalyticsDashboard({}: Props) {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Top Learners Chart */}
           <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <h2 className="mb-4 text-sm font-bold text-gray-900 flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-blue-500" />
-              <span>Top Active Learners {gradeFilter !== 'all' ? `— Grade ${gradeFilter}` : '— All Grades'}</span>
-            </h2>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-blue-500" />
+                <span>Top Active Learners {gradeFilter !== 'all' ? `— Grade ${gradeFilter}` : '— All Grades'}</span>
+              </h2>
+              {gradeFilter !== 'all' && (
+                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${currentTheme.badgeBg}`}>
+                  Grade {gradeFilter}
+                </span>
+              )}
+            </div>
             <div style={{ height: 288, minHeight: 288, width: '100%' }}>
               {learnerChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={288} minHeight={288} key={`learner-bar-${gradeFilter}-${timeRange}`}>
@@ -679,10 +637,17 @@ export default function PracticeAnalyticsDashboard({}: Props) {
 
           {/* Unit Popularity Chart */}
           <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <h2 className="mb-4 text-sm font-bold text-gray-900 flex items-center gap-2">
-              <BookOpen className="h-4 w-4 text-amber-500" />
-              <span>Unit Popularity {gradeFilter !== 'all' ? `— Grade ${gradeFilter}` : '— Across Grades'}</span>
-            </h2>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-amber-500" />
+                <span>Unit Popularity {gradeFilter !== 'all' ? `— Grade ${gradeFilter}` : '— Across Grades'}</span>
+              </h2>
+              {gradeFilter !== 'all' && (
+                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${currentTheme.badgeBg}`}>
+                  Grade {gradeFilter}
+                </span>
+              )}
+            </div>
             <div style={{ height: 288, minHeight: 288, width: '100%' }}>
               {unitChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={288} minHeight={288} key={`unit-bar-${gradeFilter}-${timeRange}`}>
