@@ -74,6 +74,7 @@ export default function FillInBlanksGame({
   const [mascotMessage, setMascotMessage] = useState("")
   const [showConfetti, setShowConfetti] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [imageError, setImageError] = useState(false)
   const { playCorrect, playWrong, playClick } = useGameSounds()
   const pendingTimeoutsRef = useRef<number[]>([])
 
@@ -81,6 +82,7 @@ export default function FillInBlanksGame({
 
   // Reset state when single question changes
   useEffect(() => {
+    setImageError(false)
     if (isSingleMode) {
       setShowResult(false)
       setAnswer("")
@@ -212,7 +214,7 @@ export default function FillInBlanksGame({
       </h2>
 
       {/* Show image for DB questions (single mode) or built-in questions */}
-      {isSingleMode && singleQuestion?.image && (
+      {isSingleMode && singleQuestion?.image && !imageError && (
         <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 bg-white flex items-center justify-center">
           <Image
             src={singleQuestion.image}
@@ -223,10 +225,11 @@ export default function FillInBlanksGame({
             quality={100}
             unoptimized
             priority
+            onError={() => setImageError(true)}
           />
         </div>
       )}
-      {!isSingleMode && builtInQuestions[currentQuestionIndex].image && (
+      {!isSingleMode && builtInQuestions[currentQuestionIndex].image && !imageError && (
         <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 bg-white flex items-center justify-center">
           <Image
             src={builtInQuestions[currentQuestionIndex].image || "/placeholder.svg"}
@@ -237,6 +240,7 @@ export default function FillInBlanksGame({
             quality={100}
             unoptimized
             priority
+            onError={() => setImageError(true)}
           />
         </div>
       )}

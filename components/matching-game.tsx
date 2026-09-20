@@ -76,10 +76,12 @@ export default function MatchingGame({
   const [mascotMood, setMascotMood] = useState<"idle" | "happy" | "sad" | "thinking" | "celebrating" | "encouraging">("idle")
   const [mascotMessage, setMascotMessage] = useState("")
   const [showConfetti, setShowConfetti] = useState(false)
+  const [imageError, setImageError] = useState(false)
   const { playCorrect, playWrong, playClick } = useGameSounds()
   const pendingTimeoutsRef = useRef<number[]>([])
 
   useEffect(() => {
+    setImageError(false)
     const pairsToUse = question?.pairs && Array.isArray(question.pairs) ? question.pairs : builtInPairs
     setMatchPairs(pairsToUse)
     setRightItems([...pairsToUse.map((p: MatchPair) => p.right || "")].sort(() => Math.random() - 0.5))
@@ -241,7 +243,7 @@ export default function MatchingGame({
           </div>
         )}
 
-        {question?.image && (
+        {question?.image && !imageError && (
           <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 bg-white flex items-center justify-center">
             <Image
               src={question.image}
@@ -252,6 +254,7 @@ export default function MatchingGame({
               quality={100}
               unoptimized
               priority
+              onError={() => setImageError(true)}
             />
           </div>
         )}

@@ -55,12 +55,14 @@ export default function ReorderGame({
   const [mascotMood, setMascotMood] = useState<"idle" | "happy" | "sad" | "thinking" | "celebrating" | "encouraging">("idle")
   const [mascotMessage, setMascotMessage] = useState("")
   const [showConfetti, setShowConfetti] = useState(false)
+  const [imageError, setImageError] = useState(false)
   const { playCorrect, playWrong, playClick } = useGameSounds()
   const pendingTimeoutsRef = useRef<number[]>([])
 
   const isSingleMode = !!question
 
   useEffect(() => {
+    setImageError(false)
     if (isSingleMode && question.items && Array.isArray(question.items)) {
       // Build correct order from DB (correct is now an array of text strings in proper order)
       const correctTexts: string[] = Array.isArray(question.correct) ? question.correct : question.items
@@ -231,7 +233,7 @@ export default function ReorderGame({
         )}
 
       {/* Show question image if provided from DB */}
-      {question?.image && (
+      {question?.image && !imageError && (
         <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 bg-white flex items-center justify-center">
           <Image
             src={question.image}
@@ -242,6 +244,7 @@ export default function ReorderGame({
             quality={100}
             unoptimized
             priority
+            onError={() => setImageError(true)}
           />
         </div>
       )}

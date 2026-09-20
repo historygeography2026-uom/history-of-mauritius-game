@@ -81,10 +81,12 @@ export default function MultipleChoiceGame({
 
   const pendingTimeoutsRef = useRef<number[]>([])
 
+  const [imageError, setImageError] = useState(false)
   const isSingleMode = !!singleQuestion
 
   // Reset state when single question changes
   useEffect(() => {
+    setImageError(false)
     if (isSingleMode) {
       setShowResult(false)
       setSelectedAnswer(null)
@@ -92,7 +94,7 @@ export default function MultipleChoiceGame({
       setMascotMood("idle")
       setMascotMessage("")
     }
-  }, [singleQuestion, isSingleMode])
+  }, [singleQuestion, isSingleMode, currentQuestionIndex])
   const question = useMemo(() => {
     if (!isSingleMode) return builtInQuestions[currentQuestionIndex]
     
@@ -203,7 +205,7 @@ export default function MultipleChoiceGame({
           </div>
         </div>
 
-      {question.image && (
+      {question.image && !imageError && (
         <div className="mb-1 overflow-hidden rounded-lg border-2 border-primary/20 bg-white flex items-center justify-center">
           <Image
             src={question.image || "/placeholder.svg"}
@@ -214,6 +216,7 @@ export default function MultipleChoiceGame({
             quality={100}
             unoptimized
             priority
+            onError={() => setImageError(true)}
           />
         </div>
       )}

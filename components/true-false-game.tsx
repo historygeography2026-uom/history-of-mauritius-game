@@ -76,17 +76,19 @@ export default function TrueFalseGame({
   const { playCorrect, playWrong, playClick } = useGameSounds()
   const pendingTimeoutsRef = useRef<number[]>([])
 
+  const [imageError, setImageError] = useState(false)
   const isSingleMode = !!singleQuestion
 
   // Reset state when single question changes
   useEffect(() => {
+    setImageError(false)
     if (isSingleMode) {
       setShowResult(false)
       setSelectedAnswer(null)
       setMascotMood("idle")
       setMascotMessage("")
     }
-  }, [singleQuestion, isSingleMode])
+  }, [singleQuestion, isSingleMode, currentQuestionIndex])
 
   const question = isSingleMode
     ? {
@@ -183,7 +185,7 @@ export default function TrueFalseGame({
         True or False? 👍👎
       </h2>
 
-      {question.image && (
+      {question.image && !imageError && (
         <div className="mb-2 overflow-hidden rounded-xl border-2 border-primary/20 bg-white flex items-center justify-center">
           <Image
             src={question.image || "/placeholder.svg"}
@@ -194,6 +196,7 @@ export default function TrueFalseGame({
             quality={100}
             unoptimized
             priority
+            onError={() => setImageError(true)}
           />
         </div>
       )}
