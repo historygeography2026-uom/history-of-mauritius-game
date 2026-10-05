@@ -16,6 +16,7 @@ import { DodoTimer } from "@/components/dodo-timer"
 import { useAchievements } from "@/hooks/use-achievements"
 import { saveProgress } from "@/components/progress-map"
 import { useSession } from "next-auth/react"
+import { getGuestToken } from "@/lib/guest-identity"
 
 // Dynamically import heavy game components — only the active type loads
 const MultipleChoiceGame = dynamic(() => import("@/components/multiple-choice-game"), { ssr: false })
@@ -387,7 +388,11 @@ const GamePage = () => {
         fetch("/api/game/answer", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question_id: currentQuestion.id, student_answer: studentAnswer }),
+          body: JSON.stringify({
+            question_id: currentQuestion.id,
+            student_answer: studentAnswer,
+            guest_token: getGuestToken(),
+          }),
           keepalive: true,
         }).catch(() => {})
       } catch {

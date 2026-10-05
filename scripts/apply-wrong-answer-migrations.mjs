@@ -33,12 +33,17 @@ async function status() {
     `SELECT data_type FROM information_schema.columns
      WHERE table_name = 'practice_attempts' AND column_name = 'guest_token'`
   )
+  const colGame = await pool.query(
+    `SELECT data_type FROM information_schema.columns
+     WHERE table_name = 'game_attempts' AND column_name = 'guest_token'`
+  )
   const tbl = await pool.query(`SELECT to_regclass('public.game_attempts') AS t`)
   const types = await pool.query(
     `SELECT table_name, data_type FROM information_schema.columns
      WHERE column_name = 'id' AND table_name IN ('questions','users') AND table_schema = 'public'`
   )
   console.log('practice_attempts.guest_token:', col.rows[0]?.data_type ?? 'MISSING')
+  console.log('game_attempts.guest_token:', colGame.rows[0]?.data_type ?? 'MISSING')
   console.log('game_attempts table:', tbl.rows[0].t ?? 'MISSING')
   console.log('id types:', types.rows.map((r) => `${r.table_name}=${r.data_type}`).join(', '))
 }

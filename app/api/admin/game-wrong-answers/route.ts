@@ -93,7 +93,7 @@ async function getWrongAnswers(
 
   const sql = `
     WITH filtered AS (
-      SELECT ga.question_id, ga.student_id, ga.student_answer, ga.is_correct, ga.attempted_at,
+      SELECT ga.question_id, ga.student_id, ga.guest_token, ga.student_answer, ga.is_correct, ga.attempted_at,
              q.question_text, qt.name AS question_type, s.name AS subject, l.level_number
       FROM game_attempts ga
       JOIN questions q       ON ga.question_id = q.id
@@ -104,9 +104,9 @@ async function getWrongAnswers(
     ),
     agg AS (
       SELECT question_id, question_text, question_type, subject, level_number,
-             COUNT(*) FILTER (WHERE NOT is_correct)                    AS wrong_count,
-             COUNT(*)                                                  AS total_attempts,
-             COUNT(DISTINCT student_id) FILTER (WHERE NOT is_correct)  AS unique_wrong_students
+             COUNT(*) FILTER (WHERE NOT is_correct)                                              AS wrong_count,
+             COUNT(*)                                                                            AS total_attempts,
+             COUNT(DISTINCT COALESCE(student_id::text, guest_token::text)) FILTER (WHERE NOT is_correct) AS unique_wrong_students
       FROM filtered
       GROUP BY question_id, question_text, question_type, subject, level_number
       HAVING COUNT(*) FILTER (WHERE NOT is_correct) >= $${minIdx}
@@ -217,9 +217,9 @@ async function getWrongAnswerDetail(questionIdParam: string | null) {
       `SELECT COUNT(*) AS total_attempts,
               COUNT(*) FILTER (WHERE is_correct)     AS correct_count,
               COUNT(*) FILTER (WHERE NOT is_correct) AS wrong_count,
-              COUNT(DISTINCT student_id)             AS unique_students,
-              COUNT(DISTINCT student_id) FILTER (WHERE NOT is_correct) AS students_wrong,
-              COUNT(DISTINCT student_id) FILTER (WHERE is_correct)     AS students_correct
+              COUNT(DISTINCT COALESCE(student_id::text, guest_token::text))                                       AS unique_students,
+              COUNT(DISTINCT COALESCE(student_id::text, guest_token::text)) FILTER (WHERE NOT is_correct) AS students_wrong,
+              COUNT(DISTINCT COALESCE(student_id::text, guest_token::text)) FILTER (WHERE is_correct)     AS students_correct
        FROM game_attempts
        WHERE question_id = $1`,
       [questionId]

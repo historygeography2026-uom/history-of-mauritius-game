@@ -24,14 +24,18 @@ const clip = (v: unknown) => String(v ?? "").slice(0, MAX_STR)
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions)
   const studentId = session?.user?.id ? parseInt(session.user.id) : null
-  if (!studentId) {
-    return NextResponse.json({ ok: false }, { status: 401 })
-  }
 
   try {
     const body = await request.json().catch(() => null)
     const questionId = Number(body?.question_id)
     const rawAnswer = body?.student_answer
+    const rawGuestToken = body?.guest_token
+
+    // Validate guest_token format if student is not logged in (must be a valid UUID)
+    const validGuestToken =
+      !studentId && rawGuestToken && typeof rawGuestToken === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawGuestToken)
+        ? rawGuestToken
+        : null
 
     if (!Number.isInteger(questionId) || questionId <= 0) {
       return NextResponse.json({ ok: false }, { status: 400 })
@@ -115,9 +119,9 @@ export async function POST(request: Request) {
     }
 
     await pool.query(
-      `INSERT INTO game_attempts (question_id, student_id, student_answer, is_correct)
-       VALUES ($1, $2, $3, $4)`,
-      [questionId, studentId, JSON.stringify(answer), isCorrect]
+      `INSERT INTO game_attempts (question_id, student_id, guest_token, student_answer, is_correct)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [questionId, studentId, validGuestToken, JSON.stringify(answer), isCorrect]
     )
 
     return NextResponse.json({ ok: true })
