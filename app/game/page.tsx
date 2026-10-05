@@ -361,7 +361,7 @@ const GamePage = () => {
     }
   }, [showTimeoutScreen, levelTimedOut])
 
-  const handleQuestionComplete = useCallback((stars: number) => {
+  const handleQuestionComplete = useCallback((stars: number, studentAnswer?: unknown) => {
     // CRITICAL: Exit immediately if unmounting to prevent all side effects
     if (isUnmountingRef.current) return
     
@@ -380,6 +380,20 @@ const GamePage = () => {
     const currentQuestion = mixedQuestions[currentQuestionIndex]
     const clampedStars = Math.max(0, Math.min(3, Math.floor(stars))) // Validate stars: 0-3 integers only
     const isCorrect = clampedStars > 0
+
+    // Silent analytics: log the answer for admin wrong-answer stats (fire-and-forget, never blocks gameplay)
+    if (currentQuestion?.id && studentAnswer !== undefined) {
+      try {
+        fetch("/api/game/answer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question_id: currentQuestion.id, student_answer: studentAnswer }),
+          keepalive: true,
+        }).catch(() => {})
+      } catch {
+        // ignore — analytics must never affect the game
+      }
+    }
     
     // Record question for achievements (ONLY if not unmounting)
     if (!isUnmountingRef.current) {

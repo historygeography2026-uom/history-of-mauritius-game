@@ -65,7 +65,7 @@ export default function MultipleChoiceGame({
   onBack,
   question: singleQuestion,
 }: {
-  onComplete: (stars: number) => void
+  onComplete: (stars: number, studentAnswer?: unknown) => void
   onBack: () => void
   question?: any
 }) {
@@ -153,7 +153,10 @@ export default function MultipleChoiceGame({
     setMascotMood("idle")
     setMascotMessage("")
     if (isSingleMode) {
-      onComplete(selectedAnswer === question.correctAnswer ? 1 : 0)
+      onComplete(
+        selectedAnswer === question.correctAnswer ? 1 : 0,
+        selectedAnswer !== null ? question.options[selectedAnswer] : undefined
+      )
     } else {
       if (currentQuestionIndex < builtInQuestions.length - 1) {
         setCurrentQuestionIndex(currentQuestionIndex + 1)

@@ -61,7 +61,7 @@ export default function TrueFalseGame({
   onBack,
   question: singleQuestion,
 }: {
-  onComplete: (stars: number) => void
+  onComplete: (stars: number, studentAnswer?: unknown) => void
   onBack: () => void
   question?: any
 }) {
@@ -130,7 +130,7 @@ export default function TrueFalseGame({
     setMascotMood("idle")
     setMascotMessage("")
     if (isSingleMode) {
-      onComplete(selectedAnswer === question.isTrue ? 1 : 0)
+      onComplete(selectedAnswer === question.isTrue ? 1 : 0, selectedAnswer ?? undefined)
     } else {
       if (currentQuestionIndex < builtInQuestions.length - 1) {
         setCurrentQuestionIndex(currentQuestionIndex + 1)

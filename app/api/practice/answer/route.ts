@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   const studentId = session?.user?.id ? parseInt(session.user.id) : null
 
   try {
-    const { session_id, question_id, student_answer } = await request.json()
+    const { session_id, question_id, student_answer, guest_token } = await request.json()
 
     if (!session_id || !question_id) {
       return NextResponse.json(
@@ -24,6 +24,12 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
+
+    // Validate guest_token format if provided (must be a valid UUID)
+    const validGuestToken =
+      !studentId && guest_token && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(guest_token)
+        ? guest_token
+        : null
 
     // Validate session exists and is still open
     const sessionResult = await pool.query(
@@ -65,11 +71,11 @@ export async function POST(request: Request) {
       student_answer
     )
 
-    // Log the attempt (student_id nullable for guests)
+    // Log the attempt (student_id nullable for guests, guest_token for anonymous tracking)
     await pool.query(
       `INSERT INTO practice_attempts
-         (session_id, student_id, unit_id, question_id, student_answer, is_correct)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
+         (session_id, student_id, unit_id, question_id, student_answer, is_correct, guest_token)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [
         session_id,
         studentId,
@@ -77,6 +83,7 @@ export async function POST(request: Request) {
         question_id,
         student_answer !== undefined ? JSON.stringify(student_answer) : null,
         result.is_correct,
+        validGuestToken,
       ]
     )
 

@@ -18,6 +18,7 @@ const AdminTabNav = dynamic(() => import("@/components/admin/admin-tab-nav"), { 
 const PracticeQuestionManagement = dynamic(() => import("@/components/admin/PracticeQuestionManagement"), { ssr: false })
 const GameAnalyticsDashboard = dynamic(() => import("@/components/admin/GameAnalyticsDashboard"), { ssr: false })
 const PracticeAnalyticsDashboard = dynamic(() => import("@/components/admin/PracticeAnalyticsDashboard"), { ssr: false })
+const WrongAnswersDashboard = dynamic(() => import("@/components/admin/WrongAnswersDashboard"), { ssr: false })
 const PracticeImportModal = dynamic(() => import("@/components/admin/PracticeImportModal"), { ssr: false })
 
 // Import UI components from shadcn/ui for better control
@@ -1373,6 +1374,7 @@ ${errorMessages}
             { id: "practice", label: "Practice Questions", icon: "📚" },
             { id: "stats_game", label: "Game Stats", icon: "🎮" },
             { id: "stats_practice", label: "Practice Stats", icon: "📊" },
+            { id: "wrong_answers", label: "Wrong Answers", icon: "⚠️" },
           ]}
           activeTab={activeAdminTab}
           onTabChange={setActiveAdminTab}
@@ -1406,6 +1408,13 @@ ${errorMessages}
           <AdminTabErrorBoundary tabName="Practice Analytics Dashboard">
             <div className="space-y-8">
               <PracticeAnalyticsDashboard />
+            </div>
+          </AdminTabErrorBoundary>
+        )}
+        {activeAdminTab === "wrong_answers" && (
+          <AdminTabErrorBoundary tabName="Wrong Answers Dashboard">
+            <div className="space-y-8">
+              <WrongAnswersDashboard />
             </div>
           </AdminTabErrorBoundary>
         )}

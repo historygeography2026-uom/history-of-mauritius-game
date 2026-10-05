@@ -42,7 +42,7 @@ export default function ReorderGame({
   onBack,
   question,
 }: {
-  onComplete: (stars: number) => void
+  onComplete: (stars: number, studentAnswer?: unknown) => void
   onBack: () => void
   question?: any
 }) {
@@ -58,6 +58,8 @@ export default function ReorderGame({
   const [imageError, setImageError] = useState(false)
   const { playCorrect, playWrong, playClick } = useGameSounds()
   const pendingTimeoutsRef = useRef<number[]>([])
+  // Snapshot of the order the student submitted (items get replaced by the correct order on a wrong answer)
+  const submittedOrderRef = useRef<string[]>([])
 
   const isSingleMode = !!question
 
@@ -144,6 +146,7 @@ export default function ReorderGame({
     if (showResult) return
     playClick()
     const isOrderCorrect = items.every((item, index) => item.event === correctOrder[index]?.event)
+    submittedOrderRef.current = items.map((item) => item.event)
     setWasCorrect(isOrderCorrect)
     setShowResult(true)
     if (isOrderCorrect) {
@@ -305,7 +308,7 @@ export default function ReorderGame({
           </div>
 
           <Button
-            onClick={() => onComplete(wasCorrect ? 1 : 0)}
+            onClick={() => onComplete(wasCorrect ? 1 : 0, submittedOrderRef.current)}
             className="w-full bg-gradient-to-r from-secondary to-primary text-white hover:opacity-90 text-lg py-3 rounded-xl shadow-lg font-bold"
           >
             Continue →

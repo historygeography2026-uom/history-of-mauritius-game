@@ -8,6 +8,7 @@ import FillBlankQuestionScreen from "@/components/practice/FillBlankQuestionScre
 import OrderingQuestionScreen from "@/components/practice/OrderingQuestionScreen"
 import MatchingQuestionScreen from "@/components/practice/MatchingQuestionScreen"
 import PracticeCompleteScreen from "@/components/practice/PracticeCompleteScreen"
+import { getGuestToken } from "@/lib/guest-identity"
 
 interface SessionQuestion {
   id: number
@@ -161,6 +162,7 @@ function PracticePlayContent() {
         session_id: Number(sessionId),
         question_id: question.id,
         student_answer: answer,
+        guest_token: getGuestToken(),
       }),
     })
 

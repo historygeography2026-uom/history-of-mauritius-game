@@ -38,6 +38,16 @@ export async function GET(request: NextRequest) {
         return await getHardQuestions(searchParams.get("unit"))
       case "learner-detail":
         return await getLearnerDetail(searchParams.get("student_id"))
+      case "wrong-answers":
+        return await getWrongAnswers(
+          searchParams.get("grade"),
+          searchParams.get("unit"),
+          searchParams.get("range"),
+          searchParams.get("question_type"),
+          parseInt(searchParams.get("min_attempts") || "1")
+        )
+      case "wrong-answer-detail":
+        return await getWrongAnswerDetail(searchParams.get("question_id"))
       default:
         return NextResponse.json({ error: `Unknown view: ${view}` }, { status: 400 })
     }
@@ -338,4 +348,192 @@ async function getPracticeTimeline(range: string | null, grade: string | null = 
   }
   
   return NextResponse.json(rows)
+}
+
+/**
+ * Tier 1 — Most Missed Questions (Global)
+ * Returns questions ranked by wrong-answer popularity with filters.
+ */
+async function getWrongAnswers(
+  grade: string | null,
+  unit: string | null,
+  range: string | null,
+  questionType: string | null,
+  minAttempts: number
+) {
+  const conditions: string[] = ['NOT pa.is_correct']
+  const params: any[] = []
+  let paramIdx = 1
+
+  // Grade filter
+  if (grade === '4') {
+    conditions.push('pu.unit_no BETWEEN 11 AND 16')
+  } else if (grade === '5') {
+    conditions.push('pu.unit_no BETWEEN 1 AND 5')
+  } else if (grade === '6') {
+    conditions.push('pu.unit_no BETWEEN 6 AND 10')
+  }
+
+  // Unit filter
+  if (unit) {
+    conditions.push(`pq.unit_id = $${paramIdx}`)
+    params.push(Number(unit))
+    paramIdx++
+  }
+
+  // Date range filter
+  if (range === '7d') {
+    conditions.push(`pa.attempted_at > NOW() - INTERVAL '7 days'`)
+  } else if (range === '30d') {
+    conditions.push(`pa.attempted_at > NOW() - INTERVAL '30 days'`)
+  }
+
+  // Question type filter
+  if (questionType && ['mcq', 'matching', 'fill', 'reorder', 'truefalse'].includes(questionType)) {
+    conditions.push(`pq.question_type = $${paramIdx}`)
+    params.push(questionType)
+    paramIdx++
+  }
+
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+
+  // Min attempts threshold param
+  params.push(minAttempts || 1)
+  const minAttemptsParamIdx = paramIdx
+
+  const sql = `
+    WITH wrong_agg AS (
+      SELECT
+        pq.id AS question_id,
+        pq.question_text,
+        pq.question_type,
+        pu.unit_no,
+        pu.unit_name,
+        COUNT(pa.id) AS wrong_count,
+        COUNT(DISTINCT COALESCE(pa.student_id::text, pa.guest_token::text)) AS unique_wrong_students
+      FROM practice_attempts pa
+      JOIN practice_questions pq ON pa.question_id = pq.id
+      JOIN practice_units pu ON pq.unit_id = pu.id
+      ${whereClause}
+      GROUP BY pq.id, pu.id
+      HAVING COUNT(pa.id) >= $${minAttemptsParamIdx}
+    ),
+    total_agg AS (
+      SELECT
+        question_id,
+        COUNT(*) AS total_attempts
+      FROM practice_attempts
+      GROUP BY question_id
+    ),
+    top_wrong AS (
+      SELECT
+        pa.question_id,
+        pa.student_answer,
+        COUNT(*) AS answer_freq,
+        ROW_NUMBER() OVER (PARTITION BY pa.question_id ORDER BY COUNT(*) DESC) AS rn
+      FROM practice_attempts pa
+      JOIN practice_questions pq ON pa.question_id = pq.id
+      JOIN practice_units pu ON pq.unit_id = pu.id
+      ${whereClause}
+      GROUP BY pa.question_id, pa.student_answer
+    )
+    SELECT
+      wa.question_id,
+      wa.question_text,
+      wa.question_type,
+      wa.unit_no,
+      wa.unit_name,
+      wa.wrong_count,
+      wa.unique_wrong_students,
+      COALESCE(ta.total_attempts, 0)::int AS total_attempts,
+      CASE WHEN COALESCE(ta.total_attempts, 0) > 0
+        THEN ROUND(100.0 * wa.wrong_count / ta.total_attempts)
+        ELSE 0
+      END AS error_rate_pct,
+      tw.student_answer AS most_common_wrong_answer,
+      tw.answer_freq AS most_common_wrong_count
+    FROM wrong_agg wa
+    LEFT JOIN total_agg ta ON ta.question_id = wa.question_id
+    LEFT JOIN top_wrong tw ON tw.question_id = wa.question_id AND tw.rn = 1
+    ORDER BY wa.wrong_count DESC
+    LIMIT 50
+  `
+
+  const result = await pool.query(sql, params)
+  return NextResponse.json(result.rows)
+}
+
+/**
+ * Tier 2 — Wrong Answer Distribution (Per-Question)
+ * Shows what students actually answered wrong, grouped by answer.
+ */
+async function getWrongAnswerDetail(questionIdParam: string | null) {
+  if (!questionIdParam) {
+    return NextResponse.json({ error: 'question_id is required' }, { status: 400 })
+  }
+
+  const questionId = Number(questionIdParam)
+  if (isNaN(questionId)) {
+    return NextResponse.json({ error: 'question_id must be a number' }, { status: 400 })
+  }
+
+  // Get question info
+  const questionResult = await pool.query(
+    `SELECT pq.id, pq.question_text, pq.question_type, pq.answer_data,
+            pu.unit_no, pu.unit_name
+     FROM practice_questions pq
+     JOIN practice_units pu ON pq.unit_id = pu.id
+     WHERE pq.id = $1`,
+    [questionId]
+  )
+
+  if (questionResult.rows.length === 0) {
+    return NextResponse.json({ error: 'Question not found' }, { status: 404 })
+  }
+
+  const question = questionResult.rows[0]
+
+  // Get wrong answer distribution
+  const distributionResult = await pool.query(
+    `SELECT
+       pa.student_answer,
+       COUNT(*) AS frequency,
+       ROUND(100.0 * COUNT(*) / NULLIF(SUM(COUNT(*)) OVER(), 0)) AS pct,
+       MIN(pa.attempted_at) AS first_seen,
+       MAX(pa.attempted_at) AS last_seen
+     FROM practice_attempts pa
+     WHERE pa.question_id = $1 AND NOT pa.is_correct
+     GROUP BY pa.student_answer
+     ORDER BY frequency DESC
+     LIMIT 20`,
+    [questionId]
+  )
+
+  // Get overall stats for this question
+  const statsResult = await pool.query(
+    `SELECT
+       COUNT(*) AS total_attempts,
+       COUNT(*) FILTER (WHERE is_correct) AS correct_count,
+       COUNT(*) FILTER (WHERE NOT is_correct) AS wrong_count,
+       COUNT(DISTINCT COALESCE(student_id::text, guest_token::text)) AS unique_students,
+       COUNT(DISTINCT COALESCE(student_id::text, guest_token::text)) FILTER (WHERE NOT is_correct) AS students_wrong,
+       COUNT(DISTINCT COALESCE(student_id::text, guest_token::text)) FILTER (WHERE is_correct) AS students_correct
+     FROM practice_attempts
+     WHERE question_id = $1`,
+    [questionId]
+  )
+
+
+  return NextResponse.json({
+    question: {
+      id: question.id,
+      question_text: question.question_text,
+      question_type: question.question_type,
+      answer_data: question.answer_data,
+      unit_no: question.unit_no,
+      unit_name: question.unit_name,
+    },
+    stats: statsResult.rows[0],
+    wrong_answer_distribution: distributionResult.rows,
+  })
 }

@@ -62,7 +62,7 @@ export default function FillInBlanksGame({
   onBack,
   question: singleQuestion,
 }: {
-  onComplete: (stars: number) => void
+  onComplete: (stars: number, studentAnswer?: unknown) => void
   onBack: () => void
   question?: any
 }) {
@@ -172,7 +172,7 @@ export default function FillInBlanksGame({
     setMascotMessage("")
     setIsSubmitting(false)
     if (isSingleMode) {
-      onComplete(isCorrect ? 1 : 0)
+      onComplete(isCorrect ? 1 : 0, answer)
     } else {
       if (currentQuestionIndex < builtInQuestions.length - 1) {
         setCurrentQuestionIndex(currentQuestionIndex + 1)

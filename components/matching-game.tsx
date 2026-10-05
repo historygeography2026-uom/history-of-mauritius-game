@@ -58,7 +58,7 @@ export default function MatchingGame({
   onBack,
   question,
 }: {
-  onComplete: (stars: number) => void
+  onComplete: (stars: number, studentAnswer?: unknown) => void
   onBack: () => void
   question?: any
 }) {
@@ -79,6 +79,8 @@ export default function MatchingGame({
   const [imageError, setImageError] = useState(false)
   const { playCorrect, playWrong, playClick } = useGameSounds()
   const pendingTimeoutsRef = useRef<number[]>([])
+  // Wrong pairs attempted (silent analytics only)
+  const wrongPairsRef = useRef<{ left: string; right: string }[]>([])
 
   useEffect(() => {
     setImageError(false)
@@ -91,6 +93,7 @@ export default function MatchingGame({
     setSelectedLeft(null)
     setSelectedRight(null)
     setWrongAttempts(0)
+    wrongPairsRef.current = []
     setGaveUp(false)
   }, [question])
 
@@ -138,6 +141,7 @@ export default function MatchingGame({
       setFeedback({ show: true, correct: false })
       setWrongMatch(true)
       setWrongAttempts((prev) => prev + 1)
+      wrongPairsRef.current.push({ left: leftValue || "", right: rightValue || "" })
       setMascotMood("encouraging")
       setMascotMessage(getRandomMessage("wrong"))
       playWrong()
@@ -195,7 +199,7 @@ export default function MatchingGame({
   const handleNext = () => {
     playClick()
     const finalScore = gaveUp ? Math.max(0, score - 1) : score
-    onComplete(finalScore)
+    onComplete(finalScore, { wrong_pairs: wrongPairsRef.current, gave_up: gaveUp })
   }
 
   return (
