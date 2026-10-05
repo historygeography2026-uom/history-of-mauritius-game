@@ -381,11 +381,13 @@ async function getWrongAnswers(
     paramIdx++
   }
 
-  // Date range filter
+  let totalRangeClause = ""
   if (range === '7d') {
     conditions.push(`pa.attempted_at > NOW() - INTERVAL '7 days'`)
+    totalRangeClause = "WHERE attempted_at > NOW() - INTERVAL '7 days'"
   } else if (range === '30d') {
     conditions.push(`pa.attempted_at > NOW() - INTERVAL '30 days'`)
+    totalRangeClause = "WHERE attempted_at > NOW() - INTERVAL '30 days'"
   }
 
   // Question type filter
@@ -423,6 +425,7 @@ async function getWrongAnswers(
         question_id,
         COUNT(*) AS total_attempts
       FROM practice_attempts
+      ${totalRangeClause}
       GROUP BY question_id
     ),
     top_wrong AS (

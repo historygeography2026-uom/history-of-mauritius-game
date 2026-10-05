@@ -191,6 +191,11 @@ export default function WrongAnswersDashboard() {
     fetchWrongAnswers()
   }, [fetchWrongAnswers])
 
+  // Automatically reset to page 1 whenever any filter or search query changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [source, gradeFilter, subjectFilter, levelFilter, unitFilter, rangeFilter, typeFilter, minAttempts, searchQuery])
+
   const handleSourceChange = (next: Source) => {
     if (next === source) return
     setSource(next)
@@ -232,6 +237,9 @@ export default function WrongAnswersDashboard() {
     })
     return result
   }, [data, searchQuery, sortField, sortDir])
+
+  const totalPages = Math.max(1, Math.ceil(filteredData.length / pageSize))
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages)
 
   const handleSort = (field: typeof sortField) => {
     if (sortField === field) {
@@ -508,9 +516,9 @@ export default function WrongAnswersDashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((row, idx) => {
+                  {filteredData.slice((safeCurrentPage - 1) * pageSize, safeCurrentPage * pageSize).map((row, idx) => {
                     const errorRate = Number(row.error_rate_pct) || 0
-                    const globalIdx = (currentPage - 1) * pageSize + idx
+                    const globalIdx = (safeCurrentPage - 1) * pageSize + idx
                     return (
                       <tr key={`${source}-${row.question_id}`} className="hover:bg-red-50/30 transition-colors">
                         <td className="px-4 py-3 text-xs text-gray-400 font-mono">{globalIdx + 1}</td>
@@ -567,24 +575,24 @@ export default function WrongAnswersDashboard() {
           {!loading && filteredData.length > pageSize && (
             <div className="border-t border-gray-200 px-5 py-3 flex items-center justify-between bg-gray-50/70">
               <span className="text-sm text-gray-500">
-                Showing <span className="font-semibold text-gray-800">{(currentPage - 1) * pageSize + 1}</span> to{" "}
-                <span className="font-semibold text-gray-800">{Math.min(currentPage * pageSize, filteredData.length)}</span> of{" "}
+                Showing <span className="font-semibold text-gray-800">{(safeCurrentPage - 1) * pageSize + 1}</span> to{" "}
+                <span className="font-semibold text-gray-800">{Math.min(safeCurrentPage * pageSize, filteredData.length)}</span> of{" "}
                 <span className="font-semibold text-gray-800">{filteredData.length}</span> questions
               </span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
+                  disabled={safeCurrentPage === 1}
                   className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm disabled:opacity-50 hover:bg-gray-100 transition-colors font-medium text-gray-700 bg-white shadow-xs"
                 >
                   Previous
                 </button>
                 <span className="text-xs text-gray-500 font-medium">
-                  {currentPage} / {Math.ceil(filteredData.length / pageSize)}
+                  {safeCurrentPage} / {totalPages}
                 </span>
                 <button
-                  onClick={() => setCurrentPage((p) => Math.min(Math.ceil(filteredData.length / pageSize), p + 1))}
-                  disabled={currentPage >= Math.ceil(filteredData.length / pageSize)}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={safeCurrentPage >= totalPages}
                   className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm disabled:opacity-50 hover:bg-gray-100 transition-colors font-medium text-gray-700 bg-white shadow-xs"
                 >
                   Next
