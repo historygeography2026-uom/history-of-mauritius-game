@@ -153,7 +153,7 @@ export default function WrongAnswersDashboard() {
   const [sortField, setSortField] = useState<"wrong_count" | "error_rate_pct" | "unique_wrong_students">("wrong_count")
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
   const [currentPage, setCurrentPage] = useState(1)
-  const pageSize = 15
+  const [pageSize, setPageSize] = useState(25)
 
   const apiBase = source === "game" ? "/api/admin/game-wrong-answers" : "/api/admin/practice/stats"
 
@@ -597,32 +597,67 @@ export default function WrongAnswersDashboard() {
           )}
 
           {/* Pagination */}
-          {!loading && filteredData.length > pageSize && (
-            <div className="border-t border-gray-200 px-5 py-3 flex items-center justify-between bg-gray-50/70">
-              <span className="text-sm text-gray-500">
-                Showing <span className="font-semibold text-gray-800">{(safeCurrentPage - 1) * pageSize + 1}</span> to{" "}
-                <span className="font-semibold text-gray-800">{Math.min(safeCurrentPage * pageSize, filteredData.length)}</span> of{" "}
-                <span className="font-semibold text-gray-800">{filteredData.length}</span> questions
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={safeCurrentPage === 1}
-                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm disabled:opacity-50 hover:bg-gray-100 transition-colors font-medium text-gray-700 bg-white shadow-xs"
-                >
-                  Previous
-                </button>
-                <span className="text-xs text-gray-500 font-medium">
-                  {safeCurrentPage} / {totalPages}
+          {!loading && filteredData.length > 0 && (
+            <div className="border-t border-gray-200 px-5 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 bg-gray-50/70">
+              <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
+                <span>
+                  Showing <span className="font-semibold text-gray-800">{(safeCurrentPage - 1) * pageSize + 1}</span> to{" "}
+                  <span className="font-semibold text-gray-800">{Math.min(safeCurrentPage * pageSize, filteredData.length)}</span> of{" "}
+                  <span className="font-semibold text-gray-800">{filteredData.length.toLocaleString()}</span> questions
                 </span>
-                <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={safeCurrentPage >= totalPages}
-                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm disabled:opacity-50 hover:bg-gray-100 transition-colors font-medium text-gray-700 bg-white shadow-xs"
-                >
-                  Next
-                </button>
+                <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                  <span className="font-medium">Rows:</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => {
+                      setPageSize(Number(e.target.value))
+                      setCurrentPage(1)
+                    }}
+                    className="rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs font-bold text-gray-700 shadow-xs focus:border-red-500 focus:outline-hidden"
+                  >
+                    <option value={15}>15 per page</option>
+                    <option value={25}>25 per page</option>
+                    <option value={50}>50 per page</option>
+                    <option value={100}>100 per page</option>
+                    <option value={200}>200 per page</option>
+                  </select>
+                </div>
               </div>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setCurrentPage(1)}
+                    disabled={safeCurrentPage === 1}
+                    className="px-2.5 py-1.5 border border-gray-300 rounded-lg text-xs disabled:opacity-40 hover:bg-gray-100 transition-colors font-medium text-gray-700 bg-white shadow-xs"
+                  >
+                    First
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={safeCurrentPage === 1}
+                    className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm disabled:opacity-50 hover:bg-gray-100 transition-colors font-medium text-gray-700 bg-white shadow-xs"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-xs text-gray-700 font-bold px-2">
+                    {safeCurrentPage} / {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={safeCurrentPage >= totalPages}
+                    className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm disabled:opacity-50 hover:bg-gray-100 transition-colors font-medium text-gray-700 bg-white shadow-xs"
+                  >
+                    Next
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={safeCurrentPage >= totalPages}
+                    className="px-2.5 py-1.5 border border-gray-300 rounded-lg text-xs disabled:opacity-40 hover:bg-gray-100 transition-colors font-medium text-gray-700 bg-white shadow-xs"
+                  >
+                    Last
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </section>

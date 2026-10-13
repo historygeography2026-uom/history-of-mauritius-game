@@ -130,7 +130,6 @@ async function getWrongAnswers(
     FROM agg a
     LEFT JOIN top_wrong tw ON tw.question_id = a.question_id AND tw.rn = 1
     ORDER BY a.wrong_count DESC
-    LIMIT 200
   `
 
   const result = await pool.query(sql, params)
