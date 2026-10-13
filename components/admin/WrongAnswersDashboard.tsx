@@ -143,7 +143,7 @@ export default function WrongAnswersDashboard() {
 
   // Filters
   const [gradeFilter, setGradeFilter] = useState<"all" | "4" | "5" | "6">("all")
-  const [subjectFilter, setSubjectFilter] = useState<"all" | "history" | "geography">("all")
+  const [subjectFilter, setSubjectFilter] = useState<"all" | "history" | "geography" | "science" | "hg">("all")
   const [levelFilter, setLevelFilter] = useState<"all" | "1" | "2" | "3">("all")
   const [unitFilter, setUnitFilter] = useState<string>("")
   const [rangeFilter, setRangeFilter] = useState<"7d" | "30d" | "all">("all")
@@ -163,6 +163,7 @@ export default function WrongAnswersDashboard() {
       const params = new URLSearchParams({ view: "wrong-answers" })
       if (source === "practice") {
         if (gradeFilter !== "all") params.set("grade", gradeFilter)
+        if (subjectFilter !== "all") params.set("subject", subjectFilter)
         if (unitFilter) params.set("unit", unitFilter)
       } else {
         if (subjectFilter !== "all") params.set("subject", subjectFilter)
@@ -199,6 +200,10 @@ export default function WrongAnswersDashboard() {
   const handleSourceChange = (next: Source) => {
     if (next === source) return
     setSource(next)
+    setSubjectFilter("all")
+    setGradeFilter("all")
+    setLevelFilter("all")
+    setUnitFilter("")
     setCurrentPage(1)
     setSearchQuery("")
   }
@@ -368,20 +373,40 @@ export default function WrongAnswersDashboard() {
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-3 bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
           {source === "practice" ? (
-            /* Grade filter (practice) */
-            <div className="flex items-center rounded-lg bg-gray-100 p-0.5">
-              {(["all", "4", "5", "6"] as const).map((g) => (
-                <button
-                  key={g}
-                  onClick={() => { setGradeFilter(g); setUnitFilter(""); setCurrentPage(1) }}
-                  className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
-                    gradeFilter === g ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  {g === "all" ? "All" : `G${g}`}
-                </button>
-              ))}
-            </div>
+            <>
+              {/* Grade filter (practice) */}
+              <div className="flex items-center rounded-lg bg-gray-100 p-0.5">
+                {(["all", "4", "5", "6"] as const).map((g) => (
+                  <button
+                    key={g}
+                    onClick={() => { setGradeFilter(g); setUnitFilter(""); setCurrentPage(1) }}
+                    className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                      gradeFilter === g ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    {g === "all" ? "All Grades" : `Grade ${g}`}
+                  </button>
+                ))}
+              </div>
+              {/* Subject filter (practice) */}
+              <div className="flex items-center rounded-lg bg-gray-100 p-0.5">
+                {([
+                  { key: "all" as const, label: "All Subjects" },
+                  { key: "hg" as const, label: "📚 H&G" },
+                  { key: "science" as const, label: "🔬 Science (G4)" },
+                ]).map((s) => (
+                  <button
+                    key={s.key}
+                    onClick={() => { setSubjectFilter(s.key); setCurrentPage(1) }}
+                    className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                      subjectFilter === s.key ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </>
           ) : (
             <>
               {/* Subject filter (game) */}

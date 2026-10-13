@@ -44,7 +44,8 @@ export async function GET(request: NextRequest) {
           searchParams.get("unit"),
           searchParams.get("range"),
           searchParams.get("question_type"),
-          parseInt(searchParams.get("min_attempts") || "1")
+          parseInt(searchParams.get("min_attempts") || "1"),
+          searchParams.get("subject")
         )
       case "wrong-answer-detail":
         return await getWrongAnswerDetail(searchParams.get("question_id"))
@@ -298,7 +299,7 @@ async function getPracticeTimeline(range: string | null, grade: string | null = 
 
   let gradeFilter = ''
   if (grade === '4') {
-    gradeFilter = 'AND pu.unit_no BETWEEN 11 AND 16'
+    gradeFilter = 'AND pu.unit_no BETWEEN 11 AND 24'
   } else if (grade === '5') {
     gradeFilter = 'AND pu.unit_no BETWEEN 1 AND 5'
   } else if (grade === '6') {
@@ -309,7 +310,7 @@ async function getPracticeTimeline(range: string | null, grade: string | null = 
     SELECT
       ${dateExpression} as day,
       COUNT(pa.id)::int as attempts,
-      COUNT(CASE WHEN pu.unit_no BETWEEN 11 AND 16 THEN 1 END)::int as grade4_attempts,
+      COUNT(CASE WHEN pu.unit_no BETWEEN 11 AND 24 THEN 1 END)::int as grade4_attempts,
       COUNT(CASE WHEN pu.unit_no BETWEEN 1 AND 5 THEN 1 END)::int as grade5_attempts,
       COUNT(CASE WHEN pu.unit_no BETWEEN 6 AND 10 THEN 1 END)::int as grade6_attempts
     FROM practice_attempts pa
@@ -359,15 +360,27 @@ async function getWrongAnswers(
   unit: string | null,
   range: string | null,
   questionType: string | null,
-  minAttempts: number
+  minAttempts: number,
+  subject: string | null = null
 ) {
   const conditions: string[] = ['NOT pa.is_correct']
   const params: any[] = []
   let paramIdx = 1
 
+  // Subject filter
+  if (subject === 'science') {
+    conditions.push('pu.unit_no BETWEEN 17 AND 24')
+  } else if (subject === 'history' || subject === 'geography' || subject === 'hg') {
+    conditions.push('pu.unit_no < 17')
+  }
+
   // Grade filter
   if (grade === '4') {
-    conditions.push('pu.unit_no BETWEEN 11 AND 16')
+    if (subject !== 'science' && subject !== 'hg' && subject !== 'history' && subject !== 'geography') {
+      conditions.push('pu.unit_no BETWEEN 11 AND 24')
+    } else if (subject === 'hg' || subject === 'history' || subject === 'geography') {
+      conditions.push('pu.unit_no BETWEEN 11 AND 16')
+    }
   } else if (grade === '5') {
     conditions.push('pu.unit_no BETWEEN 1 AND 5')
   } else if (grade === '6') {

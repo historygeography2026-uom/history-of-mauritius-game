@@ -21,6 +21,25 @@ import {
   IllusCommunity,
   IllusVoyages,
 } from "./G4UnitIllustrations"
+import {
+  IllusLivingThings,
+  IllusAir,
+  IllusPlants,
+  IllusAnimals,
+  IllusWater,
+  IllusMaterials,
+  IllusEnergy,
+  IllusPollution,
+} from "./G4ScienceIllustrations"
+
+export type G4Subject = "hg" | "science"
+
+// Grade 4 unit_no ranges: History & Geography 11–16, Science 17–24
+export const G4_SCIENCE_MIN_UNIT = 17
+export const getG4Subject = (unitNo: number): G4Subject =>
+  unitNo >= G4_SCIENCE_MIN_UNIT ? "science" : "hg"
+const getRelativeUnitNo = (unitNo: number) =>
+  unitNo >= G4_SCIENCE_MIN_UNIT ? unitNo - (G4_SCIENCE_MIN_UNIT - 1) : unitNo - 10
 
 interface PracticeUnit {
   id: number
@@ -88,6 +107,71 @@ const UNIT_CONFIGS: Record<number, UnitTheming> = {
     glow: "shadow-teal-400/40",
     shadow: "shadow-blue-600",
   },
+  // ── Grade 4 Science (unit_no 17–24) ──
+  17: {
+    title: "Living Things",
+    icon: IllusLivingThings,
+    gradient: "from-lime-400 to-green-500",
+    tint: "bg-lime-100",
+    glow: "shadow-lime-400/40",
+    shadow: "shadow-green-600",
+  },
+  18: {
+    title: "Air",
+    icon: IllusAir,
+    gradient: "from-sky-400 to-blue-500",
+    tint: "bg-sky-100",
+    glow: "shadow-sky-400/40",
+    shadow: "shadow-blue-600",
+  },
+  19: {
+    title: "Plants",
+    icon: IllusPlants,
+    gradient: "from-emerald-400 to-teal-500",
+    tint: "bg-emerald-100",
+    glow: "shadow-emerald-400/40",
+    shadow: "shadow-teal-600",
+  },
+  20: {
+    title: "Animals",
+    icon: IllusAnimals,
+    gradient: "from-amber-400 to-orange-500",
+    tint: "bg-amber-100",
+    glow: "shadow-amber-400/40",
+    shadow: "shadow-orange-600",
+  },
+  21: {
+    title: "Water",
+    icon: IllusWater,
+    gradient: "from-blue-400 to-indigo-500",
+    tint: "bg-blue-100",
+    glow: "shadow-blue-400/40",
+    shadow: "shadow-indigo-600",
+  },
+  22: {
+    title: "Materials",
+    icon: IllusMaterials,
+    gradient: "from-stone-400 to-slate-500",
+    tint: "bg-stone-100",
+    glow: "shadow-stone-400/40",
+    shadow: "shadow-slate-600",
+  },
+  23: {
+    title: "Energy",
+    icon: IllusEnergy,
+    gradient: "from-yellow-400 to-orange-500",
+    tint: "bg-yellow-100",
+    glow: "shadow-yellow-400/40",
+    shadow: "shadow-orange-600",
+  },
+  24: {
+    title: "Pollution in our Environment",
+    icon: IllusPollution,
+    gradient: "from-green-500 to-emerald-600",
+    tint: "bg-green-100",
+    glow: "shadow-green-500/40",
+    shadow: "shadow-emerald-700",
+  },
 }
 
 const DEFAULT_CONFIG: UnitTheming = {
@@ -112,7 +196,7 @@ function UnitQuestCard({
   const ref = useRef<HTMLDivElement>(null)
   const count = Number(unit.question_count) || 0
   const isReady = count > 0
-  const relativeUnitNo = unit.unit_no - 10 // Convert 11-16 → 1-6
+  const relativeUnitNo = getRelativeUnitNo(unit.unit_no) // H&G 11-16 → 1-6, Science 17-24 → 1-8
   const config = UNIT_CONFIGS[unit.unit_no] || DEFAULT_CONFIG
   const Icon = config.icon
 
@@ -244,6 +328,11 @@ function UnitQuestCard({
   )
 }
 
+const SUBJECT_TABS: { key: G4Subject; label: string; emoji: string; badge: string }[] = [
+  { key: "hg", label: "History & Geography", emoji: "\uD83D\uDCD6", badge: "Grade 4 \u2014 History & Geography" },
+  { key: "science", label: "Science", emoji: "\uD83D\uDD2C", badge: "Grade 4 \u2014 Science" },
+]
+
 export default function G4UnitSelector({
   units,
   onStart,
@@ -251,10 +340,16 @@ export default function G4UnitSelector({
   units: PracticeUnit[]
   onStart: (unitId: number) => void
 }) {
-  const readyCount = useMemo(
-    () => (units || []).filter((u) => Number(u.question_count) > 0).length,
-    [units]
+  const [subject, setSubject] = useState<G4Subject>("hg")
+  const visibleUnits = useMemo(
+    () => (units || []).filter((u) => getG4Subject(u.unit_no) === subject),
+    [units, subject]
   )
+  const readyCount = useMemo(
+    () => visibleUnits.filter((u) => Number(u.question_count) > 0).length,
+    [visibleUnits]
+  )
+  const activeTab = SUBJECT_TABS.find((t) => t.key === subject) || SUBJECT_TABS[0]
 
   return (
     <div className="relative z-10 min-h-screen">
@@ -278,7 +373,7 @@ export default function G4UnitSelector({
             className="flex items-center gap-2 rounded-full bg-amber-100/80 px-4 py-2 font-display text-sm font-bold text-[#333a56] border border-amber-200 shadow-sm"
           >
             <Sparkles className="h-4 w-4 text-[#e8845a]" aria-hidden="true" />
-            {readyCount} of {(units || []).length} quests ready
+            {readyCount} of {visibleUnits.length} quests ready
           </motion.div>
         </div>
 
@@ -341,16 +436,51 @@ export default function G4UnitSelector({
 
       {/* Quest Cards Grid */}
       <section aria-label="Grade 4 practice units" className="mx-auto max-w-6xl px-4 pt-4 pb-20">
+        {/* Subject tabs */}
+        <div
+          role="tablist"
+          aria-label="Grade 4 subjects"
+          className="mx-auto mb-5 flex w-fit items-center gap-1 rounded-full border-2 border-[#333a56]/10 bg-white p-1.5 shadow-[0_5px_0_0_rgba(51,58,86,0.1)]"
+        >
+          {SUBJECT_TABS.map((tab) => {
+            const active = tab.key === subject
+            return (
+              <button
+                key={tab.key}
+                id={`g4-subject-tab-${tab.key}`}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setSubject(tab.key)}
+                className={`relative rounded-full px-4 py-2 font-display text-sm font-bold transition-colors sm:px-5 ${
+                  active ? "text-white" : "text-[#333a56]/70 hover:text-[#333a56]"
+                }`}
+              >
+                {active && (
+                  <motion.span
+                    layoutId="g4-subject-pill"
+                    className="absolute inset-0 rounded-full bg-gradient-to-r from-[#4aa3bd] to-[#e8845a] shadow-md"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10">
+                  {tab.emoji} {tab.label}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
         {/* Grade 4 badge */}
         <div className="mx-auto flex w-fit items-center gap-2 rounded-full border-2 border-[#333a56]/10 bg-white px-5 py-2 shadow-[0_5px_0_0_rgba(51,58,86,0.1)] mb-8">
-          <span className="font-display text-sm font-bold text-[#333a56]">📖 Grade 4 — History & Geography</span>
+          <span className="font-display text-sm font-bold text-[#333a56]">{activeTab.emoji} {activeTab.badge}</span>
         </div>
 
         {/* 3D Quest Cards Grid with Framer Motion Staggered Pop-in & Spring Reflow */}
-        {(units || []).length > 0 ? (
+        {visibleUnits.length > 0 ? (
           <motion.ul layout className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <AnimatePresence mode="popLayout">
-              {(units || []).map((unit, i) => (
+              {visibleUnits.map((unit, i) => (
                 <motion.li
                   key={unit.id}
                   layout

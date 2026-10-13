@@ -25,7 +25,7 @@ interface PracticeQuestion {
   question_type: string
   question_text: string
   instruction?: string
-  image_url?: string
+  image_url?: string | null
   answer_data?: any
   is_active?: boolean
 }
@@ -81,17 +81,22 @@ export default function PracticeQuestionEditModal({ open, onClose, onSave, quest
     uploadFormData.append("file", file)
 
     try {
-      const res = await fetch("/api/upload", {
+      const res = await fetch("/api/upload-image", {
         method: "POST",
         body: uploadFormData,
       })
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.error || `Upload failed with status ${res.status}`)
+      }
       const data = await res.json()
       if (data.url) {
         setImagePreview(data.url)
         updateField("image_url", data.url)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Image upload failed:", error)
+      alert(error?.message || "Image upload failed")
     } finally {
       setUploadingImage(false)
     }
@@ -104,7 +109,7 @@ export default function PracticeQuestionEditModal({ open, onClose, onSave, quest
       if (imagePreview) {
         payload.image_url = imagePreview
       } else {
-        payload.image_url = undefined
+        payload.image_url = null
       }
 
       // Sanitize answer_data based on question type
@@ -151,8 +156,9 @@ export default function PracticeQuestionEditModal({ open, onClose, onSave, quest
 
       await onSave(payload)
       onClose()
-    } catch (error) {
+    } catch (error: any) {
       console.error("Save failed:", error)
+      alert(error?.message || "Failed to save question")
     } finally {
       setLoading(false)
     }
@@ -307,7 +313,15 @@ export default function PracticeQuestionEditModal({ open, onClose, onSave, quest
               <Label>Unit</Label>
               <Select
                 value={String(formData.unit_no || "1")}
-                onValueChange={(val) => updateField("unit_no", parseInt(val))}
+                onValueChange={(val) => {
+                  const targetUnitNo = parseInt(val)
+                  const matchedUnit = units.find((u) => u.unit_no === targetUnitNo)
+                  setFormData((prev) => ({
+                    ...prev,
+                    unit_no: targetUnitNo,
+                    unit_id: matchedUnit?.id || prev.unit_id,
+                  }))
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select unit" />

@@ -160,10 +160,17 @@ export async function POST(req: NextRequest) {
         const rawUnitVal = q.unit ?? (q as any).Unit ?? (q as any).unitno ?? (q as any).unit_no ?? (q as any)["Unit No"] ?? (q as any)["Unit Number"] ?? (q as any).theme
         if (rawUnitVal !== undefined && rawUnitVal !== null && String(rawUnitVal).trim() !== "") {
           const rawUnit = String(rawUnitVal).trim()
+          const g4SciMatch = rawUnit.match(/grade\s*4\s*sci(?:ence)?\s*unit\s*(\d+)/i) || rawUnit.match(/g4\s*s\s*u\s*(\d+)/i)
           const g4Match = rawUnit.match(/grade\s*4\s*unit\s*(\d+)/i)
           const g6Match = rawUnit.match(/grade\s*6\s*unit\s*(\d+)/i)
           const g5Match = rawUnit.match(/grade\s*5\s*unit\s*(\d+)/i)
-          if (g4Match) {
+          const isSci = String(q.subject || "").toLowerCase().includes("sci") || rawUnit.toLowerCase().includes("sci")
+
+          if (g4SciMatch) {
+            unitNum = 16 + parseInt(g4SciMatch[1], 10)
+          } else if (g4Match && isSci) {
+            unitNum = 16 + parseInt(g4Match[1], 10)
+          } else if (g4Match) {
             unitNum = 10 + parseInt(g4Match[1], 10)
           } else if (g6Match) {
             unitNum = 5 + parseInt(g6Match[1], 10)
@@ -172,16 +179,27 @@ export async function POST(req: NextRequest) {
           } else {
             const numMatch = rawUnit.match(/\d+/)
             if (numMatch) {
-              unitNum = parseInt(numMatch[0], 10)
+              const parsed = parseInt(numMatch[0], 10)
+              if (isSci && parsed >= 1 && parsed <= 8) {
+                unitNum = 16 + parsed
+              } else {
+                unitNum = parsed
+              }
             }
           }
         } else if (q.level !== undefined && q.level !== null) {
           const lvl = parseInt(String(q.level).replace(/\D/g, ""), 10) || 1
           const subj = String(q.subject || "").toLowerCase()
-          unitNum = subj.includes("geo") ? Math.min(2 + lvl, 5) : Math.min(lvl, 5)
+          if (subj.includes("sci")) {
+            unitNum = 16 + Math.min(Math.max(lvl, 1), 8)
+          } else if (subj.includes("geo")) {
+            unitNum = Math.min(2 + lvl, 5)
+          } else {
+            unitNum = Math.min(lvl, 5)
+          }
         }
 
-        if (unitNum < 1 || unitNum > 16) {
+        if (unitNum < 1 || unitNum > 24) {
           unitNum = 1
         }
 
@@ -205,7 +223,7 @@ export async function POST(req: NextRequest) {
             questionPreview,
             "unit",
             `Unit ${unitNum} does not exist in the database`,
-            "Please check unit numbers in Admin panel (Units 1-16)."
+            "Please check unit numbers in Admin panel (Units 1-24)."
           )
           errors.push(errMsg)
           addUnitError(unitNum, errMsg)

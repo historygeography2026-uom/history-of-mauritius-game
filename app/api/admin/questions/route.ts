@@ -368,19 +368,27 @@ export async function PUT(request: NextRequest) {
     try {
       await client.query("BEGIN")
 
+      const hasInstruction = instruction !== undefined
+      const hasImageUrl = image_url !== undefined
+
       // Update question
       await client.query(
         `UPDATE questions 
          SET subject_id = $1, level_id = $2, question_type_id = $3, 
-             question_text = $4, instruction = $5, image_url = $6, timer_seconds = $7, updated_at = NOW()
-         WHERE id = $8`,
+             question_text = $4,
+             instruction = CASE WHEN $5::boolean THEN $6 ELSE instruction END,
+             image_url = CASE WHEN $7::boolean THEN $8 ELSE image_url END,
+             timer_seconds = $9, updated_at = NOW()
+         WHERE id = $10`,
         [
           subjectId,
           levelId,
           typeId,
           question_text,
-          instruction !== undefined ? instruction : null,
-          image_url !== undefined ? image_url : null,
+          hasInstruction,
+          instruction || null,
+          hasImageUrl,
+          image_url || null,
           timer_seconds || 30,
           id,
         ]

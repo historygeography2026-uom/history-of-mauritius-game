@@ -21,6 +21,14 @@ const DEFAULT_FALLBACK_UNITS: PracticeUnit[] = [
   { id: 15, unit_no: 14, unit_name: "Grade 4 Unit 4", question_count: 0 },
   { id: 16, unit_no: 15, unit_name: "Grade 4 Unit 5", question_count: 0 },
   { id: 17, unit_no: 16, unit_name: "Grade 4 Unit 6", question_count: 0 },
+  { id: 18, unit_no: 17, unit_name: "Grade 4 Science Unit 1", question_count: 0 },
+  { id: 19, unit_no: 18, unit_name: "Grade 4 Science Unit 2", question_count: 0 },
+  { id: 20, unit_no: 19, unit_name: "Grade 4 Science Unit 3", question_count: 0 },
+  { id: 21, unit_no: 20, unit_name: "Grade 4 Science Unit 4", question_count: 0 },
+  { id: 22, unit_no: 21, unit_name: "Grade 4 Science Unit 5", question_count: 0 },
+  { id: 23, unit_no: 22, unit_name: "Grade 4 Science Unit 6", question_count: 0 },
+  { id: 24, unit_no: 23, unit_name: "Grade 4 Science Unit 7", question_count: 0 },
+  { id: 25, unit_no: 24, unit_name: "Grade 4 Science Unit 8", question_count: 0 },
 ]
 
 export default function G4PracticePage() {

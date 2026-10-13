@@ -19,12 +19,12 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get("type")
 
     let query = `
-      SELECT pq.id, pq.question_text, pq.instruction, pq.image_url,
+      SELECT pq.id, pq.unit_id, pq.question_text, pq.instruction, pq.image_url,
              pq.question_type, pq.answer_data, pq.is_active,
              pq.created_at, pq.updated_at,
-             pu.unit_no, pu.unit_name
+             COALESCE(pu.unit_no, 1) as unit_no, COALESCE(pu.unit_name, 'Unit 1') as unit_name
       FROM practice_questions pq
-      JOIN practice_units pu ON pq.unit_id = pu.id
+      LEFT JOIN practice_units pu ON pq.unit_id = pu.id
       WHERE 1=1
     `
     const params: any[] = []
@@ -66,13 +66,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `Invalid type. Must be one of: ${VALID_TYPES.join(", ")}` }, { status: 400 })
     }
 
-    // Resolve unit_id from unit_no if not provided directly
-    let resolvedUnitId = unit_id || null
-    if (!resolvedUnitId && body.unit_no) {
+    // Resolve unit_id from unit_no if provided, otherwise fallback to unit_id
+    let resolvedUnitId = null
+    if (body.unit_no !== undefined && body.unit_no !== null) {
       const unitLookup = await pool.query("SELECT id FROM practice_units WHERE unit_no = $1 LIMIT 1", [body.unit_no])
       if (unitLookup.rows.length > 0) {
         resolvedUnitId = unitLookup.rows[0].id
       }
+    }
+    if (!resolvedUnitId && unit_id) {
+      resolvedUnitId = unit_id
     }
 
     if (!resolvedUnitId) {
@@ -108,12 +111,12 @@ export async function POST(request: NextRequest) {
 
     const newId = insertResult.rows[0].id
     const enrichedResult = await pool.query(
-      `SELECT pq.id, pq.question_text, pq.instruction, pq.image_url,
+      `SELECT pq.id, pq.unit_id, pq.question_text, pq.instruction, pq.image_url,
               pq.question_type, pq.answer_data, pq.is_active,
               pq.created_at, pq.updated_at,
-              pu.unit_no, pu.unit_name
+              COALESCE(pu.unit_no, 1) as unit_no, COALESCE(pu.unit_name, 'Unit 1') as unit_name
        FROM practice_questions pq
-       JOIN practice_units pu ON pq.unit_id = pu.id
+       LEFT JOIN practice_units pu ON pq.unit_id = pu.id
        WHERE pq.id = $1`,
       [newId]
     )
@@ -157,13 +160,16 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // Resolve unit_id from unit_no if not provided directly
-    let resolvedUnitId = unit_id || null
-    if (!resolvedUnitId && body.unit_no) {
+    // Resolve unit_id: prioritize unit_no if specified to allow moving units
+    let resolvedUnitId = null
+    if (body.unit_no !== undefined && body.unit_no !== null) {
       const unitLookup = await pool.query("SELECT id FROM practice_units WHERE unit_no = $1 LIMIT 1", [body.unit_no])
       if (unitLookup.rows.length > 0) {
         resolvedUnitId = unitLookup.rows[0].id
       }
+    }
+    if (!resolvedUnitId && unit_id) {
+      resolvedUnitId = unit_id
     }
 
     // Validate unit if resolved
@@ -174,23 +180,28 @@ export async function PUT(request: NextRequest) {
       }
     }
 
+    const hasInstruction = instruction !== undefined
+    const hasImageUrl = image_url !== undefined
+
     await pool.query(
       `UPDATE practice_questions SET
          unit_id = COALESCE($1, unit_id),
          question_type = COALESCE($2, question_type),
          question_text = COALESCE($3, question_text),
-         instruction = $4,
-         image_url = $5,
-         answer_data = COALESCE($6, answer_data),
-         is_active = COALESCE($7, is_active),
+         instruction = CASE WHEN $4::boolean THEN $5 ELSE instruction END,
+         image_url = CASE WHEN $6::boolean THEN $7 ELSE image_url END,
+         answer_data = COALESCE($8, answer_data),
+         is_active = COALESCE($9, is_active),
          updated_at = NOW()
-       WHERE id = $8`,
+       WHERE id = $10`,
       [
         resolvedUnitId,
         question_type || null,
         question_text?.trim() || null,
-        instruction !== undefined ? instruction : null,
-        image_url !== undefined ? image_url : null,
+        hasInstruction,
+        instruction || null,
+        hasImageUrl,
+        image_url || null,
         answer_data ? JSON.stringify(answer_data) : null,
         is_active !== undefined ? is_active : null,
         id,
@@ -198,12 +209,12 @@ export async function PUT(request: NextRequest) {
     )
 
     const enrichedResult = await pool.query(
-      `SELECT pq.id, pq.question_text, pq.instruction, pq.image_url,
+      `SELECT pq.id, pq.unit_id, pq.question_text, pq.instruction, pq.image_url,
               pq.question_type, pq.answer_data, pq.is_active,
               pq.created_at, pq.updated_at,
-              pu.unit_no, pu.unit_name
+              COALESCE(pu.unit_no, 1) as unit_no, COALESCE(pu.unit_name, 'Unit 1') as unit_name
        FROM practice_questions pq
-       JOIN practice_units pu ON pq.unit_id = pu.id
+       LEFT JOIN practice_units pu ON pq.unit_id = pu.id
        WHERE pq.id = $1`,
       [id]
     )

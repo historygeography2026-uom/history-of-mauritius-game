@@ -87,12 +87,13 @@ export const generatePracticeExcelTemplate = async () => {
     { Instructions: "" },
     { Instructions: "UNIT NUMBERING GUIDE:" },
     { Instructions: "• Grade 4 Units: Unit 11, 12, 13, 14, 15, 16" },
+    { Instructions: "• Grade 4 Science Units: Unit 17 (Science Unit 1) to Unit 24 (Science Unit 8), or write 'Grade 4 Science Unit 3'" },
     { Instructions: "• Grade 5 Units: Unit 1, 2, 3, 4, 5" },
     { Instructions: "• Grade 6 Units: Unit 6 (Grade 6 Unit 1), Unit 7 (Grade 6 Unit 2), Unit 8 (Grade 6 Unit 3), Unit 9 (Grade 6 Unit 4), Unit 10 (Grade 6 Unit 5)" },
-    { Instructions: "• Note: You can enter numbers 1 to 16 directly in the 'unit' column." },
+    { Instructions: "• Note: You can enter numbers 1 to 24 directly in the 'unit' column." },
     { Instructions: "" },
     { Instructions: "REQUIRED FIELDS FOR ALL QUESTIONS:" },
-    { Instructions: "• unit: Unit number (1-5 for Grade 5, 6-10 for Grade 6, 11-16 for Grade 4)" },
+    { Instructions: "• unit: Unit number (1-5 for Grade 5, 6-10 for Grade 6, 11-16 for Grade 4, 17-24 for Grade 4 Science)" },
     { Instructions: "• type: 'mcq', 'matching', 'fill', 'reorder', or 'truefalse'" },
     { Instructions: "• question: The question text / prompt" },
     { Instructions: "" },
@@ -360,7 +361,7 @@ export interface PracticeValidationResult {
 }
 
 const VALID_TYPES = ["mcq", "matching", "fill", "reorder", "truefalse"]
-const MAX_UNIT = 16
+const MAX_UNIT = 24
 
 const toStr = (val: any): string => {
   if (val === null || val === undefined) return ""
@@ -394,11 +395,34 @@ export function normalizeQuestionType(rawType: any): PracticeExcelQuestion["type
  * - Fallback to subject + level if using game questions template
  */
 export function parseUnitNumber(q: any): number {
+  // Grade 4 Science rows (subject = science) must name their unit explicitly,
+  // otherwise the shared "level" column would wrongly map them to Grade 5 Unit 1.
+  const subjectRaw = toStr(q.subject || q.Subject).toLowerCase()
+  const explicitUnit = q.unit ?? q.Unit ?? q.UNIT ?? q.unitno ?? q.unit_no ?? q["Unit No"] ?? q["Unit Number"] ?? q["Unit #"] ?? q.theme ?? q.Theme
+  if (subjectRaw.includes("sci")) {
+    const s = toStr(explicitUnit)
+    if (!s) return 0
+    const sciMatch = s.match(/(?:grade\s*4\s*science\s*unit|g4\s*s\s*u?|science\s*unit)\s*(\d+)/i)
+    if (sciMatch) {
+      const u = parseInt(sciMatch[1], 10)
+      return u >= 1 && u <= 8 ? 16 + u : 0
+    }
+    const n = parseInt(s.replace(/\D/g, ""), 10)
+    if (n >= 17 && n <= 24) return n
+    if (n >= 1 && n <= 8) return 16 + n
+    return 0
+  }
+
   // 1. Direct unit property or common aliases
   const rawUnit = q.unit ?? q.Unit ?? q.UNIT ?? q.unitno ?? q.unit_no ?? q["Unit No"] ?? q["Unit Number"] ?? q["Unit #"] ?? q.level ?? q.Level ?? q.LEVEL ?? q.theme ?? q.Theme
 
   if (rawUnit !== undefined && rawUnit !== null && String(rawUnit).trim() !== "") {
     const rawStr = String(rawUnit).trim()
+    const g4sMatch = rawStr.match(/grade\s*4\s*science\s*unit\s*(\d+)/i) || rawStr.match(/g4\s*s\s*u\s*(\d+)/i)
+    if (g4sMatch) {
+      const u = parseInt(g4sMatch[1], 10)
+      if (u >= 1 && u <= 8) return 16 + u
+    }
     const g4Match = rawStr.match(/grade\s*4\s*unit\s*(\d+)/i) || rawStr.match(/g4\s*u\s*(\d+)/i)
     if (g4Match) {
       const u = parseInt(g4Match[1], 10)
@@ -417,7 +441,7 @@ export function parseUnitNumber(q: any): number {
     const numMatch = rawStr.match(/\d+/)
     if (numMatch) {
       const val = parseInt(numMatch[0], 10)
-      if (val >= 1 && val <= 16) return val
+      if (val >= 1 && val <= MAX_UNIT) return val
     }
   }
 

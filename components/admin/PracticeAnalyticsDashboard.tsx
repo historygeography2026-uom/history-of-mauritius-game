@@ -26,6 +26,14 @@ const DEFAULT_ALL_UNITS: PracticeUnitDef[] = [
   { id: 15, unit_no: 14, unit_name: "Grade 4 Unit 4" },
   { id: 16, unit_no: 15, unit_name: "Grade 4 Unit 5" },
   { id: 17, unit_no: 16, unit_name: "Grade 4 Unit 6" },
+  { id: 18, unit_no: 17, unit_name: "Grade 4 Science Unit 1" },
+  { id: 19, unit_no: 18, unit_name: "Grade 4 Science Unit 2" },
+  { id: 20, unit_no: 19, unit_name: "Grade 4 Science Unit 3" },
+  { id: 21, unit_no: 20, unit_name: "Grade 4 Science Unit 4" },
+  { id: 22, unit_no: 21, unit_name: "Grade 4 Science Unit 5" },
+  { id: 23, unit_no: 22, unit_name: "Grade 4 Science Unit 6" },
+  { id: 24, unit_no: 23, unit_name: "Grade 4 Science Unit 7" },
+  { id: 25, unit_no: 24, unit_name: "Grade 4 Science Unit 8" },
   { id: 7, unit_no: 1, unit_name: "Grade 5 Unit 1" },
   { id: 8, unit_no: 2, unit_name: "Grade 5 Unit 2" },
   { id: 9, unit_no: 3, unit_name: "Grade 5 Unit 3" },
@@ -38,19 +46,78 @@ const DEFAULT_ALL_UNITS: PracticeUnitDef[] = [
   { id: 5, unit_no: 10, unit_name: "Grade 6 Unit 5" },
 ]
 
-function parseGradeAndUnit(unitName: string, unitNo?: number): { grade: number; unit: number; sortKey: number } {
+const UNIT_TITLE_MAP: Record<number, string> = {
+  // Grade 5 (1-5)
+  1: "Our Natural Environment",
+  2: "Discovery of Mauritius & Rodrigues",
+  3: "Settlement in Mauritius",
+  4: "Weather and Climate",
+  5: "Port Louis: the capital of Mauritius",
+  // Grade 6 (6-10)
+  6: "Land Use",
+  7: "People in the island in the past",
+  8: "Natural Hazards",
+  9: "Celebrating Independence",
+  10: "Our Heritage",
+  // Grade 4 H&G (11-16)
+  11: "Working with Maps",
+  12: "The Natural Environment of Mauritius",
+  13: "Weather",
+  14: "People and Places",
+  15: "People Living in our Locality",
+  16: "Voyages of Discovery",
+  // Grade 4 Science (17-24)
+  17: "Living Things",
+  18: "Air",
+  19: "Plants",
+  20: "Animals",
+  21: "Water",
+  22: "Materials",
+  23: "Energy",
+  24: "Pollution in our Environment",
+}
+
+function getFriendlyUnitTitle(unitNo?: number, fallbackName?: string): string {
+  if (unitNo && UNIT_TITLE_MAP[unitNo]) return UNIT_TITLE_MAP[unitNo]
+  return fallbackName || "Unit"
+}
+
+function parseGradeAndUnit(unitName: string, unitNo?: number): { grade: number; unit: number; sortKey: number; science?: boolean } {
+  // If unitNo is provided, use it directly (100% authoritative)
+  if (unitNo !== undefined && unitNo > 0) {
+    if (unitNo >= 11 && unitNo <= 16) return { grade: 4, unit: unitNo - 10, sortKey: 400 + (unitNo - 10) }
+    if (unitNo >= 17 && unitNo <= 24) return { grade: 4, unit: unitNo - 16, sortKey: 450 + (unitNo - 16), science: true }
+    if (unitNo >= 1 && unitNo <= 5) return { grade: 5, unit: unitNo, sortKey: 500 + unitNo }
+    if (unitNo >= 6 && unitNo <= 10) return { grade: 6, unit: unitNo - 5, sortKey: 600 + (unitNo - 5) }
+  }
+
+  // Grade 4 Science units (unit_no 17–24)
+  const sciMatch = unitName.match(/Science\s*Unit\s*(\d+)/i) || unitName.match(/Grade\s*4\s*Science\s*Unit\s*(\d+)/i)
+  if (sciMatch) {
+    const unit = parseInt(sciMatch[1], 10)
+    return { grade: 4, unit, sortKey: 450 + unit, science: true }
+  }
+
+  // Standard Grade X Unit Y
   const match = unitName.match(/Grade\s*(\d+)\s*Unit\s*(\d+)/i)
   if (match) {
     const grade = parseInt(match[1], 10)
     const unit = parseInt(match[2], 10)
     return { grade, unit, sortKey: grade * 100 + unit }
   }
-  if (unitNo !== undefined) {
-    if (unitNo >= 11 && unitNo <= 16) return { grade: 4, unit: unitNo - 10, sortKey: 400 + (unitNo - 10) }
-    if (unitNo >= 1 && unitNo <= 5) return { grade: 5, unit: unitNo, sortKey: 500 + unitNo }
-    if (unitNo >= 6 && unitNo <= 10) return { grade: 6, unit: unitNo - 5, sortKey: 600 + (unitNo - 5) }
+
+  // Match by curriculum topic title (e.g. "Living Things", "Air", "Water")
+  for (const [noStr, title] of Object.entries(UNIT_TITLE_MAP)) {
+    if (unitName.toLowerCase().includes(title.toLowerCase())) {
+      const uNo = Number(noStr)
+      if (uNo >= 11 && uNo <= 16) return { grade: 4, unit: uNo - 10, sortKey: 400 + (uNo - 10) }
+      if (uNo >= 17 && uNo <= 24) return { grade: 4, unit: uNo - 16, sortKey: 450 + (uNo - 16), science: true }
+      if (uNo >= 1 && uNo <= 5) return { grade: 5, unit: uNo, sortKey: 500 + uNo }
+      if (uNo >= 6 && uNo <= 10) return { grade: 6, unit: uNo - 5, sortKey: 600 + (uNo - 5) }
+    }
   }
-  return { grade: 99, unit: 99, sortKey: 9999 }
+
+  return { grade: 4, unit: 1, sortKey: 401 }
 }
 
 function getGradeTheme(grade: number) {
@@ -166,7 +233,7 @@ export default function PracticeAnalyticsDashboard({}: Props) {
     })
 
     return {
-      4: { attempts: g4Attempts, learners: g4Learners.size, units: 6 },
+      4: { attempts: g4Attempts, learners: g4Learners.size, units: 14 },
       5: { attempts: g5Attempts, learners: g5Learners.size, units: 5 },
       6: { attempts: g6Attempts, learners: g6Learners.size, units: 5 },
       totalAttempts: g4Attempts + g5Attempts + g6Attempts,
@@ -192,12 +259,27 @@ export default function PracticeAnalyticsDashboard({}: Props) {
     })
   }, [availableUnits, stats])
 
-  // Group sorted units by grade for organized display
+  // Group sorted units by grade and curriculum section for organized display
   const unitsByGrade = useMemo(() => {
     return {
       4: allSortedUnits.filter(u => parseGradeAndUnit(u.unit_name, u.unit_no).grade === 4),
       5: allSortedUnits.filter(u => parseGradeAndUnit(u.unit_name, u.unit_no).grade === 5),
       6: allSortedUnits.filter(u => parseGradeAndUnit(u.unit_name, u.unit_no).grade === 6),
+    }
+  }, [allSortedUnits])
+
+  const unitsBySection = useMemo(() => {
+    return {
+      g4Hg: allSortedUnits.filter(u => {
+        const p = parseGradeAndUnit(u.unit_name, u.unit_no)
+        return p.grade === 4 && !p.science
+      }),
+      g4Sci: allSortedUnits.filter(u => {
+        const p = parseGradeAndUnit(u.unit_name, u.unit_no)
+        return p.grade === 4 && p.science
+      }),
+      g5: allSortedUnits.filter(u => parseGradeAndUnit(u.unit_name, u.unit_no).grade === 5),
+      g6: allSortedUnits.filter(u => parseGradeAndUnit(u.unit_name, u.unit_no).grade === 6),
     }
   }, [allSortedUnits])
 
@@ -247,9 +329,10 @@ export default function PracticeAnalyticsDashboard({}: Props) {
       const parsed = parseGradeAndUnit(u.unit_name, u.unit_no)
       return {
         name: u.unit_name,
-        shortName: `G${parsed.grade} U${parsed.unit}`,
+        shortName: parsed.science ? `G4 Sci U${parsed.unit}` : `G${parsed.grade} U${parsed.unit}`,
         grade: parsed.grade,
         unit: parsed.unit,
+        science: Boolean(parsed.science),
         Attempts: total
       }
     })
@@ -299,13 +382,23 @@ export default function PracticeAnalyticsDashboard({}: Props) {
 
   const handleExportCSV = () => {
     if (filteredPivotTable.length === 0) return
-    const headers = ["Learner Name", "Total Attempts", ...activeUnitNames]
+    const headers = [
+      "Learner Name",
+      "Total Attempts",
+      ...activeUnits.map(u => {
+        const p = parseGradeAndUnit(u.unit_name, u.unit_no)
+        const friendly = getFriendlyUnitTitle(u.unit_no, u.unit_name)
+        return p.science 
+          ? `"Grade 4 Science Unit ${p.unit} - ${friendly}"` 
+          : `"Grade ${p.grade} Unit ${p.unit} - ${friendly}"`
+      })
+    ]
     const csvRows = [headers.join(",")]
     filteredPivotTable.forEach(row => {
       const rowData = [
         `"${row.learner}"`,
         row.total,
-        ...activeUnitNames.map(unit => row[unit] || 0)
+        ...activeUnits.map(u => row[u.unit_name] || 0)
       ]
       csvRows.push(rowData.join(","))
     })
@@ -612,13 +705,25 @@ export default function PracticeAnalyticsDashboard({}: Props) {
               {gradeFilter === 'all' ? (
                 <div className="flex items-center gap-3 text-xs font-semibold">
                   <span className="flex items-center gap-1.5 text-indigo-600">
-                    <span className="h-2.5 w-2.5 rounded-full bg-indigo-500"></span> Grade 4
+                    <span className="h-2.5 w-2.5 rounded-full bg-indigo-500"></span> G4 H&G
                   </span>
                   <span className="flex items-center gap-1.5 text-emerald-600">
-                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-500"></span> Grade 5
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-600"></span> G4 Science
+                  </span>
+                  <span className="flex items-center gap-1.5 text-amber-600">
+                    <span className="h-2.5 w-2.5 rounded-full bg-amber-500"></span> Grade 5
                   </span>
                   <span className="flex items-center gap-1.5 text-sky-600">
                     <span className="h-2.5 w-2.5 rounded-full bg-sky-500"></span> Grade 6
+                  </span>
+                </div>
+              ) : gradeFilter === '4' ? (
+                <div className="flex items-center gap-3 text-xs font-semibold">
+                  <span className="flex items-center gap-1.5 text-indigo-600">
+                    <span className="h-2.5 w-2.5 rounded-full bg-indigo-500"></span> History & Geography
+                  </span>
+                  <span className="flex items-center gap-1.5 text-emerald-600">
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-600"></span> Science
                   </span>
                 </div>
               ) : (
@@ -638,7 +743,7 @@ export default function PracticeAnalyticsDashboard({}: Props) {
                   <RechartsTooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '10px' }} />
                   <Bar dataKey="Attempts" name="Attempts" radius={[4, 4, 0, 0]} barSize={activeUnits.length > 10 ? 36 : 56}>
                     {unitChartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={getGradeTheme(entry.grade).barColor} />
+                      <Cell key={`cell-${index}`} fill={entry.science ? '#059669' : getGradeTheme(entry.grade).barColor} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -724,7 +829,7 @@ export default function PracticeAnalyticsDashboard({}: Props) {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm min-w-max border-collapse">
               <thead>
-                {/* When All Grades is selected: Top Super-Header Grouping Columns by Grade */}
+                {/* When All Grades is selected: Top Super-Header Grouping Columns by Grade & Subject */}
                 {gradeFilter === 'all' && (
                   <tr className="border-b border-gray-200 text-xs font-bold uppercase tracking-wider">
                     <th className="px-5 py-2.5 border-r border-gray-200 bg-gray-100 text-gray-600 sticky left-0 z-10 shadow-[1px_0_0_0_#e5e7eb]">
@@ -733,15 +838,48 @@ export default function PracticeAnalyticsDashboard({}: Props) {
                     <th className="px-4 py-2.5 text-center bg-emerald-100/60 text-emerald-900 border-r-2 border-emerald-300">
                       Total
                     </th>
-                    <th colSpan={6} className="px-4 py-2 text-center bg-indigo-50 border-r-2 border-indigo-200 text-indigo-900 font-extrabold">
-                      🟣 Grade 4 Units (1–6)
+                    {unitsBySection.g4Hg.length > 0 && (
+                      <th colSpan={unitsBySection.g4Hg.length} className="px-4 py-2 text-center bg-indigo-50 border-r-2 border-indigo-200 text-indigo-900 font-extrabold">
+                        🟣 Grade 4 H&G (1–{unitsBySection.g4Hg.length})
+                      </th>
+                    )}
+                    {unitsBySection.g4Sci.length > 0 && (
+                      <th colSpan={unitsBySection.g4Sci.length} className="px-4 py-2 text-center bg-emerald-50 border-r-2 border-emerald-200 text-emerald-900 font-extrabold">
+                        🔬 Grade 4 Science (1–{unitsBySection.g4Sci.length})
+                      </th>
+                    )}
+                    {unitsBySection.g5.length > 0 && (
+                      <th colSpan={unitsBySection.g5.length} className="px-4 py-2 text-center bg-amber-50 border-r-2 border-amber-200 text-amber-900 font-extrabold">
+                        🟢 Grade 5 Units (1–{unitsBySection.g5.length})
+                      </th>
+                    )}
+                    {unitsBySection.g6.length > 0 && (
+                      <th colSpan={unitsBySection.g6.length} className="px-4 py-2 text-center bg-sky-50 text-sky-900 font-extrabold">
+                        🔵 Grade 6 Units (1–{unitsBySection.g6.length})
+                      </th>
+                    )}
+                  </tr>
+                )}
+
+                {/* When Grade 4 is selected: Super-Header distinguishing H&G and Science */}
+                {gradeFilter === '4' && (
+                  <tr className="border-b border-gray-200 text-xs font-bold uppercase tracking-wider">
+                    <th className="px-5 py-2.5 border-r border-gray-200 bg-gray-100 text-gray-600 sticky left-0 z-10 shadow-[1px_0_0_0_#e5e7eb]">
+                      Learner
                     </th>
-                    <th colSpan={5} className="px-4 py-2 text-center bg-emerald-50 border-r-2 border-emerald-200 text-emerald-900 font-extrabold">
-                      🟢 Grade 5 Units (1–5)
+                    <th className="px-4 py-2.5 text-center bg-emerald-100/60 text-emerald-900 border-r-2 border-emerald-300">
+                      Total
                     </th>
-                    <th colSpan={5} className="px-4 py-2 text-center bg-sky-50 text-sky-900 font-extrabold">
-                      🔵 Grade 6 Units (1–5)
-                    </th>
+                    {unitsBySection.g4Hg.length > 0 && (
+                      <th colSpan={unitsBySection.g4Hg.length} className="px-4 py-2 text-center bg-indigo-50 border-r-2 border-indigo-200 text-indigo-900 font-extrabold">
+                        📚 History & Geography (Units 1–{unitsBySection.g4Hg.length})
+                      </th>
+                    )}
+                    {unitsBySection.g4Sci.length > 0 && (
+                      <th colSpan={unitsBySection.g4Sci.length} className="px-4 py-2 text-center bg-emerald-50 text-emerald-900 font-extrabold">
+                        🔬 Science (Units 1–{unitsBySection.g4Sci.length})
+                      </th>
+                    )}
                   </tr>
                 )}
 
@@ -753,20 +891,24 @@ export default function PracticeAnalyticsDashboard({}: Props) {
                   <th scope="col" className="px-4 py-3 text-center text-emerald-700 bg-emerald-50/50 border-r-2 border-gray-200 font-bold">
                     Total
                   </th>
-                  {activeUnits.map(unit => {
+                  {activeUnits.map((unit, index) => {
                     const parsed = parseGradeAndUnit(unit.unit_name, unit.unit_no)
-                    const theme = getGradeTheme(parsed.grade)
-                    // Add thicker border after last unit of Grade 4 and Grade 5
-                    const isLastOfGrade = (parsed.grade === 4 && parsed.unit === 6) || (parsed.grade === 5 && parsed.unit === 5)
+                    const theme = parsed.science ? { text: 'text-emerald-700' } : getGradeTheme(parsed.grade)
+                    const friendlyTitle = getFriendlyUnitTitle(unit.unit_no, unit.unit_name)
+                    const nextUnit = activeUnits[index + 1]
+                    const nextParsed = nextUnit ? parseGradeAndUnit(nextUnit.unit_name, nextUnit.unit_no) : null
+                    const isLastOfSection = !nextParsed || (parsed.grade !== nextParsed.grade) || (Boolean(parsed.science) !== Boolean(nextParsed.science))
+
                     return (
                       <th 
                         key={unit.unit_name} 
                         scope="col" 
-                        className={`px-3 py-2.5 text-center whitespace-nowrap ${isLastOfGrade ? 'border-r-2 border-gray-300' : 'border-r border-gray-100'}`}
+                        title={`${friendlyTitle} (${unit.unit_name})`}
+                        className={`px-3 py-2.5 text-center whitespace-nowrap cursor-help ${isLastOfSection ? 'border-r-2 border-gray-300' : 'border-r border-gray-100'}`}
                       >
                         <div className="flex flex-col items-center gap-0.5">
                           <span className={`text-[10px] uppercase font-bold tracking-wider ${theme.text}`}>
-                            G{parsed.grade}
+                            {parsed.science ? '🔬 Sci' : `G${parsed.grade}`}
                           </span>
                           <span className="font-bold text-gray-800 text-xs">
                             Unit {parsed.unit}
@@ -786,14 +928,17 @@ export default function PracticeAnalyticsDashboard({}: Props) {
                     <td className="px-4 py-3 text-center font-black text-emerald-700 bg-emerald-50/30 border-r-2 border-gray-200">
                       {row.total}
                     </td>
-                    {activeUnitNames.map(unit => {
-                      const count = row[unit] || 0
-                      const parsed = parseGradeAndUnit(unit)
-                      const isLastOfGrade = (parsed.grade === 4 && parsed.unit === 6) || (parsed.grade === 5 && parsed.unit === 5)
+                    {activeUnits.map((unit, index) => {
+                      const count = row[unit.unit_name] || 0
+                      const parsed = parseGradeAndUnit(unit.unit_name, unit.unit_no)
+                      const nextUnit = activeUnits[index + 1]
+                      const nextParsed = nextUnit ? parseGradeAndUnit(nextUnit.unit_name, nextUnit.unit_no) : null
+                      const isLastOfSection = !nextParsed || (parsed.grade !== nextParsed.grade) || (Boolean(parsed.science) !== Boolean(nextParsed.science))
+
                       return (
                         <td 
-                          key={unit} 
-                          className={`px-3 py-3 text-center ${isLastOfGrade ? 'border-r-2 border-gray-200' : 'border-r border-gray-100'} ${count > 0 ? 'text-gray-900 font-bold' : 'text-gray-300'}`}
+                          key={unit.unit_name} 
+                          className={`px-3 py-3 text-center ${isLastOfSection ? 'border-r-2 border-gray-200' : 'border-r border-gray-100'} ${count > 0 ? 'text-gray-900 font-bold' : 'text-gray-300'}`}
                         >
                           {count > 0 ? (
                             <span className="inline-block rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-800">

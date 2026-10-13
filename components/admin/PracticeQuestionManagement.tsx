@@ -19,7 +19,7 @@ interface PracticeQuestion {
   question_type: string
   question_text: string
   instruction?: string
-  image_url?: string
+  image_url?: string | null
   answer_data?: any
   is_active?: boolean
     created_at?: string
@@ -45,6 +45,7 @@ export default function PracticeQuestionManagement({ onImport }: Props) {
   const [questions, setQuestions] = useState<PracticeQuestion[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [subjectFilter, setSubjectFilter] = useState<string>("all")
   const [unitFilter, setUnitFilter] = useState<string>("all")
   const [typeFilter, setTypeFilter] = useState<string>("all")
   
@@ -52,6 +53,8 @@ export default function PracticeQuestionManagement({ onImport }: Props) {
   const [isAddingQuestion, setIsAddingQuestion] = useState(false)
   const [savingEdit, setSavingEdit] = useState(false)
   const [editError, setEditError] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(25)
 
   const fetchData = useCallback(async () => {
     try {
@@ -78,6 +81,10 @@ export default function PracticeQuestionManagement({ onImport }: Props) {
     fetchData()
   }, [fetchData])
 
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search, subjectFilter, unitFilter, typeFilter])
+
   const handleDelete = async (questionId: number) => {
     if (!confirm("Are you sure you want to delete this practice question?")) return
     try {
@@ -86,8 +93,10 @@ export default function PracticeQuestionManagement({ onImport }: Props) {
       })
       if (res.ok) {
         setQuestions((prev) => prev.filter((q) => q.id !== questionId))
+        alert("Practice question deleted successfully!")
       } else {
-        alert("Failed to delete question")
+        const err = await res.json().catch(() => ({}))
+        alert(err.error || "Failed to delete question")
       }
     } catch (e) {
       console.error("Delete failed:", e)
@@ -109,7 +118,7 @@ export default function PracticeQuestionManagement({ onImport }: Props) {
       })
 
       if (!res.ok) {
-        const err = await res.json()
+        const err = await res.json().catch(() => ({}))
         throw new Error(err.error || "Failed to save question")
       }
 
@@ -121,20 +130,31 @@ export default function PracticeQuestionManagement({ onImport }: Props) {
       }
       setEditingQuestion(null)
       setIsAddingQuestion(false)
+      alert(isNew ? "Question created successfully!" : "Question updated successfully!")
       fetchData()
     } catch (err: any) {
       setEditError(err.message || "Failed to save question")
+      alert(err.message || "Failed to save question")
+      throw err
     } finally {
       setSavingEdit(false)
     }
   }
 
   const filtered = questions.filter((q) => {
+    if (subjectFilter === "science" && !(q.unit_no >= 17 && q.unit_no <= 24)) return false
+    if (subjectFilter === "hg" && (q.unit_no >= 17 && q.unit_no <= 24)) return false
     if (unitFilter !== "all" && q.unit_no !== Number(unitFilter)) return false
     if (typeFilter !== "all" && q.question_type !== typeFilter) return false
     if (search && !(q.question_text || "").toLowerCase().includes(search.toLowerCase())) return false
     return true
   })
+
+  const totalPages = Math.ceil(filtered.length / pageSize) || 1
+  const validCurrentPage = Math.min(Math.max(1, currentPage), totalPages)
+  const startIndex = (validCurrentPage - 1) * pageSize
+  const endIndex = Math.min(startIndex + pageSize, filtered.length)
+  const paginatedQuestions = filtered.slice(startIndex, endIndex)
 
   if (loading) {
     return (
@@ -209,17 +229,43 @@ export default function PracticeQuestionManagement({ onImport }: Props) {
             />
           </div>
           <select
+            value={subjectFilter}
+            onChange={(e) => {
+              const nextSubj = e.target.value
+              setSubjectFilter(nextSubj)
+              if (nextSubj === "science" && unitFilter !== "all" && Number(unitFilter) < 17) {
+                setUnitFilter("all")
+              } else if (nextSubj === "hg" && unitFilter !== "all" && Number(unitFilter) >= 17) {
+                setUnitFilter("all")
+              }
+            }}
+            aria-label="Filter by subject"
+            className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 focus:border-blue-500 focus:outline-none shadow-sm"
+          >
+            <option value="all">All Subjects</option>
+            <option value="science">🔬 Science (Grade 4)</option>
+            <option value="hg">📚 History & Geography</option>
+          </select>
+          <select
             value={unitFilter}
             onChange={(e) => setUnitFilter(e.target.value)}
             aria-label="Filter by unit"
             className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 focus:border-blue-500 focus:outline-none shadow-sm"
           >
-            <option value="all">All Units ({units.length})</option>
-            {units.map((u) => (
-              <option key={u.id} value={u.unit_no}>
-                {u.unit_name}
-              </option>
-            ))}
+            <option value="all">
+              {subjectFilter === "science" ? "All Science Units (8)" : subjectFilter === "hg" ? "All H&G Units (16)" : `All Units (${units.length})`}
+            </option>
+            {units
+              .filter((u) => {
+                if (subjectFilter === "science") return u.unit_no >= 17 && u.unit_no <= 24
+                if (subjectFilter === "hg") return u.unit_no < 17
+                return true
+              })
+              .map((u) => (
+                <option key={u.id} value={u.unit_no}>
+                  {u.unit_name}
+                </option>
+              ))}
           </select>
           <select
             value={typeFilter}
@@ -252,12 +298,13 @@ export default function PracticeQuestionManagement({ onImport }: Props) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filtered.map((q) => {
+              {paginatedQuestions.map((q) => {
                 const typeInfo = TYPE_LABELS[q.question_type] || {
                   label: q.question_type,
                   badge: "bg-slate-100 text-slate-700 border border-slate-300",
                 }
-                const isGrade4 = q.unit_no >= 11 && q.unit_no <= 16
+                const isScience = q.unit_no >= 17 && q.unit_no <= 24
+                const isGrade4 = q.unit_no >= 11 && q.unit_no <= 24
                 const isGrade5 = q.unit_no <= 5
                 const createdDate = q.created_at ? new Date(q.created_at).toLocaleDateString() : "—"
 
@@ -277,7 +324,7 @@ export default function PracticeQuestionManagement({ onImport }: Props) {
 
                     {/* Subject */}
                     <td className="px-4 py-3 font-bold text-slate-700 text-xs">
-                      History & Geography
+                      {isScience ? "Science" : "History & Geography"}
                     </td>
 
                     {/* Level / Unit */}
@@ -381,6 +428,69 @@ export default function PracticeQuestionManagement({ onImport }: Props) {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination Toolbar */}
+        <div className="mt-3 flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-white border border-slate-200 rounded-xl shadow-xs">
+          <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-slate-600">
+            <span>
+              Showing <strong className="text-slate-900">{filtered.length === 0 ? 0 : startIndex + 1}</strong> to <strong className="text-slate-900">{endIndex}</strong> of <strong className="text-slate-900">{filtered.length}</strong> questions
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-slate-500 font-medium">Rows:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value))
+                  setCurrentPage(1)
+                }}
+                className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-bold text-slate-700 shadow-xs focus:border-blue-500 focus:outline-hidden"
+              >
+                <option value={15}>15 per page</option>
+                <option value={25}>25 per page</option>
+                <option value={50}>50 per page</option>
+                <option value={100}>100 per page</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setCurrentPage(1)}
+              disabled={validCurrentPage <= 1}
+              className="px-2.5 py-1 text-xs font-bold rounded-lg border border-slate-300 bg-white text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 transition shadow-xs"
+            >
+              First
+            </button>
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={validCurrentPage <= 1}
+              className="px-2.5 py-1 text-xs font-bold rounded-lg border border-slate-300 bg-white text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 transition shadow-xs"
+            >
+              Prev
+            </button>
+            <span className="px-3 py-1 text-xs font-black text-slate-800 bg-slate-100 rounded-lg">
+              Page {validCurrentPage} of {totalPages}
+            </span>
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={validCurrentPage >= totalPages}
+              className="px-2.5 py-1 text-xs font-bold rounded-lg border border-slate-300 bg-white text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 transition shadow-xs"
+            >
+              Next
+            </button>
+            <button
+              type="button"
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={validCurrentPage >= totalPages}
+              className="px-2.5 py-1 text-xs font-bold rounded-lg border border-slate-300 bg-white text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 transition shadow-xs"
+            >
+              Last
+            </button>
+          </div>
         </div>
 
         {/* Footer info */}
